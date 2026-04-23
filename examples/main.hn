@@ -1,0 +1,36 @@
+// Example Hunnu Language Program
+// This demonstrates the MVP features of Hunnu
+
+fn main() {
+    // Variables
+    let x = 10
+    let name = "Hunnu"
+
+    // Basic arithmetic
+    let sum = 5 + 3
+    let product = 4 * 2
+    let quotient = 20 / 4
+
+    // Conditionals
+    if x > 5 {
+        print("Hello from Hunnu!")
+        print(name)
+    }
+
+    if sum > product {
+        print("Sum is greater")
+    } else {
+        print("Product is greater or equal")
+    }
+
+    // Nested conditionals
+    if x > 0 {
+        if x < 20 {
+            print("x is between 0 and 20")
+        }
+    }
+
+    // More complex expressions
+    let result = (x + sum) * 2 - product
+    print(result)
+}

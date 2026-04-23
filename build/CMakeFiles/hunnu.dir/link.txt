@@ -1,0 +1,1 @@
+/usr/bin/cc -Wl,--dependency-file=CMakeFiles/hunnu.dir/link.d CMakeFiles/hunnu.dir/cli/main.c.o CMakeFiles/hunnu.dir/cli/cli.c.o CMakeFiles/hunnu.dir/compiler/lexer/lexer.c.o CMakeFiles/hunnu.dir/compiler/lexer/token.c.o CMakeFiles/hunnu.dir/compiler/parser/parser.c.o CMakeFiles/hunnu.dir/compiler/ast/ast.c.o CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.o -o hunnu

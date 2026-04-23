@@ -1,0 +1,77 @@
+#include "token.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+static const char* token_type_names[] = {
+    "EOF",
+    "IDENT",
+    "INT_LITERAL",
+    "STRING_LITERAL",
+    "BOOL_LITERAL",
+    "LET",
+    "FN",
+    "IF",
+    "ELSE",
+    "TRUE",
+    "FALSE",
+    "PRINT",
+    "LPAREN",
+    "RPAREN",
+    "LBRACE",
+    "RBRACE",
+    "LBRACKET",
+    "RBRACKET",
+    "SEMICOLON",
+    "COMMA",
+    "COLON",
+    "ASSIGN",
+    "PLUS",
+    "MINUS",
+    "STAR",
+    "SLASH",
+    "PERCENT",
+    "EQ",
+    "NEQ",
+    "LT",
+    "LE",
+    "GT",
+    "GE",
+    "AND",
+    "OR",
+    "NOT",
+    "ARROW",
+    "NEWLINE",
+    "UNKNOWN"
+};
+
+Token* token_new(TokenType type, const char* lexeme, int32_t line, int32_t column) {
+    Token* token = (Token*)malloc(sizeof(Token));
+    token->type = type;
+    token->lexeme = strdup(lexeme);
+    token->line = line;
+    token->column = column;
+    return token;
+}
+
+void token_free(Token* token) {
+    if (token) {
+        free(token->lexeme);
+        free(token);
+    }
+}
+
+void token_print(Token* token) {
+    printf("%s(%d:%d): '%s'", 
+           token_type_to_string(token->type), 
+           token->line, 
+           token->column, 
+           token->lexeme);
+}
+
+const char* token_type_to_string(TokenType type) {
+    if (type >= 0 && type <= TOKEN_UNKNOWN) {
+        return token_type_names[type];
+    }
+    return "UNKNOWN";
+}

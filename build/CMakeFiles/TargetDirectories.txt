@@ -1,0 +1,7 @@
+/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles/hunnu.dir
+/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles/edit_cache.dir
+/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles/rebuild_cache.dir
+/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles/list_install_components.dir
+/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles/install.dir
+/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles/install/local.dir
+/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles/install/strip.dir
