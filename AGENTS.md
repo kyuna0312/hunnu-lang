@@ -4,56 +4,39 @@ This file provides guidance for agentic coding agents working on hunnu-lang.
 
 ## Project Overview
 
-hunnu-lang is a programming language project. The codebase structure is being established.
+hunnu-lang is a lightweight, expression-oriented programming language written in C.
+The project uses CMake for building and has a compiler/interpreter architecture.
 
 ---
 
 ## Build Commands
 
-npm is used as the package manager.
+CMake is used as the build system.
 
 ### Main Commands
 
 ```bash
-# Install dependencies
-npm install
+# Create build directory (first time only)
+mkdir -p build && cd build
+
+# Configure with CMake
+cmake ..
 
 # Build the project
-npm run build
+make
 
-# Run the compiler/interpreter
-npm run start
-
-# Run in development mode with hot reload
-npm run dev
+# Or build from root:
+cd build && make
 ```
 
-### Linting
+### Running
 
 ```bash
-# Run linter
-npm run lint
+# Run a Hunnu program
+./build/hunnu run examples/main.hn
 
-# Fix linting issues automatically
-npm run lint:fix
-```
-
-### Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run a single test file (use -- flag with test runner)
-npm test -- --testPathPattern="filename.test"
-# or using vitest:
-npx vitest run --test filename.test
+# Or shorter:
+./build/hunnu examples/main.hn
 ```
 
 ---
@@ -62,7 +45,7 @@ npx vitest run --test filename.test
 
 ### General Principles
 
-- Write clean, readable, idiomatic code
+- Write clean, readable, idiomatic C code
 - Keep functions small and focused (single responsibility)
 - Use meaningful variable and function names
 - Avoid magic numbers - use constants
@@ -70,144 +53,206 @@ npx vitest run --test filename.test
 
 ### Formatting
 
-- Use 2 spaces for indentation (no tabs)
+- Use 4 spaces for indentation (no tabs)
 - Max line length: 100 characters
-- Use trailing commas in multi-line objects/arrays
-- Use single quotes for strings (double only for strings containing single quotes)
-- Always use semicolons
+- Opening brace on same line as function/if/while
+- Use `const` whenever possible
+- Prefer `static` for internal functions
 
 Example:
-```typescript
-const config = {
-  name: 'hunnu-lang',
-  version: '0.1.0',
-};
+```c
+static int calculate_value(int a, int b) {
+    return a + b;
+}
 ```
 
-### Imports
+### Includes
 
-- Use absolute imports when possible (from 'src/...')
-- Group imports in this order:
-  1. Node built-ins (path, fs, etc.)
-  2. External libraries (third-party)
-  3. Internal modules (from this project)
+- Group includes in this order:
+  1. Project header (local .h)
+  2. Standard C library (<stdio.h>, <stdlib.h>, etc.)
+  3. System headers
 
 Example:
-```typescript
-import * as path from 'path';
-import { Parser } from './parser';
-import { Token, TokenType } from '../tokenizer';
+```c
+#include "lexer.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 ```
 
 ### Naming Conventions
 
 | Type | Convention | Example |
 |------|-----------|---------|
-| Variables | camelCase | `currentToken` |
+| Variables | snake_case | `current_token` |
 | Constants | UPPER_SNAKE_CASE | `MAX_TOKEN_LENGTH` |
-| Functions | camelCase | `parseExpression` |
-| Classes | PascalCase | `Lexer` |
-| Interfaces | PascalCase (prefix with I) | `INode` |
-| Enums | PascalCase | `TokenType` |
-| Files | kebab-case | `lexer.ts` |
-| Tests | kebab-case.test | `lexer.test.ts` |
+| Functions | snake_case | `parse_expression` |
+| Types/Structs | snake_case (PascalCase for display) | `Lexer` |
+| Enums (values) | UPPER_SNAKE_CASE | `TOKEN_LET` |
+| Files | snake_case | `lexer.c` / `lexer.h` |
+| Macros | UPPER_SNAKE_CASE | `#define MAX_DEPTH 100` |
 
 ### Types
 
-- Always use explicit types for function parameters and return values
-- Prefer interfaces over types for object shapes
-- Use `unknown` over `any` when type is truly unknown
-- Never use `any` - use `unknown` or generic types
-- Use utility types: `Partial<T>`, `Required<T>`, `Readonly<T>`
+- Use fixed-width integers from `<stdint.h>`: `int32_t`, `int64_t`, `uint32_t`
+- Use `size_t` for sizes and indices
+- Use `int` for boolean return types (0 = false, non-zero = true)
+- Always initialize pointers to `NULL`
+- Check for `NULL` before dereferencing
 
 ### Error Handling
 
-- Use custom error classes extending `Error` or `Error`
-- Include error codes and contextual info in errors
-- Never silently swallow errors
-- Use Result types for operations that can fail:
-
-```typescript
-type Result<T, E = Error> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
-```
-
-### Testing Guidelines
-
-- Use descriptive test names: `should parse binary expression correctly`
-- Follow AAA pattern: Arrange, Act, Assert
-- Test both success and failure cases
-- Use `describe` blocks for grouping related tests
-- Mock external dependencies
+- Return error codes (0 for success, negative for errors)
+- Use `fprintf(stderr, ...)` for error messages
+- Never silently ignore return values
+- Clean up resources on error (free memory, close files)
 
 ---
 
-## Architecture
+## Project Architecture
 
 ### Directory Structure
 
 ```
-src/
-  tokenizer/     # Lexical analysis
-  parser/        # Syntax analysis  
-  ast/           # AST node definitions
-  evaluator/    # Code generation/execution
-  compiler/     # Compilation to target
-  utils/        # Helper functions
-tests/
-  tokenizer/
-  parser/
-  ...
+hunnu-lang/
+├── compiler/
+│   ├── ast/          # Abstract syntax tree definitions
+│   ├── interpreter/  # Runtime execution
+│   ├── lexer/       # Tokenization (lexer.c, token.h)
+│   └── parser/       # Syntax analysis
+├── cli/              # Command-line interface
+├── examples/          # Sample .hn programs
+├── build/            # Build output (gitignored)
+└── CMakeLists.txt   # Build configuration
 ```
 
 ### Key Files
 
-- `src/index.ts` - Entry point
-- `src/cli.ts` - Command-line interface
+- `compiler/lexer/token.h` - Token type definitions (enum TokenType)
+- `compiler/lexer/lexer.c` - Lexical analyzer implementation
+- `compiler/parser/parser.c` - Parser implementation
+- `compiler/ast/ast.h` - AST node definitions
+- `compiler/interpreter/interpreter.c` - Runtime interpreter
+
+### Data Flow
+
+```
+Source Code (.hn)
+    │
+    ▼
+Lexer (tokenizer)
+    │ tokens
+    ▼
+Parser (AST builder)
+    │ AST nodes
+    ▼
+Interpreter
+    │ execution
+    ▼
+Output
+```
+
+---
+
+## Adding New Features
+
+### Adding New Tokens
+
+1. Add `TOKEN_NEW_TOKEN` to `compiler/lexer/token.h` enum
+2. Add keyword in `compiler/lexer/lexer.c` `keyword_names` array
+3. Add corresponding type in `keyword_types` array
+4. Update `lexer_check_keyword()` if needed
+
+### Adding New AST Nodes
+
+1. Add `AST_NEW_NODE` to `compiler/ast/ast.h` enum
+2. Create struct in `ast.h` for the node
+3. Implement creation/destruction functions in `ast.c`
+4. Update parser to build the node
+5. Update interpreter to execute the node
+
+### Adding Keywords
+
+Keywords are handled in `lexer.c`:
+- Add keyword string to `keyword_names` array
+- Add corresponding `TokenType` to `keyword_types` array
+
+---
+
+## Testing
+
+### Manual Testing
+
+```bash
+# Build the project
+cd build && make
+
+# Run an example
+./build/hunnu examples/main.hn
+
+# Create test files in examples/ directory
+```
+
+### Test Program Example
+
+```hunnu
+fn main() {
+    let x = 10
+
+    if x > 5 {
+        print("Hello from Hunnu!")
+    }
+
+    let sum = 5 + 3
+    print(sum)
+}
+```
 
 ---
 
 ## IDE Recommendations
 
 - Use VS Code or Cursor
-- Install recommended extensions (see .vscode/extensions.json)
-- Enable "Format on Save"
+- Install C/C++ extension for syntax highlighting
+- Use `.vscode/c_cpp_properties.json` for include paths:
+
+```json
+{
+    "configurations": [
+        {
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/compiler"
+            ]
+        }
+    ]
+}
+```
 
 ---
 
 ## Common Issues
 
-### Single Test Running
+### Build Failures
 
-If tests fail to run with `--` syntax, try:
-
+If build fails, clean and rebuild:
 ```bash
-# For vitest
-npx vitest run --testPathPattern "lexer"
-
-# For jest  
-npx jest --testPathPattern "lexer"
+rm -rf build/*
+cd build && cmake .. && make
 ```
 
-Check `package.json` for the actual test configuration.
+### Segmentation Faults
 
----
-
-## Configuration Files
-
-- `package.json` - npm scripts and dependencies
-- `tsconfig.json` - TypeScript configuration
-- `jest.config.js` or `vitest.config.ts` - Test configuration
-- `.eslintrc.json` - Linting rules
-- `.prettierrc` - Code formatting
+- Use a debugger: `gdb ./build/hunnu`
+- Check for uninitialized pointers
+- Verify NULL checks before dereferencing
 
 ---
 
 ## Notes for Agents
 
-- Always run lint/typecheck before committing
-- Verify tests pass before submitting changes
-- Keep PRs small and focused
-- Add tests for new features
+- Always build and test after changes
+- Keep changes small and focused
+- Update examples to demonstrate new features
 - Update this file when project setup changes
