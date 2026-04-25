@@ -4,14 +4,18 @@ A lightweight, expression-oriented programming language written in C.
 
 ## Features
 
-- **Variables**: `let x = 10`
-- **Functions**: `fn add(a, b) { return a + b }`
-- **Control Flow**: `if`, `while`, `for` loops
-- **Loop Control**: `break` and `continue`
-- **Arithmetic**: Full support for `+`, `-`, `*`, `/`, `%`
-- **Comparison**: `==`, `!=`, `<`, `<=`, `>`, `>=`
-- **Boolean Logic**: `and`, `or`, `not`
-- **Printing**: `print("Hello")`
+| Feature | Syntax |
+|---------|--------|
+| Variables | `let x = 10` |
+| Functions | `fn add(a, b) { return a + b }` |
+| If / Else | `if x > 0 { ... } else { ... }` |
+| While loop | `while x > 0 { ... }` |
+| For loop | `for let i = 0; i < 3; i = i + 1 { ... }` |
+| Break / Continue | `break` / `continue` inside loops |
+| Arithmetic | `+` `-` `*` `/` `%` |
+| Comparison | `==` `!=` `<` `<=` `>` `>=` |
+| Boolean logic | `and` `or` `not` |
+| Print | `print("Hello")` |
 
 ## Building
 
@@ -37,11 +41,26 @@ fn main() {
 }
 ```
 
+### Fibonacci
+
+```hunnu
+fn fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+fn main() {
+    print(fib(10))
+}
+```
+
 ### For Loop
 
 ```hunnu
 fn main() {
-    for let i = 0; i < 3; i = i + 1 {
+    for let i = 0; i < 5; i = i + 1 {
         print(i)
     }
 }
@@ -51,8 +70,11 @@ fn main() {
 
 ```hunnu
 fn main() {
-    let x = 3
+    let x = 10
     while x > 0 {
+        if x == 5 {
+            break
+        }
         print(x)
         x = x - 1
     }
@@ -77,13 +99,23 @@ fn main() {
 ```
 hunnu-lang/
 ├── compiler/
-│   ├── ast/          # Abstract syntax tree
-│   ├── interpreter/  # Runtime execution
-│   ├── lexer/        # Tokenization
-│   └── parser/       # Syntax analysis
-├── cli/              # Command-line interface
-└── examples/         # Sample programs
+│   ├── ast/          # AST node definitions and constructors
+│   ├── interpreter/  # Tree-walk runtime
+│   ├── lexer/        # Tokenizer
+│   └── parser/       # Recursive-descent parser
+├── cli/              # Entry point and CLI handling
+├── examples/         # Sample .hn programs
+└── CMakeLists.txt
 ```
+
+## Roadmap
+
+See [`future-improvements.md`](future-improvements.md) for the full list. Near-term priorities:
+
+- Scoped variable environments (function-local variables)
+- First-class function calls
+- Arrays and string operations
+- Better runtime error messages with line numbers
 
 ## License
 
