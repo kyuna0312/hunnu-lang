@@ -4,8 +4,62 @@ All notable changes to the Hunnu language project.
 
 ## [Unreleased]
 
-### Phase 2: Core Language Features ✅
+### Phase 4: Bytecode Compiler + VM ✅
 *Added: April 2025*
+
+#### Bytecode Instruction Set
+- Added `opcodes.h` with full instruction enumeration
+- Instructions for constants, arithmetic, comparison, control flow
+- Local variable access, arrays, indexing, function calls
+
+```c
+// Example bytecode
+OP_CONSTANT_INT 10       // push integer
+OP_CONSTANT_INT 20       // push another
+OP_ADD                 // add them
+OP_SET_LOCAL 0          // store in local 0
+OP_GET_LOCAL 0          // retrieve local 0
+OP_GET_INDEX           // array indexing
+OP_CALL                // function call
+OP_RETURN             // return from function
+```
+
+#### Bytecode Compiler
+- Added `compiler/compiler.c` - AST to bytecode compilation
+- Walks AST and emits corresponding bytecode
+- Manages constant pool for strings
+- Supports: program, function, block, variable declarations, if/while, arrays, print
+
+#### Virtual Machine
+- Added `compiler/vm.c` - stack-based VM execution
+- Value stack (256 slots max)
+- Local variable storage
+- Builtin function dispatch (print, input, to_int, to_float, to_str)
+- Bytecode interpreter loop
+
+#### CLI Integration
+- Added `build` command to output bytecode:
+```bash
+./hunnu build examples/main.hn
+```
+
+- Added `--vm` flag to `run` command:
+```bash
+./hunnu run examples/main.hn --vm
+```
+
+#### Files
+- `compiler/vm/opcodes.h` - instruction enum
+- `compiler/vm/compiler.h` - compiler types
+- `compiler/vm/compiler.c` - bytecode compiler
+- `compiler/vm/vm.h` - VM header
+- `compiler/vm/vm.c` - VM execution
+- Updated `cli/main.c`, `cli/cli.h` - new commands and flags
+- Updated `interpreter/interpreter.c`, `interpreter/interpreter.h` - value creation helpers
+
+---
+
+### Phase 3: Standard Library & Dev Experience ✅
 
 #### Compound Assignment
 - Added `+=`, `-=`, `*=`, `/=` operators

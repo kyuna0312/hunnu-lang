@@ -310,6 +310,8 @@ See [`plan.md`](plan.md) for the full development roadmap.
 ### Completed
 - ✅ Phase 1: Foundation Fixes (scoping, break/continue, memory fixes)
 - ✅ Phase 2: Core Language Features (compound assignment, else if, floats, null/nil, string escapes)
+- ✅ Phase 3: Standard Library & Dev Experience (input, to_str/to_int/to_float, --debug)
+- ✅ Phase 4: Bytecode Compiler + VM (build command, --vm flag)
 
 ## License
 

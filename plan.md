@@ -32,6 +32,8 @@
 - **Floating-point numbers**: `3.14159`, `2.0`
 - **null/nil literal**: `let x = null` or `let y = nil`
 - **CLI**: `--debug` flag shows tokens and AST
+- **Bytecode compiler**: `./hunnu build file.hn` outputs bytecode
+- **VM execution**: `./hunnu run file.hn --vm` uses VM instead of interpreter
 
 ### Missing / Broken
 - (All Phase 1 items completed!)
@@ -69,15 +71,15 @@
 | 🟢 | `--debug` / `--ast` CLI flag | cli.c | ✅ DONE |
 | 🟢 | Runtime errors with line numbers | interpreter.c | ⚠️ Already has (basic) |
 
-### Phase 4: Advanced Features
+### Phase 4: Advanced Features ✅
 
-| Priority | Item | Status |
-|----------|------|--------|
-| 🔵 | Bytecode compiler + VM | TODO |
-| 🔵 | Modules / import system | TODO |
-| 🔵 | Structs / records | TODO |
-| 🔵 | Pattern matching | TODO |
-| 🔵 | Algebraic Data Types (ADTs) | TODO |
+| Priority | Item | Files | Status |
+|----------|------|-------|--------|
+| 🔵 | Bytecode compiler + VM | compiler/vm/ | ✅ DONE |
+| 🔵 | Modules / import system | | TODO |
+| 🔵 | Structs / records | | TODO |
+| 🔵 | Pattern matching | | TODO |
+| 🔵 | Algebraic Data Types (ADTs) | | TODO |
 
 ---
 
@@ -194,8 +196,10 @@ Phase 1 (Foundation)      Phase 2 (Core)         Phase 3 (Lib/DX)        Phase 4
 | Lexer | `compiler/lexer/lexer.c`, `compiler/lexer/token.h` | Tokenization |
 | Parser | `compiler/parser/parser.c`, `compiler/parser/parser.h` | AST construction |
 | AST | `compiler/ast/ast.h`, `compiler/ast/ast.c` | Node definitions |
-| Interpreter | `compiler/interpreter/interpreter.c` | Execution |
-| CLI | `compiler/cli/cli.c` | Command-line interface |
+| Interpreter | `compiler/interpreter/interpreter.c` | Tree-walk execution |
+| Bytecode Compiler | `compiler/vm/compiler.c`, `compiler/vm/opcodes.h` | AST to bytecode |
+| Virtual Machine | `compiler/vm/vm.c` | Bytecode execution |
+| CLI | `cli/main.c`, `cli/cli.h` | Command-line interface |
 
 ---
 
