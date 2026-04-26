@@ -53,8 +53,8 @@ See [`compiler/version.h`](compiler/version.h) for the full version list.
 
 Hunnu supports both English and Mongolian (Cyrillic) keywords:
 
-| English | Mongolian (Cyrillic) | Meaning |
-|---------|---------------------|---------|
+| English | Mongolian (Cyrillic) | Translation |
+|---------|---------------------|--------------|
 | `let` | `хувьсагч` | variable |
 | `fn` | `функц` | function |
 | `if` | `хэрвээ` | if |
@@ -62,12 +62,12 @@ Hunnu supports both English and Mongolian (Cyrillic) keywords:
 | `true` | `үнэн` | true |
 | `false` | `худал` | false |
 | `print` | `хэвлэх` | print |
-| `while` | `давталт` | while |
-| `for` | `тооллого` | for |
+| `while` | `давталт` | repeat/loop |
+| `for` | `тооллого` | count/iterate |
 | `return` | `буцаах` | return |
-| `break` | `зогсоох` | break |
+| `break` | `зогсоох` | stop |
 | `continue` | `үргэлжлүүлэх` | continue |
-| `null` | `хоосон` | null |
+| `null` | `хоосон` | empty |
 
 ---
 
