@@ -21,7 +21,7 @@ A lightweight, expression-oriented programming language written in C.
 | String concat | `"a" + "b"` | `"a" + "b"` |
 | String len | `len(s)` | `len(s)` |
 
-## Building / Бүрүүлэх
+## Building
 
 ```bash
 mkdir build && cd build
@@ -128,7 +128,7 @@ fn main() {
 
 ### Хэрхэн ашиглах
 
-**Hunnu** нь C хэл дээр бичигдсэн, илэрхийлэлд суурилсан програмчлалын хэл юм.
+**Hunnu** нь C хэл дээр бичигдсэн, програмчлалын хэл юм.
 
 ### Синтакс
 
@@ -151,14 +151,14 @@ if x > 5 {
     print("Bhut")
 }
 
-// While давталж
+// While давталт
 let i = 0
 while i < 10 {
     print(i)
     i = i + 1
 }
 
-// For давталж
+// For давталт
 for let i = 0; i < 5; i = i + 1 {
     print(i)
 }
@@ -230,6 +230,6 @@ See [`future-improvements.md`](future-improvements.md) for the full list. Near-t
 - Arrays and string operations
 - Better runtime error messages with line numbers
 
-## License / Зөвшөөрөл
+## License
 
 MIT
