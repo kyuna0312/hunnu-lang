@@ -1,6 +1,6 @@
 /**
  * @file version.c
- * @brief Version implementation using Mongolian women names
+ * @brief Version implementation using authentic Mongolian women names
  */
 
 #include "version.h"
@@ -16,15 +16,15 @@ const char* version_get_description(void) {
 }
 
 uint32_t version_get_major(void) {
-    return version_major_versions[HUNNU_VERSION_CURRENT];
+    return version_majors[HUNNU_VERSION_CURRENT];
 }
 
 uint32_t version_get_minor(void) {
-    return version_minor_versions[HUNNU_VERSION_CURRENT];
+    return version_minors[HUNNU_VERSION_CURRENT];
 }
 
 uint32_t version_get_patch(void) {
-    return version_patch_versions[HUNNU_VERSION_CURRENT];
+    return version_patches[HUNNU_VERSION_CURRENT];
 }
 
 const char* version_get_string(void) {
