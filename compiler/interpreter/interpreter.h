@@ -43,10 +43,12 @@ int value_as_bool(Value* value);
 int64_t value_as_int(Value* value);
 
 Value value_create_int(int64_t val);
+Value value_create_float(double val);
 Value value_create_string(char* val);
 Value value_create_bool(int val);
 Value value_create_none(void);
-Value value_create_array(Value** arr, size_t length);
+Value value_create_array(size_t length);
+Value value_create_array_val(Value** arr, size_t length);
 char* value_to_string(Value* value);
 
 #endif

@@ -17,6 +17,8 @@ set(HUNNU_SOURCES
     compiler/parser/parser.c
     compiler/ast/ast.c
     compiler/interpreter/interpreter.c
+    compiler/vm/compiler.c
+    compiler/vm/vm.c
 )
 
 add_executable(hunnu ${HUNNU_SOURCES})

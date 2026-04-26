@@ -513,6 +513,43 @@ ASTNode* parser_parse_primary(Parser* parser) {
                                   parser->previous->column);
         }
         
+        if (strcmp(name, "input") == 0 && parser_match(parser, TOKEN_LPAREN)) {
+            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after input");
+            return ast_call_expr_create("input", NULL, 0,
+                                  parser->previous->line,
+                                  parser->previous->column);
+        }
+        
+        if (strcmp(name, "to_str") == 0 && parser_match(parser, TOKEN_LPAREN)) {
+            ASTNode* arg_expr = parser_parse_expression(parser);
+            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after to_str argument");
+            ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
+            args[0] = arg_expr;
+            return ast_call_expr_create("to_str", args, 1,
+                                  parser->previous->line,
+                                  parser->previous->column);
+        }
+        
+        if (strcmp(name, "to_int") == 0 && parser_match(parser, TOKEN_LPAREN)) {
+            ASTNode* arg_expr = parser_parse_expression(parser);
+            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after to_int argument");
+            ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
+            args[0] = arg_expr;
+            return ast_call_expr_create("to_int", args, 1,
+                                  parser->previous->line,
+                                  parser->previous->column);
+        }
+        
+        if (strcmp(name, "to_float") == 0 && parser_match(parser, TOKEN_LPAREN)) {
+            ASTNode* arg_expr = parser_parse_expression(parser);
+            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after to_float argument");
+            ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
+            args[0] = arg_expr;
+            return ast_call_expr_create("to_float", args, 1,
+                                  parser->previous->line,
+                                  parser->previous->column);
+        }
+        
         ASTNode* identifier = ast_identifier_create(name,
                                    parser->previous->line,
                                    parser->previous->column);

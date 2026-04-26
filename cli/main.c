@@ -5,6 +5,8 @@
 #include "compiler/lexer/lexer.h"
 #include "compiler/parser/parser.h"
 #include "compiler/interpreter/interpreter.h"
+#include "compiler/vm/compiler.h"
+#include "compiler/vm/vm.h"
 
 void print_usage(const char* prog_name) {
     printf("Usage: %s <command> [options] <file>\n", prog_name);
@@ -26,7 +28,7 @@ void print_version(void) {
     printf("A simple, safe, and fast programming language\n");
 }
 
-int cmd_run(const char* filename) {
+int cmd_run(const char* filename, int debug, int use_vm) {
     FILE* fp = fopen(filename, "r");
     if (!fp) {
         fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
@@ -43,6 +45,21 @@ int cmd_run(const char* filename) {
     fclose(fp);
 
     Lexer* lexer = lexer_new(source);
+    
+    if (debug) {
+        printf("--- Tokens ---\n");
+        Token* token;
+        while ((token = lexer_next_token(lexer)) != NULL) {
+            if (token->type == TOKEN_EOF) break;
+            token_print(token);
+            printf("\n");
+        }
+        printf("--- End Tokens ---\n\n");
+        
+        lexer_free(lexer);
+        lexer = lexer_new(source);
+    }
+    
     ASTNode* program = parse(lexer);
     
     if (!program) {
@@ -51,11 +68,28 @@ int cmd_run(const char* filename) {
         lexer_free(lexer);
         return 1;
     }
-
-    Interpreter* interp = interpreter_new();
-    int result = interpreter_run(interp, program);
     
-    interpreter_free(interp);
+    if (debug) {
+        printf("--- AST ---\n");
+        ast_print(program, 0);
+        printf("--- End AST ---\n\n");
+    }
+
+    int result;
+    
+    if (use_vm) {
+        CompiledProgram* compiled = compile_program(program);
+        if (debug) {
+            compiled_program_print(compiled);
+        }
+        result = vm_execute(compiled);
+        compiled_program_free(compiled);
+    } else {
+        Interpreter* interp = interpreter_new();
+        result = interpreter_run(interp, program);
+        interpreter_free(interp);
+    }
+    
     ast_free(program);
     lexer_free(lexer);
     free(source);
@@ -153,7 +187,16 @@ int main(int argc, char* argv[]) {
             print_usage(argv[0]);
             return 1;
         }
-        return cmd_run(argv[2]);
+        int debug = 0;
+        int use_vm = 0;
+        for (int i = 3; i < argc; i++) {
+            if (strcmp(argv[i], "--debug") == 0 || strcmp(argv[i], "-d") == 0) {
+                debug = 1;
+            } else if (strcmp(argv[i], "--vm") == 0 || strcmp(argv[i], "-v") == 0) {
+                use_vm = 1;
+            }
+        }
+        return cmd_run(argv[2], debug, use_vm);
     }
 
     if (strcmp(argv[1], "tokens") == 0) {
@@ -175,8 +218,46 @@ int main(int argc, char* argv[]) {
     }
 
     if (strcmp(argv[1], "build") == 0) {
-        fprintf(stderr, "Error: 'build' command not yet implemented\n");
-        return 1;
+        if (argc < 3) {
+            fprintf(stderr, "Error: Missing filename argument\n");
+            print_usage(argv[0]);
+            return 1;
+        }
+        
+        const char* filename = argv[2];
+        FILE* fp = fopen(filename, "r");
+        if (!fp) {
+            fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
+            return 1;
+        }
+
+        fseek(fp, 0, SEEK_END);
+        long file_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+
+        char* source = (char*)malloc(file_size + 1);
+        fread(source, 1, file_size, fp);
+        source[file_size] = '\0';
+        fclose(fp);
+
+        Lexer* lexer = lexer_new(source);
+        ASTNode* program = parse(lexer);
+        lexer_free(lexer);
+
+        if (!program) {
+            fprintf(stderr, "Error: Failed to parse source file\n");
+            free(source);
+            return 1;
+        }
+
+        CompiledProgram* compiled = compile_program(program);
+        compiled_program_print(compiled);
+        
+        compiled_program_free(compiled);
+        ast_free(program);
+        free(source);
+        
+        return 0;
     }
 
     fprintf(stderr, "Error: Unknown command '%s'\n", argv[1]);

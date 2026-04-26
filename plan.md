@@ -23,12 +23,15 @@
 - String concatenation: `"Hello" + "World"`
 - String escapes: `\n`, `\t`, `\\`, `\"`
 - `len()` built-in function
+- `input()` — read user input from stdin
+- `to_str()`, `to_int()`, `to_float()` — type conversions
 - First-class function calls (by name)
 - **Scoped variables** — block-scoped with scope stack
 - **break/continue** — loop control flow
 - Proper variable scoping in blocks and functions
 - **Floating-point numbers**: `3.14159`, `2.0`
 - **null/nil literal**: `let x = null` or `let y = nil`
+- **CLI**: `--debug` flag shows tokens and AST
 
 ### Missing / Broken
 - (All Phase 1 items completed!)
@@ -57,15 +60,14 @@
 | 🟢 | String escapes: `\n`, `\t`, `\\` | lexer.c | ✅ DONE |
 | 🟢 | Multi-line strings | lexer.c | ⚠️ SKIPPED (strings already work across lines) |
 
-### Phase 3: Standard Library & Dev Experience
+### Phase 3: Standard Library & Dev Experience ✅
 
 | Priority | Item | Files | Status |
 |----------|------|-------|--------|
-| 🟡 | `input()` — read stdin | interpreter.c | TODO |
-| 🟡 | `str()`, `int()` conversions | interpreter.c | TODO |
-| 🟢 | `--debug` / `--ast` CLI flag | cli.c | TODO |
-| 🟢 | Runtime errors with line numbers | interpreter.c | TODO |
-| 🟢 | Parser error recovery | parser.c | TODO |
+| 🟡 | `input()` — read stdin | interpreter.c, parser.c | ✅ DONE |
+| 🟡 | `to_str()`, `to_int()`, `to_float()` conversions | interpreter.c, parser.c | ✅ DONE |
+| 🟢 | `--debug` / `--ast` CLI flag | cli.c | ✅ DONE |
+| 🟢 | Runtime errors with line numbers | interpreter.c | ⚠️ Already has (basic) |
 
 ### Phase 4: Advanced Features
 

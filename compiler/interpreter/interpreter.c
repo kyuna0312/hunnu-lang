@@ -192,7 +192,17 @@ Value value_create_none(void) {
     return v;
 }
 
-Value value_create_array(Value** arr, size_t length) {
+Value value_create_array(size_t length) {
+    Value v;
+    v.type = VALUE_ARRAY;
+    v.value.int_value = 0;
+    v.has_value = 1;
+    v.array_length = length;
+    v.array_elements = (Value**)calloc(length, sizeof(Value*));
+    return v;
+}
+
+Value value_create_array_val(Value** arr, size_t length) {
     Value v;
     v.type = VALUE_ARRAY;
     v.value.int_value = 0;
@@ -470,7 +480,7 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 *elem = interpreter_evaluate(interp, node->data.array_expr.elements[i]);
                 elements[i] = elem;
             }
-            return value_create_array(elements, node->data.array_expr.count);
+            return value_create_array_val(elements, node->data.array_expr.count);
         }
         
         case AST_INDEX_EXPR: {
@@ -513,6 +523,65 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 }
                 value_free(&arg);
                 return value_create_int(len);
+            }
+            
+            if (strcmp(name, "input") == 0 && node->data.call_expr.arg_count == 0) {
+                char buffer[1024];
+                if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+                    size_t len = strlen(buffer);
+                    if (len > 0 && buffer[len - 1] == '\n') {
+                        buffer[len - 1] = '\0';
+                    }
+                    return value_create_string(buffer);
+                }
+                return value_create_string("");
+            }
+            
+            if (strcmp(name, "to_str") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                char buffer[64];
+                if (arg.type == VALUE_INT) {
+                    snprintf(buffer, sizeof(buffer), "%ld", (long)arg.value.int_value);
+                } else if (arg.type == VALUE_FLOAT) {
+                    snprintf(buffer, sizeof(buffer), "%g", arg.value.float_value);
+                } else if (arg.type == VALUE_BOOL) {
+                    snprintf(buffer, sizeof(buffer), "%s", arg.value.bool_value ? "true" : "false");
+                } else if (arg.type == VALUE_STRING) {
+                    value_free(&arg);
+                    return arg;
+                } else {
+                    snprintf(buffer, sizeof(buffer), "nil");
+                }
+                value_free(&arg);
+                return value_create_string(buffer);
+            }
+            
+            if (strcmp(name, "to_int") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                int64_t result = 0;
+                if (arg.type == VALUE_INT) {
+                    result = arg.value.int_value;
+                } else if (arg.type == VALUE_FLOAT) {
+                    result = (int64_t)arg.value.float_value;
+                } else if (arg.type == VALUE_STRING) {
+                    result = atoll(arg.value.string_value);
+                }
+                value_free(&arg);
+                return value_create_int(result);
+            }
+            
+            if (strcmp(name, "to_float") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                double result = 0.0;
+                if (arg.type == VALUE_INT) {
+                    result = (double)arg.value.int_value;
+                } else if (arg.type == VALUE_FLOAT) {
+                    result = arg.value.float_value;
+                } else if (arg.type == VALUE_STRING) {
+                    result = atof(arg.value.string_value);
+                }
+                value_free(&arg);
+                return value_create_float(result);
             }
             
             fprintf(stderr, "Error: Unknown function '%s'\n", name);
