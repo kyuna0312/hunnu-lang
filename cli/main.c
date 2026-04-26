@@ -18,9 +18,17 @@ void print_usage(const char* prog_name) {
     printf("\nOptions:\n");
     printf("  -v, --version   Show version information\n");
     printf("  -h, --help     Show this help message\n");
+    printf("  --vm           Use bytecode VM (for run command)\n");
+    printf("  --debug        Enable debug output (for run command)\n");
     printf("\nExamples:\n");
     printf("  %s run examples/main.hn\n", prog_name);
+    printf("  %s run examples/main.hn --debug\n", prog_name);
     printf("  %s build examples/main.hn\n", prog_name);
+    printf("\nLanguage Features:\n");
+    printf("  Variables: let x = 10\n");
+    printf("  Functions: fn add(a, b) { return a + b }\n");
+    printf("  Control: if/else, while, for loops\n");
+    printf("  Arrays: let arr = [1, 2, 3]\n");
 }
 
 void print_version(void) {

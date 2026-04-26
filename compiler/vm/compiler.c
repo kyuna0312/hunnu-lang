@@ -51,16 +51,6 @@ static size_t compiler_emit_constant(Compiler* c, Value value) {
     return c->constant_count++;
 }
 
-static void compiler_compile_expression(Compiler* c, ASTNode* node);
-
-static void compiler_compile_block(Compiler* c, ASTNode* node) {
-    if (!node || node->type != AST_BLOCK) return;
-    
-    for (size_t i = 0; i < node->data.block.count; i++) {
-        compiler_compile_expression(c, node->data.block.statements[i]);
-    }
-}
-
 static void compiler_compile_expression(Compiler* c, ASTNode* node) {
     if (!node) return;
     

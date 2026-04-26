@@ -1,8 +1,14 @@
+/**
+ * @file interpreter.c
+ * @brief AST interpreter implementation
+ */
+
 #include "interpreter.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+/** Variable scope */
 typedef struct Scope {
     char** names;
     Value* values;
@@ -11,6 +17,7 @@ typedef struct Scope {
     struct Scope* parent;
 } Scope;
 
+/** Interpreter state */
 struct Interpreter {
     Scope* current_scope;
     Value return_value;
@@ -19,6 +26,12 @@ struct Interpreter {
     int has_continue;
 };
 
+/**
+ * @brief Creates a new scope
+ * @param capacity Initial capacity
+ * @param parent Parent scope
+ * @return New scope
+ */
 static Scope* scope_create(size_t capacity, Scope* parent) {
     Scope* scope = (Scope*)malloc(sizeof(Scope));
     scope->capacity = capacity;
@@ -82,6 +95,10 @@ static void scope_define(Scope* scope, const char* name, Value value) {
     scope->count++;
 }
 
+/**
+ * @brief Creates a new interpreter
+ * @return Newly allocated interpreter
+ */
 Interpreter* interpreter_new(void) {
     Interpreter* interp = (Interpreter*)malloc(sizeof(Interpreter));
     interp->current_scope = scope_create(64, NULL);
@@ -91,38 +108,71 @@ Interpreter* interpreter_new(void) {
     return interp;
 }
 
+/**
+ * @brief Sets return value for function
+ * @param interp Interpreter
+ * @param value Return value
+ */
 void interpreter_set_return(Interpreter* interp, Value value) {
     interp->return_value = value;
     interp->has_return = 1;
 }
 
+/**
+ * @brief Gets return value
+ * @param interp Interpreter
+ * @return Return value
+ */
 Value interpreter_get_return(Interpreter* interp) {
     return interp->return_value;
 }
 
+/**
+ * @brief Clears return value
+ * @param interp Interpreter
+ */
 void interpreter_clear_return(Interpreter* interp) {
     interp->has_return = 0;
 }
 
+/**
+ * @brief Checks if break was encountered
+ * @param interp Interpreter
+ * @return 1 if break, 0 otherwise
+ */
 int interpreter_has_break(Interpreter* interp) {
     return interp->has_break;
 }
 
+/**
+ * @brief Checks if continue was encountered
+ * @param interp Interpreter
+ * @return 1 if continue, 0 otherwise
+ */
 int interpreter_has_continue(Interpreter* interp) {
     return interp->has_continue;
 }
 
+/**
+ * @brief Clears break/continue flags
+ * @param interp Interpreter
+ */
 void interpreter_clear_break_continue(Interpreter* interp) {
     interp->has_break = 0;
     interp->has_continue = 0;
 }
 
+/**
+ * @brief Frees interpreter
+ * @param interp Interpreter to free
+ */
 void interpreter_free(Interpreter* interp) {
     if (!interp) return;
     scope_free(interp->current_scope);
     free(interp);
 }
 
+/** Copies a value (shallow copy) */
 static Value value_copy(const Value* val) {
     Value copy;
     copy.type = val->type;
@@ -130,16 +180,11 @@ static Value value_copy(const Value* val) {
     
     if (val->type == VALUE_STRING) {
         copy.value.string_value = strdup(val->value.string_value);
-        copy.array_length = 0;
-        copy.array_elements = NULL;
-    } else if (val->type == VALUE_ARRAY) {
-        copy.array_length = val->array_length;
-        copy.array_elements = val->array_elements;
     } else {
         copy.value = val->value;
-        copy.array_length = val->array_length;
-        copy.array_elements = val->array_elements;
     }
+    copy.array_length = val->array_length;
+    copy.array_elements = val->array_elements;
     return copy;
 }
 
@@ -216,8 +261,6 @@ void value_free(Value* value) {
     if (!value) return;
     if (value->type == VALUE_STRING) {
         free(value->value.string_value);
-        value->array_length = 0;
-        value->array_elements = NULL;
     } else if (value->type == VALUE_ARRAY) {
         value->array_length = 0;
         value->array_elements = NULL;
@@ -383,25 +426,25 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             if (op == TOKEN_SLASH) {
                 if (left.type == VALUE_INT && right.type == VALUE_INT) {
                     if (right.value.int_value == 0) {
-                        fprintf(stderr, "Error: Division by zero\n");
+                        fprintf(stderr, "Error: Division by zero at runtime\n");
                     } else {
                         result = value_create_int(left.value.int_value / right.value.int_value);
                     }
                 } else if (left.type == VALUE_FLOAT && right.type == VALUE_FLOAT) {
                     if (right.value.float_value == 0.0) {
-                        fprintf(stderr, "Error: Division by zero\n");
+                        fprintf(stderr, "Error: Division by zero at runtime\n");
                     } else {
                         result = value_create_float(left.value.float_value / right.value.float_value);
                     }
                 } else if (left.type == VALUE_INT && right.type == VALUE_FLOAT) {
                     if (right.value.float_value == 0.0) {
-                        fprintf(stderr, "Error: Division by zero\n");
+                        fprintf(stderr, "Error: Division by zero at runtime\n");
                     } else {
                         result = value_create_float((double)left.value.int_value / right.value.float_value);
                     }
                 } else if (left.type == VALUE_FLOAT && right.type == VALUE_INT) {
                     if (right.value.int_value == 0) {
-                        fprintf(stderr, "Error: Division by zero\n");
+                        fprintf(stderr, "Error: Division by zero at runtime\n");
                     } else {
                         result = value_create_float(left.value.float_value / (double)right.value.int_value);
                     }
@@ -776,6 +819,12 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
     }
 }
 
+/**
+ * @brief Runs the AST program
+ * @param interp Interpreter
+ * @param program Program AST
+ * @return 0 on success
+ */
 int interpreter_run(Interpreter* interp, ASTNode* program) {
     if (!program || program->type != AST_PROGRAM) {
         return 1;

@@ -1,18 +1,25 @@
+/**
+ * @file lexer.c
+ * @brief Lexical analyzer implementation for Hunnu
+ */
+
 #include "lexer.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 
+/** Lexer state */
 struct Lexer {
-    const char* source;
-    size_t length;
-    size_t current;
-    size_t start;
-    int32_t line;
-    int32_t column;
+    const char* source;    /**< Source code string */
+    size_t length;          /**< Source length */
+    size_t current;         /**< Current position */
+    size_t start;          /**< Token start position */
+    int32_t line;          /**< Current line */
+    int32_t column;        /**< Current column */
 };
 
+/** English keywords */
 static const char* keyword_names[] = {
     "let",        "хувьсагч",   // variable declaration
     "fn",         "функц",    // function
@@ -47,6 +54,11 @@ static TokenType keyword_types[] = {
     TOKEN_UNKNOWN
 };
 
+/**
+ * @brief Creates a new lexer
+ * @param source Source code string
+ * @return Newly allocated lexer
+ */
 Lexer* lexer_new(const char* source) {
     Lexer* lexer = (Lexer*)malloc(sizeof(Lexer));
     lexer->source = source;
@@ -58,24 +70,47 @@ Lexer* lexer_new(const char* source) {
     return lexer;
 }
 
+/**
+ * @brief Frees lexer memory
+ * @param lexer Lexer to free
+ */
 void lexer_free(Lexer* lexer) {
     free(lexer);
 }
 
+/**
+ * @brief Checks if at end of source
+ * @param lexer Lexer instance
+ * @return 1 if at end, 0 otherwise
+ */
 int lexer_is_at_end(Lexer* lexer) {
     return lexer->current >= lexer->length;
 }
 
+/**
+ * @brief Peeks at current character without advancing
+ * @param lexer Lexer instance
+ * @return Current character or '\0'
+ */
 char lexer_peek(Lexer* lexer) {
     if (lexer_is_at_end(lexer)) return '\0';
     return lexer->source[lexer->current];
 }
 
+/**
+ * @brief Peeks at next character without advancing
+ * @param lexer Lexer instance
+ * @return Next character or '\0'
+ */
 char lexer_peek_next(Lexer* lexer) {
     if (lexer->current + 1 >= lexer->length) return '\0';
     return lexer->source[lexer->current + 1];
 }
 
+/**
+ * @brief Advances to next character
+ * @param lexer Lexer instance
+ */
 void lexer_advance(Lexer* lexer) {
     if (lexer_is_at_end(lexer)) return;
     
@@ -88,6 +123,12 @@ void lexer_advance(Lexer* lexer) {
     lexer->current++;
 }
 
+/**
+ * @brief Matches and consumes expected character
+ * @param lexer Lexer instance
+ * @param expected Expected character
+ * @return 1 if matched, 0 otherwise
+ */
 int lexer_match(Lexer* lexer, char expected) {
     if (lexer_is_at_end(lexer)) return 0;
     if (lexer->source[lexer->current] != expected) return 0;
@@ -96,6 +137,11 @@ int lexer_match(Lexer* lexer, char expected) {
     return 1;
 }
 
+/**
+ * @brief Skips whitespace characters
+ * @param lexer Lexer instance
+ * @return Number of whitespace chars skipped
+ */
 int lexer_skip_whitespace(Lexer* lexer) {
     size_t count = 0;
     while (!lexer_is_at_end(lexer)) {
@@ -110,6 +156,11 @@ int lexer_skip_whitespace(Lexer* lexer) {
     return count;
 }
 
+/**
+ * @brief Skips single-line comments (// ...)
+ * @param lexer Lexer instance
+ * @return 1 if comment skipped, 0 otherwise
+ */
 int lexer_skip_comment(Lexer* lexer) {
     if (lexer_peek(lexer) == '/' && lexer_peek_next(lexer) == '/') {
         while (!lexer_is_at_end(lexer) && lexer_peek(lexer) != '\n') {
@@ -120,6 +171,11 @@ int lexer_skip_comment(Lexer* lexer) {
     return 0;
 }
 
+/**
+ * @brief Checks if identifier is a keyword
+ * @param lexeme Identifier string
+ * @return Token type (keyword or TOKEN_IDENT)
+ */
 TokenType lexer_check_keyword(const char* lexeme) {
     for (int i = 0; keyword_names[i] != NULL; i++) {
         if (strcmp(lexeme, keyword_names[i]) == 0) {
@@ -379,5 +435,6 @@ Token* lexer_next_token(Lexer* lexer) {
     }
     
     char unknown[2] = {c, '\0'};
+    fprintf(stderr, "[%d:%d] Warning: Unknown character '%s'\n", lexer->line, lexer->column, unknown);
     return token_new(TOKEN_UNKNOWN, unknown, lexer->line, lexer->column);
 }

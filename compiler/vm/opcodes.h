@@ -1,8 +1,14 @@
+/**
+ * @file opcodes.h
+ * @brief VM opcodes and instructions
+ */
+
 #ifndef HUNNU_OPCODES_H
 #define HUNNU_OPCODES_H
 
 #include <stdint.h>
 
+/** VM opcodes */
 typedef enum {
     OP_CONSTANT,
     OP_CONSTANT_INT,
@@ -53,6 +59,7 @@ typedef enum {
     OP_HALT
 } OpCode;
 
+/** VM instruction */
 typedef struct {
     OpCode code;
     int64_t operand;

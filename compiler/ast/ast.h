@@ -1,3 +1,8 @@
+/**
+ * @file ast.h
+ * @brief Abstract Syntax Tree node definitions for Hunnu
+ */
+
 #ifndef HUNNU_AST_H
 #define HUNNU_AST_H
 
@@ -5,6 +10,7 @@
 #include <stdint.h>
 #include "lexer/token.h"
 
+/** AST node types */
 typedef enum {
     AST_PROGRAM,
     AST_VAR_DECL,
@@ -29,22 +35,26 @@ typedef enum {
     AST_STRING_CONCAT
 } ASTNodeType;
 
+/** AST node structure */
 typedef struct ASTNode {
-    ASTNodeType type;
-    int32_t line;
-    int32_t column;
+    ASTNodeType type;    /**< Node type */
+    int32_t line;        /**< Line number */
+    int32_t column;     /**< Column number */
     
     union {
+        /** Program node - list of top-level statements */
         struct {
             struct ASTNode** statements;
             size_t count;
         } program;
         
+        /** Variable declaration */
         struct {
             char* name;
             struct ASTNode* initializer;
         } var_decl;
         
+        /** Function declaration */
         struct {
             char* name;
             char** params;
@@ -52,22 +62,26 @@ typedef struct ASTNode {
             struct ASTNode* body;
         } fn_decl;
         
+        /** Block statement */
         struct {
             struct ASTNode** statements;
             size_t count;
         } block;
         
+        /** If statement */
         struct {
             struct ASTNode* condition;
             struct ASTNode* then_branch;
             struct ASTNode* else_branch;
         } if_stmt;
         
+        /** While loop */
         struct {
             struct ASTNode* condition;
             struct ASTNode* body;
         } while_stmt;
         
+        /** For loop */
         struct {
             struct ASTNode* initializer;
             struct ASTNode* condition;
@@ -75,29 +89,35 @@ typedef struct ASTNode {
             struct ASTNode* body;
         } for_stmt;
         
+        /** Return statement */
         struct {
             struct ASTNode* value;
         } return_stmt;
         
+        /** Print statement */
         struct {
             struct ASTNode* argument;
         } print_stmt;
         
+        /** Expression statement */
         struct {
             struct ASTNode* expression;
         } expr_stmt;
         
+        /** Binary expression */
         struct {
             TokenType operator;
             struct ASTNode* left;
             struct ASTNode* right;
         } binary_expr;
         
+        /** Unary expression */
         struct {
             TokenType operator;
             struct ASTNode* operand;
         } unary_expr;
         
+        /** Literal value */
         struct {
             TokenType literal_type;
             union {
@@ -108,31 +128,37 @@ typedef struct ASTNode {
             } value;
         } literal;
         
+        /** Identifier reference */
         struct {
             char* name;
         } identifier;
         
+        /** Function call */
         struct {
             char* name;
             struct ASTNode** args;
             size_t arg_count;
         } call_expr;
         
+        /** Assignment */
         struct {
             char* name;
             struct ASTNode* value;
         } assign;
         
+        /** Array literal */
         struct {
             struct ASTNode** elements;
             size_t count;
         } array_expr;
         
+        /** Array index access */
         struct {
             struct ASTNode* array;
             struct ASTNode* index;
         } index_expr;
         
+        /** String concatenation */
         struct {
             struct ASTNode* left;
             struct ASTNode* right;
@@ -140,6 +166,7 @@ typedef struct ASTNode {
     } data;
 } ASTNode;
 
+/* AST creation functions */
 ASTNode* ast_program_create(ASTNode** statements, size_t count);
 ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column);
 ASTNode* ast_fn_decl_create(const char* name, char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column);

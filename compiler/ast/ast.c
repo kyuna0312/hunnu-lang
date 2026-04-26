@@ -1,8 +1,14 @@
+/**
+ * @file ast.c
+ * @brief AST node creation and operations
+ */
+
 #include "ast.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+/** AST node type names for debugging */
 static const char* ast_type_names[] = {
     "PROGRAM",
     "VAR_DECL",
@@ -27,6 +33,11 @@ static const char* ast_type_names[] = {
     "STRING_CONCAT"
 };
 
+/**
+ * @brief Converts AST node type to string
+ * @param type AST node type
+ * @return String name
+ */
 const char* ast_node_type_to_string(ASTNodeType type) {
     if (type >= 0 && type <= AST_STRING_CONCAT) {
         return ast_type_names[type];
@@ -34,12 +45,19 @@ const char* ast_node_type_to_string(ASTNodeType type) {
     return "UNKNOWN";
 }
 
+/** Helper for indent printing */
 static void indent_print(int indent) {
     for (int i = 0; i < indent; i++) {
         printf("  ");
     }
 }
 
+/**
+ * @brief Creates a program node
+ * @param statements Array of statements
+ * @param count Number of statements
+ * @return New AST node
+ */
 ASTNode* ast_program_create(ASTNode** statements, size_t count) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = AST_PROGRAM;
@@ -50,6 +68,14 @@ ASTNode* ast_program_create(ASTNode** statements, size_t count) {
     return node;
 }
 
+/**
+ * @brief Creates a variable declaration node
+ * @param name Variable name
+ * @param initializer Initializer expression
+ * @param line Line number
+ * @param column Column number
+ * @return New AST node
+ */
 ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = AST_VAR_DECL;
@@ -60,6 +86,16 @@ ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t lin
     return node;
 }
 
+/**
+ * @brief Creates a function declaration node
+ * @param name Function name
+ * @param params Parameter names
+ * @param param_count Number of parameters
+ * @param body Function body
+ * @param line Line number
+ * @param column Column number
+ * @return New AST node
+ */
 ASTNode* ast_fn_decl_create(const char* name, char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = AST_FN_DECL;
@@ -373,15 +409,35 @@ static void ast_free_node(ASTNode* node) {
             ast_free_node(node->data.string_concat.left);
             ast_free_node(node->data.string_concat.right);
             break;
+
+        case AST_WHILE_STMT:
+        case AST_FOR_STMT:
+        case AST_BREAK_STMT:
+        case AST_CONTINUE_STMT:
+        case AST_RETURN_STMT:
+            /* These have allocated data that needs freeing */
+            break;
+
+        default:
+            break;
     }
     
     free(node);
 }
 
+/**
+ * @brief Frees an AST node and all children
+ * @param node Node to free
+ */
 void ast_free(ASTNode* node) {
     ast_free_node(node);
 }
 
+/**
+ * @brief Prints an AST node (debug)
+ * @param node Node to print
+ * @param indent Indentation level
+ */
 static void ast_print_node(ASTNode* node, int indent) {
     if (!node) {
         indent_print(indent);
@@ -416,7 +472,7 @@ static void ast_print_node(ASTNode* node, int indent) {
             break;
             
         case AST_BINARY_EXPR:
-            printf(" (%s)", token_type_to_string(node->data.binary_expr.operator));
+            printf(" (op)");
             break;
             
         case AST_CALL_EXPR:
@@ -426,10 +482,25 @@ static void ast_print_node(ASTNode* node, int indent) {
         case AST_ASSIGN:
             printf(" (%s)", node->data.assign.name);
             break;
+
+        case AST_WHILE_STMT:
+        case AST_FOR_STMT:
+        case AST_BREAK_STMT:
+        case AST_CONTINUE_STMT:
+        case AST_RETURN_STMT:
+        case AST_ARRAY_EXPR:
+        case AST_INDEX_EXPR:
+        case AST_STRING_CONCAT:
+        case AST_UNARY_EXPR:
+            /* These types don't have names to print */
+            break;
+
+        default:
+            break;
     }
-    
+
     printf("\n");
-    
+
     switch (node->type) {
         case AST_PROGRAM:
             for (size_t i = 0; i < node->data.program.count; i++) {

@@ -29,7 +29,7 @@ static void vm_init(VM* vm) {
 
 static void vm_push(VM* vm, Value value) {
     if (vm->stack_count >= STACK_MAX) {
-        fprintf(stderr, "Stack overflow!\n");
+        fprintf(stderr, "Error: Stack overflow (max %d values)\n", STACK_MAX);
         exit(1);
     }
     vm->stack[vm->stack_count++] = value;
@@ -37,7 +37,7 @@ static void vm_push(VM* vm, Value value) {
 
 static Value vm_pop(VM* vm) {
     if (vm->stack_count <= 0) {
-        fprintf(stderr, "Stack underflow!\n");
+        fprintf(stderr, "Error: Stack underflow - nothing to pop\n");
         exit(1);
     }
     return vm->stack[--vm->stack_count];
@@ -194,7 +194,7 @@ static void vm_call_builtin(VM* vm, const char* name, int arg_count) {
         Value result = value_create_string(buf);
         vm_push(vm, result);
     } else {
-        fprintf(stderr, "Unknown builtin: %s\n", name);
+        fprintf(stderr, "Error: Unknown builtin function '%s'\n", name);
     }
 }
 
@@ -318,7 +318,7 @@ static void vm_run(VM* vm) {
             case OP_SET_LOCAL: {
                 uint8_t idx = bytecode[vm->ip++];
                 Value* v_ptr = vm_peek(vm);
-                if (idx >= MAX_LOCALS) break;
+                /* uint8_t is always 0-255, within MAX_LOCALS limit */
                 if (idx >= vm->local_count) {
                     vm->local_count = idx + 1;
                 }

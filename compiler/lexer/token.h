@@ -1,8 +1,14 @@
+/**
+ * @file token.h
+ * @brief Token type definitions and Token struct for the Hunnu lexer
+ */
+
 #ifndef HUNNU_TOKEN_H
 #define HUNNU_TOKEN_H
 
 #include <stdint.h>
 
+/** Token types recognized by the lexer */
 typedef enum {
     TOKEN_EOF = 0,
     TOKEN_IDENT,
@@ -64,23 +70,47 @@ typedef enum {
     TOKEN_UNKNOWN
 } TokenType;
 
+/** Token structure representing a lexical token */
 typedef struct {
-    TokenType type;
-    char* lexeme;
-    int32_t line;
-    int32_t column;
+    TokenType type;       /**< Token type */
+    char* lexeme;       /**< Original text representation */
+    int32_t line;       /**< Line number in source */
+    int32_t column;     /**< Column number in source */
     union {
-        int64_t int_value;
-        double float_value;
-        char* string_value;
-        int bool_value;
+        int64_t int_value;     /**< Integer literal value */
+        double float_value;    /**< Float literal value */
+        char* string_value;     /**< String literal value */
+        int bool_value;        /**< Boolean literal value */
     } value;
 } Token;
 
+/**
+ * @brief Creates a new token
+ * @param type Token type
+ * @param lexeme Original text
+ * @param line Line number
+ * @param column Column number
+ * @return Newly allocated token
+ */
 Token* token_new(TokenType type, const char* lexeme, int32_t line, int32_t column);
+
+/**
+ * @brief Frees a token
+ * @param token Token to free
+ */
 void token_free(Token* token);
+
+/**
+ * @brief Prints a token to stdout
+ * @param token Token to print
+ */
 void token_print(Token* token);
 
+/**
+ * @brief Converts token type to string
+ * @param type Token type
+ * @return String representation
+ */
 const char* token_type_to_string(TokenType type);
 
 #endif

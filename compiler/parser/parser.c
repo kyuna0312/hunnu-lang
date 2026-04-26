@@ -1,15 +1,26 @@
+/**
+ * @file parser.c
+ * @brief Parser implementation for Hunnu - recursive descent parser
+ */
+
 #include "parser.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+/** Parser state */
 struct Parser {
-    Lexer* lexer;
-    Token* current;
-    Token* previous;
-    int had_error;
+    Lexer* lexer;      /**< Source lexer */
+    Token* current;   /**< Current token */
+    Token* previous;   /**< Previous token */
+    int had_error;     /**< Error flag */
 };
 
+/**
+ * @brief Creates a new parser
+ * @param lexer Initialized lexer
+ * @return Newly allocated parser
+ */
 Parser* parser_new(Lexer* lexer) {
     Parser* parser = (Parser*)malloc(sizeof(Parser));
     parser->lexer = lexer;
@@ -19,42 +30,87 @@ Parser* parser_new(Lexer* lexer) {
     return parser;
 }
 
+/**
+ * @brief Frees parser memory
+ * @param parser Parser to free
+ */
 void parser_free(Parser* parser) {
     if (parser->current) token_free(parser->current);
     free(parser);
 }
 
+/* Forward declarations for statement parsers */
 static ASTNode* parser_parse_while_statement(Parser* parser);
 static ASTNode* parser_parse_for_statement(Parser* parser);
 static ASTNode* parser_parse_return_statement(Parser* parser);
 static ASTNode* parser_parse_break_statement(Parser* parser);
 static ASTNode* parser_parse_continue_statement(Parser* parser);
 
+/**
+ * @brief Reports parse error
+ * @param parser Parser instance
+ * @param message Error message
+ */
 static void parser_error(Parser* parser, const char* message) {
     if (parser->had_error) return;
     parser->had_error = 1;
-    fprintf(stderr, "[%d:%d] Error: %s\n", 
-           parser->previous ? parser->previous->line : 0,
-           parser->previous ? parser->previous->column : 0,
-           message);
+    
+    if (parser->previous) {
+        fprintf(stderr, "[%d:%d] Error: %s", 
+               parser->previous->line,
+               parser->previous->column,
+               message);
+        if (parser->previous->type != TOKEN_NEWLINE) {
+            fprintf(stderr, " (got '%s')", parser->previous->lexeme);
+        }
+        fprintf(stderr, "\n");
+    } else if (parser->current) {
+        fprintf(stderr, "[%d:%d] Error: %s (got '%s')\n", 
+               parser->current->line,
+               parser->current->column,
+               message,
+               parser->current->lexeme);
+    } else {
+        fprintf(stderr, "Error: %s\n", message);
+    }
 }
 
+/**
+ * @brief Advances to next token
+ * @param parser Parser instance
+ */
 static void parser_advance(Parser* parser) {
     parser->previous = parser->current;
     parser->current = lexer_next_token(parser->lexer);
 }
 
+/**
+ * @brief Checks current token type
+ * @param parser Parser instance
+ * @param type Token type to check
+ * @return 1 if match, 0 otherwise
+ */
 static int parser_check(Parser* parser, TokenType type) {
     if (!parser->current) return 0;
     return parser->current->type == type;
 }
 
+/**
+ * @brief Skips newline tokens
+ * @param parser Parser instance
+ */
 static void parser_skip_newlines(Parser* parser) {
     while (parser_check(parser, TOKEN_NEWLINE)) {
         parser_advance(parser);
     }
 }
 
+/**
+ * @brief Matches and consumes token
+ * @param parser Parser instance
+ * @param type Expected token type
+ * @return 1 if matched, 0 otherwise
+ */
 static int parser_match(Parser* parser, TokenType type) {
     if (!parser_check(parser, type)) return 0;
     parser_advance(parser);
