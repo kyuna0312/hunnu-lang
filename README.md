@@ -1,4 +1,4 @@
-# Hunnu
+# Хүннү
 
 A lightweight, expression-oriented programming language written in C.
 
@@ -186,7 +186,7 @@ fn main() {
     let message = greeting + name
     print(message)
     
-    let s = "Hunnu"
+    let s = "Хүннү"
     print(len(s))
 }
 ```
@@ -224,4 +224,4 @@ See [`plan.md`](plan.md) for the full development roadmap.
 
 ## License
 
-MIT
+MIT License

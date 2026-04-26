@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Hunnu language project.
+All notable changes to the Хүннү language project.
 
 ---
 

@@ -1,6 +1,6 @@
-# Hunnu Language — Development Plan
+# Хүннү Language — Development Plan
 
-> A living document tracking the state, priorities, and vision for Hunnu.
+> A living document tracking the state, priorities, and vision for Хүннү.
 
 ---
 
@@ -125,7 +125,7 @@
 
 | # | Feature | Description |
 |----|--------|-------------|
-| 1 | Self-hosting | Write compiler in Hunnu |
+| 1 | Self-hosting | Write compiler in Хүннү |
 | 2 | JIT | Just-in-time compilation |
 | 3 | AOT | Binary output |
 
@@ -262,4 +262,4 @@ hunnu-lang/
 - Web: https://hunnu-lang.dev
 - GitHub: https://github.com/hunnu-labs/hunnu-lang
 
-MIT License © 2025 Hunnu
+MIT License © 2025 Хүннү
