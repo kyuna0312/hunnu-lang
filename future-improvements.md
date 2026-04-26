@@ -1,96 +1,104 @@
-# Future Improvements
+# Дараагийн алхсууд
 
-> Potential enhancements for Hunnu beyond the MVP.
+> Хүмүүн хэлний боломжит сайжруулалтууд.
 
-## Language Features
+---
 
-### High Priority
-- **Bytecode compiler + VM** ✅ (DONE)
-- **Modules / import system** — split code across files
-- **Standard library** — built-in functions for common tasks
+## Хэлний онцлогууд
 
-### Medium Priority
-- **Structs / records** — grouping related data:
-  ```hunnu
-  type Point = { x: int, y: int }
-  let p = Point { x: 5, y: 10 }
-  ```
+### Түлхүүр
 
-- **Pattern matching** — destructuring and case analysis:
-  ```hunnu
-  match value {
-      [] -> "empty"
-      [head, ...rest] -> "first: " + str(head)
-  }
-  ```
+| онцлог | статус |
+|---------|--------|
+| ✅ Bytecode + VM | дууссан |
+| Модуль/импорт | |
+| Стандарт сан | |
 
-- **Algebraic Data Types (ADTs)** — sum types:
-  ```hunnu
-  type Maybe[T] = Just(T) | Nothing
-  type List[T] = Cons(T, List[T]) | Nil
-  ```
+### Дунд
 
-### Lower Priority
-- **Pipe operator** — function chaining:
-  ```hunnu
-  x |> double |> add(5) |> str
-  ```
+| онцлог | статус |
+|---------|--------|
+| Struct/Record | |
+| Pattern matching | |
+| ADT (Sum төрөл) | |
 
-- **Lazy evaluation** — deferred computation:
-  ```hunnu
-  let lazy_val = lazy expensive_compute()
-  ```
+### Алсын хараа
 
-- **Structural types** — duck typing:
-  ```hunnu
-  let point = { x: 5, y: 10 }  // inferred as { x: int, y: int }
-  ```
+| онцлог | статус |
+|---------|--------|
+| Self-hosting | |
+| JIT | |
+| AOT | |
 
-- **Gradual typing** — optional type annotations:
-  ```hunnu
-  let x: int = 5
-  fn add(a: int, b: int) -> int { a + b }
-  ```
+---
 
-- **Protocols/Traits** — interface definitions:
-  ```hunnu
-  protocol Printable {
-      fn format(self) -> string
-  }
-  ```
+## Жишээ
 
-## Implementation
+### Struct
 
-### High Priority
-- **Optimization** — performance improvements
-- **Error messages** — better diagnostics with line numbers
-- **Debugger** — stepping through code
+```hunnu
+type Цэг = { x: int, y: int }
+let p = Цэг { x: 5, y: 10 }
+```
 
-### Medium Priority
-- **REPL** — interactive console
-- **Package manager** — dependency management
-- **IDE integration** — LSP server
+### Pattern matching
 
-### Lower Priority
-- **Self-hosting** — implement compiler in Hunnu itself
-- **JIT compilation** — just-in-time code generation
-- **AOT compilation** — ahead-of-time binary output
+```hunnu
+match утга {
+    [] -> "хоосон"
+    [ толстой, ... бусад] -> "эхний: " + str(толстой)
+}
+```
 
-## Infrastructure
+### ADT
 
-### Testing
-- Unit tests for compiler phases
-- Integration tests for language features
-- Benchmark suite
-- Fuzzing for edge cases
+```hunnu
+type Болж[T] = Болсон(T) | Юугүй
+type Жагсаалт[T] = Хоолой(T, Жагсаалт[T]) | Хоосон
+```
 
-### Documentation
-- Language specification
-- API documentation
-- Tutorial for beginners
-- Cookbook with recipes
+---
 
-### Community
-- Standard library contributions
-- Tooling ecosystem
-- Package registry
+## Хэрэгжлэл
+
+### Түлхүүр
+
+| онцлог | статус |
+|---------|--------|
+| Оновчлол | |
+| Алдааны мэссэж | |
+| 디bugger | |
+
+### Дунд
+
+| онцлог | статус |
+|---------|--------|
+| REPL | |
+| Багц менеджер | |
+| LSP сервер | |
+
+---
+
+## Тест
+
+- Юнит тест
+- Интеграц тест
+- Бенчмарк
+- Fuzzing
+
+---
+
+## Бичиг
+
+- Хэлний тодорхойлолт
+- API бичиг
+- Зааварчилгаа
+- Жишээ цуглуулага
+
+---
+
+## Төрөлжүүлэх
+
+- Стандарт сангийн хувь нэмэр
+- Хэрэгслийн экосистем
+- Багц сан
