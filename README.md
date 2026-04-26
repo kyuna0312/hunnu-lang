@@ -1,6 +1,16 @@
-# Hunnu
+# Hunnu (Хүннү)
 
 A lightweight, expression-oriented programming language written in C.
+Supports both English and Mongolian (Cyrillic) keywords.
+
+---
+
+## Version
+
+**Current: 0.2.0 (Алтангэрэл)** - Үндсэн функцууд
+
+Hunnu uses authentic Mongolian women names for versioning.
+See [`compiler/version.h`](compiler/version.h) for the full version list.
 
 ---
 
@@ -25,25 +35,39 @@ A lightweight, expression-oriented programming language written in C.
 | String len | `len(s)` | `len(s)` |
 | Floats | `let pi = 3.14159` | `let pi = 3.14` |
 | null/nil | `let x = null` | `let x = null` |
+| Input | `input()` | `let name = input()` |
+| Type conversion | `to_int()`, `to_float()`, `to_str()` | `to_str(42)` |
+
+### Built-in Functions
+
+| Function | Description |
+|----------|-------------|
+| `print(x)` | Print value to stdout |
+| `input()` | Read line from stdin |
+| `len(arr)` | Get array length |
+| `to_int(x)` | Convert to integer |
+| `to_float(x)` | Convert to float |
+| `to_str(x)` | Convert to string |
 
 ### Mongolian Keywords
 
-Hunnu supports both English and Mongolian keywords:
+Hunnu supports both English and Mongolian (Cyrillic) keywords:
 
-| English | Mongolian (Cyrillic) |
-|---------|---------------------|
-| `let` | `хувьсагч` |
-| `fn` | `функц` |
-| `if` | `хэрвээ` |
-| `true` | `үнэн` |
-| `false` | `худал` |
-| `print` | `хэвлэх` |
-| `while` | `давталт` |
-| `for` | `тооллого` |
-| `return` | `буцаах` |
-| `break` | `зогсоох` |
-| `continue` | `үргэлжлүүлэх` |
-| `null` | `хоосон` |
+| English | Mongolian (Cyrillic) | Meaning |
+|---------|---------------------|---------|
+| `let` | `хувьсагч` | variable |
+| `fn` | `функц` | function |
+| `if` | `хэрвээ` | if |
+| `else` | `бусад` | else |
+| `true` | `үнэн` | true |
+| `false` | `худал` | false |
+| `print` | `хэвлэх` | print |
+| `while` | `давталт` | while |
+| `for` | `тооллого` | for |
+| `return` | `буцаах` | return |
+| `break` | `зогсоох` | break |
+| `continue` | `үргэлжлүүлэх` | continue |
+| `null` | `хоосон` | null |
 
 ---
 
@@ -60,10 +84,12 @@ make
 ## Running
 
 ```bash
-./build/hunnu run examples/main.hn
-./build/hunnu run examples/main.hn --vm
-./build/hunnu build examples/main.hn
-./build/hunnu run examples/main.hn --debug
+./hunnu run examples/main.hn     # Run with interpreter
+./hunnu run examples/main.hn --vm   # Run with VM
+./hunnu build examples/main.hn  # Compile to bytecode
+./hunnu run examples/main.hn --debug  # Debug mode
+./hunnu tokens examples/main.hn  # Show tokens
+./hunnu ast examples/main.hn    # Show AST
 ```
 
 ---
@@ -128,13 +154,34 @@ hunnu-lang/
 ├── compiler/
 │   ├── lexer/          # Tokenizer
 │   ├── parser/        # Parser (AST)
-│   ├── ast/          # AST node definitions
-│   ├── interpreter/  # Tree-walk interpreter
-│   └── vm/          # Bytecode + VM
-├── cli/              # CLI
-├── examples/         # Example code
+│   ├── ast/           # AST node definitions
+│   ├── interpreter/   # Tree-walk interpreter
+│   ├── version.h      # Version constants
+│   └── vm/            # Bytecode + VM
+├── cli/               # CLI
+├── examples/          # Example code
+├── plan.md            # Development roadmap
 └── CMakeLists.txt
 ```
+
+---
+
+## Versioning
+
+Hunnu uses authentic Mongolian women names for versioning.
+Each version represents a milestone in the language development.
+
+| Version | Name | Meaning |
+|---------|------|---------|
+| 0.1.0 | Алтан (Altan) | Golden |
+| 0.2.0 | Алтангэрэл (Altangerel) | Golden light |
+| 0.3.0 | Алтанцэцэг (Altantsetseg) | Golden flower |
+| 0.4.0 | Анар (Anar) | Pomegranate |
+| 0.5.0 | Батцэцэг (Battsetseg) | Strong flower |
+| ... | ... | ... |
+| 1.0.0 | Эрдэнэ (Erdene) | Jewel |
+
+See [`compiler/version.h`](compiler/version.h) for the full list.
 
 ---
 
@@ -148,8 +195,20 @@ See [`plan.md`](plan.md) for the full development roadmap.
 - ✅ Phase 3: Standard Library & Dev Experience (input, to_str/to_int/to_float, --debug)
 - ✅ Phase 4: Bytecode Compiler + VM (build command, --vm flag)
 
+### Next Steps (High Priority)
+- Array memory fix (deep copy, proper free)
+- Import statement for external files
+- Error line numbers in source
+
 ---
 
 ## License
 
 MIT
+
+---
+
+## Links
+
+- Web: https://hunnu-lang.dev
+- GitHub: https://github.com/hunnu-labs/hunnu-lang
