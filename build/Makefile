@@ -342,6 +342,78 @@ compiler/parser/parser.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/parser/parser.c.s
 .PHONY : compiler/parser/parser.c.s
 
+compiler/version.o: compiler/version.c.o
+.PHONY : compiler/version.o
+
+# target to build an object file
+compiler/version.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/version.c.o
+.PHONY : compiler/version.c.o
+
+compiler/version.i: compiler/version.c.i
+.PHONY : compiler/version.i
+
+# target to preprocess a source file
+compiler/version.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/version.c.i
+.PHONY : compiler/version.c.i
+
+compiler/version.s: compiler/version.c.s
+.PHONY : compiler/version.s
+
+# target to generate assembly for a file
+compiler/version.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/version.c.s
+.PHONY : compiler/version.c.s
+
+compiler/vm/compiler.o: compiler/vm/compiler.c.o
+.PHONY : compiler/vm/compiler.o
+
+# target to build an object file
+compiler/vm/compiler.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o
+.PHONY : compiler/vm/compiler.c.o
+
+compiler/vm/compiler.i: compiler/vm/compiler.c.i
+.PHONY : compiler/vm/compiler.i
+
+# target to preprocess a source file
+compiler/vm/compiler.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/vm/compiler.c.i
+.PHONY : compiler/vm/compiler.c.i
+
+compiler/vm/compiler.s: compiler/vm/compiler.c.s
+.PHONY : compiler/vm/compiler.s
+
+# target to generate assembly for a file
+compiler/vm/compiler.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/vm/compiler.c.s
+.PHONY : compiler/vm/compiler.c.s
+
+compiler/vm/vm.o: compiler/vm/vm.c.o
+.PHONY : compiler/vm/vm.o
+
+# target to build an object file
+compiler/vm/vm.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/vm/vm.c.o
+.PHONY : compiler/vm/vm.c.o
+
+compiler/vm/vm.i: compiler/vm/vm.c.i
+.PHONY : compiler/vm/vm.i
+
+# target to preprocess a source file
+compiler/vm/vm.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/vm/vm.c.i
+.PHONY : compiler/vm/vm.c.i
+
+compiler/vm/vm.s: compiler/vm/vm.c.s
+.PHONY : compiler/vm/vm.s
+
+# target to generate assembly for a file
+compiler/vm/vm.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/compiler/vm/vm.c.s
+.PHONY : compiler/vm/vm.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -376,6 +448,15 @@ help:
 	@echo "... compiler/parser/parser.o"
 	@echo "... compiler/parser/parser.i"
 	@echo "... compiler/parser/parser.s"
+	@echo "... compiler/version.o"
+	@echo "... compiler/version.i"
+	@echo "... compiler/version.s"
+	@echo "... compiler/vm/compiler.o"
+	@echo "... compiler/vm/compiler.i"
+	@echo "... compiler/vm/compiler.s"
+	@echo "... compiler/vm/vm.o"
+	@echo "... compiler/vm/vm.i"
+	@echo "... compiler/vm/vm.s"
 .PHONY : help
 
 

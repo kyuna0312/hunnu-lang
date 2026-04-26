@@ -14,6 +14,12 @@ file(REMOVE_RECURSE
   "CMakeFiles/hunnu.dir/compiler/lexer/token.c.o.d"
   "CMakeFiles/hunnu.dir/compiler/parser/parser.c.o"
   "CMakeFiles/hunnu.dir/compiler/parser/parser.c.o.d"
+  "CMakeFiles/hunnu.dir/compiler/version.c.o"
+  "CMakeFiles/hunnu.dir/compiler/version.c.o.d"
+  "CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o"
+  "CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o.d"
+  "CMakeFiles/hunnu.dir/compiler/vm/vm.c.o"
+  "CMakeFiles/hunnu.dir/compiler/vm/vm.c.o.d"
   "hunnu"
   "hunnu.pdb"
 )

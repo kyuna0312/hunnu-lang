@@ -170,6 +170,48 @@ CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/kyuna/Desktop/hunnu-lang/compiler/interpreter/interpreter.c -o CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.s
 
+CMakeFiles/hunnu.dir/compiler/version.c.o: CMakeFiles/hunnu.dir/flags.make
+CMakeFiles/hunnu.dir/compiler/version.c.o: /home/kyuna/Desktop/hunnu-lang/compiler/version.c
+CMakeFiles/hunnu.dir/compiler/version.c.o: CMakeFiles/hunnu.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/hunnu.dir/compiler/version.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hunnu.dir/compiler/version.c.o -MF CMakeFiles/hunnu.dir/compiler/version.c.o.d -o CMakeFiles/hunnu.dir/compiler/version.c.o -c /home/kyuna/Desktop/hunnu-lang/compiler/version.c
+
+CMakeFiles/hunnu.dir/compiler/version.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/hunnu.dir/compiler/version.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/kyuna/Desktop/hunnu-lang/compiler/version.c > CMakeFiles/hunnu.dir/compiler/version.c.i
+
+CMakeFiles/hunnu.dir/compiler/version.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hunnu.dir/compiler/version.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/kyuna/Desktop/hunnu-lang/compiler/version.c -o CMakeFiles/hunnu.dir/compiler/version.c.s
+
+CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o: CMakeFiles/hunnu.dir/flags.make
+CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o: /home/kyuna/Desktop/hunnu-lang/compiler/vm/compiler.c
+CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o: CMakeFiles/hunnu.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building C object CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o -MF CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o.d -o CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o -c /home/kyuna/Desktop/hunnu-lang/compiler/vm/compiler.c
+
+CMakeFiles/hunnu.dir/compiler/vm/compiler.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/hunnu.dir/compiler/vm/compiler.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/kyuna/Desktop/hunnu-lang/compiler/vm/compiler.c > CMakeFiles/hunnu.dir/compiler/vm/compiler.c.i
+
+CMakeFiles/hunnu.dir/compiler/vm/compiler.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hunnu.dir/compiler/vm/compiler.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/kyuna/Desktop/hunnu-lang/compiler/vm/compiler.c -o CMakeFiles/hunnu.dir/compiler/vm/compiler.c.s
+
+CMakeFiles/hunnu.dir/compiler/vm/vm.c.o: CMakeFiles/hunnu.dir/flags.make
+CMakeFiles/hunnu.dir/compiler/vm/vm.c.o: /home/kyuna/Desktop/hunnu-lang/compiler/vm/vm.c
+CMakeFiles/hunnu.dir/compiler/vm/vm.c.o: CMakeFiles/hunnu.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building C object CMakeFiles/hunnu.dir/compiler/vm/vm.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hunnu.dir/compiler/vm/vm.c.o -MF CMakeFiles/hunnu.dir/compiler/vm/vm.c.o.d -o CMakeFiles/hunnu.dir/compiler/vm/vm.c.o -c /home/kyuna/Desktop/hunnu-lang/compiler/vm/vm.c
+
+CMakeFiles/hunnu.dir/compiler/vm/vm.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/hunnu.dir/compiler/vm/vm.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/kyuna/Desktop/hunnu-lang/compiler/vm/vm.c > CMakeFiles/hunnu.dir/compiler/vm/vm.c.i
+
+CMakeFiles/hunnu.dir/compiler/vm/vm.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hunnu.dir/compiler/vm/vm.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/kyuna/Desktop/hunnu-lang/compiler/vm/vm.c -o CMakeFiles/hunnu.dir/compiler/vm/vm.c.s
+
 # Object files for target hunnu
 hunnu_OBJECTS = \
 "CMakeFiles/hunnu.dir/cli/main.c.o" \
@@ -178,7 +220,10 @@ hunnu_OBJECTS = \
 "CMakeFiles/hunnu.dir/compiler/lexer/token.c.o" \
 "CMakeFiles/hunnu.dir/compiler/parser/parser.c.o" \
 "CMakeFiles/hunnu.dir/compiler/ast/ast.c.o" \
-"CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.o"
+"CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.o" \
+"CMakeFiles/hunnu.dir/compiler/version.c.o" \
+"CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o" \
+"CMakeFiles/hunnu.dir/compiler/vm/vm.c.o"
 
 # External object files for target hunnu
 hunnu_EXTERNAL_OBJECTS =
@@ -190,10 +235,13 @@ hunnu: CMakeFiles/hunnu.dir/compiler/lexer/token.c.o
 hunnu: CMakeFiles/hunnu.dir/compiler/parser/parser.c.o
 hunnu: CMakeFiles/hunnu.dir/compiler/ast/ast.c.o
 hunnu: CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.o
+hunnu: CMakeFiles/hunnu.dir/compiler/version.c.o
+hunnu: CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o
+hunnu: CMakeFiles/hunnu.dir/compiler/vm/vm.c.o
 hunnu: CMakeFiles/hunnu.dir/build.make
 hunnu: CMakeFiles/hunnu.dir/compiler_depend.ts
 hunnu: CMakeFiles/hunnu.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking C executable hunnu"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking C executable hunnu"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/hunnu.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

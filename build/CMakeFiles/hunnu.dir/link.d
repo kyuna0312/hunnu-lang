@@ -9,6 +9,9 @@ hunnu: \
   CMakeFiles/hunnu.dir/compiler/parser/parser.c.o \
   CMakeFiles/hunnu.dir/compiler/ast/ast.c.o \
   CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.o \
+  CMakeFiles/hunnu.dir/compiler/version.c.o \
+  CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o \
+  CMakeFiles/hunnu.dir/compiler/vm/vm.c.o \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/libgcc.a \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libgcc_s.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libgcc_s.so \
@@ -50,6 +53,12 @@ CMakeFiles/hunnu.dir/compiler/parser/parser.c.o:
 CMakeFiles/hunnu.dir/compiler/ast/ast.c.o:
 
 CMakeFiles/hunnu.dir/compiler/interpreter/interpreter.c.o:
+
+CMakeFiles/hunnu.dir/compiler/version.c.o:
+
+CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o:
+
+CMakeFiles/hunnu.dir/compiler/vm/vm.c.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/libgcc.a:
 

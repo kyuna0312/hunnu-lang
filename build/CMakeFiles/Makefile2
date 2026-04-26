@@ -85,12 +85,12 @@ clean: CMakeFiles/hunnu.dir/clean
 CMakeFiles/hunnu.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8 "Built target hunnu"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11 "Built target hunnu"
 .PHONY : CMakeFiles/hunnu.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/hunnu.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyuna/Desktop/hunnu-lang/build/CMakeFiles 8
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyuna/Desktop/hunnu-lang/build/CMakeFiles 11
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/hunnu.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyuna/Desktop/hunnu-lang/build/CMakeFiles 0
 .PHONY : CMakeFiles/hunnu.dir/rule
@@ -102,7 +102,7 @@ hunnu: CMakeFiles/hunnu.dir/rule
 # codegen rule for target.
 CMakeFiles/hunnu.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hunnu.dir/build.make CMakeFiles/hunnu.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8 "Finished codegen for target hunnu"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kyuna/Desktop/hunnu-lang/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11 "Finished codegen for target hunnu"
 .PHONY : CMakeFiles/hunnu.dir/codegen
 
 # clean rule for target.

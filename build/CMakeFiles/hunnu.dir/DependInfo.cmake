@@ -15,6 +15,9 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/kyuna/Desktop/hunnu-lang/compiler/lexer/lexer.c" "CMakeFiles/hunnu.dir/compiler/lexer/lexer.c.o" "gcc" "CMakeFiles/hunnu.dir/compiler/lexer/lexer.c.o.d"
   "/home/kyuna/Desktop/hunnu-lang/compiler/lexer/token.c" "CMakeFiles/hunnu.dir/compiler/lexer/token.c.o" "gcc" "CMakeFiles/hunnu.dir/compiler/lexer/token.c.o.d"
   "/home/kyuna/Desktop/hunnu-lang/compiler/parser/parser.c" "CMakeFiles/hunnu.dir/compiler/parser/parser.c.o" "gcc" "CMakeFiles/hunnu.dir/compiler/parser/parser.c.o.d"
+  "/home/kyuna/Desktop/hunnu-lang/compiler/version.c" "CMakeFiles/hunnu.dir/compiler/version.c.o" "gcc" "CMakeFiles/hunnu.dir/compiler/version.c.o.d"
+  "/home/kyuna/Desktop/hunnu-lang/compiler/vm/compiler.c" "CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o" "gcc" "CMakeFiles/hunnu.dir/compiler/vm/compiler.c.o.d"
+  "/home/kyuna/Desktop/hunnu-lang/compiler/vm/vm.c" "CMakeFiles/hunnu.dir/compiler/vm/vm.c.o" "gcc" "CMakeFiles/hunnu.dir/compiler/vm/vm.c.o.d"
   "" "hunnu" "gcc" "CMakeFiles/hunnu.dir/link.d"
   )
 

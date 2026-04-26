@@ -38,8 +38,15 @@ CMakeFiles/hunnu.dir/cli/main.c.o: \
  /usr/include/bits/stdint-uintn.h /usr/include/bits/stdint-least.h \
  /home/kyuna/Desktop/hunnu-lang/compiler/lexer/lexer.h \
  /home/kyuna/Desktop/hunnu-lang/compiler/lexer/token.h \
+ /home/kyuna/Desktop/hunnu-lang/compiler/version.h \
  /home/kyuna/Desktop/hunnu-lang/compiler/parser/parser.h \
  /home/kyuna/Desktop/hunnu-lang/compiler/lexer/lexer.h \
  /home/kyuna/Desktop/hunnu-lang/compiler/ast/ast.h \
  /home/kyuna/Desktop/hunnu-lang/compiler/lexer/token.h \
- /home/kyuna/Desktop/hunnu-lang/compiler/interpreter/interpreter.h
+ /home/kyuna/Desktop/hunnu-lang/compiler/interpreter/interpreter.h \
+ /home/kyuna/Desktop/hunnu-lang/compiler/vm/compiler.h \
+ /home/kyuna/Desktop/hunnu-lang/compiler/vm/opcodes.h \
+ /home/kyuna/Desktop/hunnu-lang/compiler/vm/../interpreter/interpreter.h \
+ /home/kyuna/Desktop/hunnu-lang/compiler/vm/../ast/ast.h \
+ /home/kyuna/Desktop/hunnu-lang/compiler/vm/vm.h \
+ /home/kyuna/Desktop/hunnu-lang/compiler/vm/compiler.h
