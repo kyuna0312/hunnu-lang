@@ -442,15 +442,56 @@ ASTNode* parser_parse_primary(Parser* parser) {
     
     if (parser_match(parser, TOKEN_IDENT)) {
         char* name = strdup(parser->previous->lexeme);
-        return ast_identifier_create(name,
+        
+        if (strcmp(name, "len") == 0 && parser_match(parser, TOKEN_LPAREN)) {
+            ASTNode* arg = parser_parse_expression(parser);
+            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after len argument");
+            return ast_call_expr_create("len", &arg, 1,
+                                  parser->previous->line,
+                                  parser->previous->column);
+        }
+        
+        ASTNode* identifier = ast_identifier_create(name,
                                    parser->previous->line,
                                    parser->previous->column);
+        
+        if (parser_match(parser, TOKEN_LBRACKET)) {
+            ASTNode* index = parser_parse_expression(parser);
+            parser_consume(parser, TOKEN_RBRACKET, "Expected ']' after index");
+            return ast_index_expr_create(identifier, index,
+                                       parser->previous->line,
+                                       parser->previous->column);
+        }
+        
+        return identifier;
     }
     
     if (parser_match(parser, TOKEN_LPAREN)) {
         ASTNode* expr = parser_parse_expression(parser);
         parser_consume(parser, TOKEN_RPAREN, "Expected ')' after expression");
         return expr;
+    }
+    
+    if (parser_match(parser, TOKEN_LBRACKET)) {
+        ASTNode** elements = (ASTNode**)malloc(sizeof(ASTNode*) * 4);
+        size_t count = 0;
+        size_t capacity = 4;
+        
+        if (!parser_check(parser, TOKEN_RBRACKET)) {
+            elements[count++] = parser_parse_expression(parser);
+            while (parser_match(parser, TOKEN_COMMA)) {
+                if (count >= capacity) {
+                    capacity *= 2;
+                    elements = (ASTNode**)realloc(elements, sizeof(ASTNode*) * capacity);
+                }
+                elements[count++] = parser_parse_expression(parser);
+            }
+        }
+        
+        parser_consume(parser, TOKEN_RBRACKET, "Expected ']' after array elements");
+        return ast_array_expr_create(elements, count,
+                              parser->previous->line,
+                              parser->previous->column);
     }
     
     parser_error(parser, "Expected expression");

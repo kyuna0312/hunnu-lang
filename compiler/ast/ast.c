@@ -19,11 +19,14 @@ static const char* ast_type_names[] = {
     "LITERAL",
     "IDENTIFIER",
     "CALL_EXPR",
-    "ASSIGN"
+    "ASSIGN",
+    "ARRAY_EXPR",
+    "INDEX_EXPR",
+    "STRING_CONCAT"
 };
 
 const char* ast_node_type_to_string(ASTNodeType type) {
-    if (type >= 0 && type <= AST_ASSIGN) {
+    if (type >= 0 && type <= AST_STRING_CONCAT) {
         return ast_type_names[type];
     }
     return "UNKNOWN";
@@ -218,6 +221,36 @@ ASTNode* ast_assign_create(const char* name, ASTNode* value, int32_t line, int32
     return node;
 }
 
+ASTNode* ast_array_expr_create(ASTNode** elements, size_t count, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_ARRAY_EXPR;
+    node->line = line;
+    node->column = column;
+    node->data.array_expr.elements = elements;
+    node->data.array_expr.count = count;
+    return node;
+}
+
+ASTNode* ast_index_expr_create(ASTNode* array, ASTNode* index, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_INDEX_EXPR;
+    node->line = line;
+    node->column = column;
+    node->data.index_expr.array = array;
+    node->data.index_expr.index = index;
+    return node;
+}
+
+ASTNode* ast_string_concat_create(ASTNode* left, ASTNode* right, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_STRING_CONCAT;
+    node->line = line;
+    node->column = column;
+    node->data.string_concat.left = left;
+    node->data.string_concat.right = right;
+    return node;
+}
+
 static void ast_free_node(ASTNode* node) {
     if (!node) return;
     
@@ -294,6 +327,23 @@ static void ast_free_node(ASTNode* node) {
         case AST_ASSIGN:
             free(node->data.assign.name);
             ast_free_node(node->data.assign.value);
+            break;
+            
+        case AST_ARRAY_EXPR:
+            for (size_t i = 0; i < node->data.array_expr.count; i++) {
+                ast_free_node(node->data.array_expr.elements[i]);
+            }
+            free(node->data.array_expr.elements);
+            break;
+            
+        case AST_INDEX_EXPR:
+            ast_free_node(node->data.index_expr.array);
+            ast_free_node(node->data.index_expr.index);
+            break;
+            
+        case AST_STRING_CONCAT:
+            ast_free_node(node->data.string_concat.left);
+            ast_free_node(node->data.string_concat.right);
             break;
     }
     
@@ -412,6 +462,22 @@ static void ast_print_node(ASTNode* node, int indent) {
             
         case AST_ASSIGN:
             ast_print_node(node->data.assign.value, indent + 1);
+            break;
+            
+        case AST_ARRAY_EXPR:
+            for (size_t i = 0; i < node->data.array_expr.count; i++) {
+                ast_print_node(node->data.array_expr.elements[i], indent + 1);
+            }
+            break;
+            
+        case AST_INDEX_EXPR:
+            ast_print_node(node->data.index_expr.array, indent + 1);
+            ast_print_node(node->data.index_expr.index, indent + 1);
+            break;
+            
+        case AST_STRING_CONCAT:
+            ast_print_node(node->data.string_concat.left, indent + 1);
+            ast_print_node(node->data.string_concat.right, indent + 1);
             break;
             
         default:

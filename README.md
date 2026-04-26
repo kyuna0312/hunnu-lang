@@ -2,22 +2,26 @@
 
 A lightweight, expression-oriented programming language written in C.
 
-## Features
+## Features / Онцлогууд
 
-| Feature | Syntax |
-|---------|--------|
-| Variables | `let x = 10` |
-| Functions | `fn add(a, b) { return a + b }` |
-| If / Else | `if x > 0 { ... } else { ... }` |
-| While loop | `while x > 0 { ... }` |
-| For loop | `for let i = 0; i < 3; i = i + 1 { ... }` |
-| Break / Continue | `break` / `continue` inside loops |
-| Arithmetic | `+` `-` `*` `/` `%` |
-| Comparison | `==` `!=` `<` `<=` `>` `>=` |
-| Boolean logic | `and` `or` `not` |
-| Print | `print("Hello")` |
+| Feature | Syntax | Синтакс |
+|---------|--------|---------|
+| Variables | `let x = 10` | `let x = 10` |
+| Functions | `fn add(a, b) { return a + b }` | `fn add(a, b) { return a + b }` |
+| If / Else | `if x > 0 { ... } else { ... }` | `if x > 0 { ... } else { ... }` |
+| While loop | `while x > 0 { ... }` | `while x > 0 { ... }` |
+| For loop | `for let i = 0; i < 3; i = i + 1 { ... }` | `for let i = 0; i < 3; i = i + 1 { ... }` |
+| Break / Continue | `break` / `continue` | `break` / `continue` |
+| Arithmetic | `+` `-` `*` `/` `%` | `+` `-` `*` `/` `%` |
+| Comparison | `==` `!=` `<` `<=` `>` `>=` | `==` `!=` `<` `<=` `>` `>=` |
+| Boolean logic | `and` `or` `not` | `and` `or` `not` |
+| Print | `print("Hello")` | `print("Hello")` |
+| Arrays | `let arr = [1, 2, 3]` | `let arr = [1, 2, 3]` |
+| Array access | `arr[0]` | `arr[0]` |
+| String concat | `"a" + "b"` | `"a" + "b"` |
+| String len | `len(s)` | `len(s)` |
 
-## Building
+## Building / Бүрүүлэх
 
 ```bash
 mkdir build && cd build
@@ -25,13 +29,13 @@ cmake ..
 make
 ```
 
-## Running
+## Running / Ажиллуулах
 
 ```bash
 ./build/hunnu run examples/main.hn
 ```
 
-## Examples
+## Examples / Жишээнүүд
 
 ### Hello World
 
@@ -94,7 +98,116 @@ fn main() {
 }
 ```
 
-## Project Structure
+### Arrays / Массив
+
+```hunnu
+fn main() {
+    let numbers = [10, 20, 30, 40, 50]
+    print(numbers[0])
+    print(numbers[4])
+}
+```
+
+### Strings / Тэмдэгт
+
+```hunnu
+fn main() {
+    let greeting = "Сайн уу, "
+    let name = "Дэлхий"
+    let message = greeting + name
+    print(message)
+    
+    let s = "Hunnu"
+    print(len(s))
+}
+```
+
+---
+
+## Mongolian / Монгол хэл
+
+### Хэрхэн ашиглах
+
+**Hunnu** нь C хэл дээр бичигдсэн, илэрхийлэлд суурилсан програмчлалын хэл юм.
+
+### Синтакс
+
+```hunnu
+// Хувьсагч зарлах
+let x = 10
+
+// Функц тодорхойлох
+fn greeting(name) {
+    return "Сайн уу, " + name
+}
+
+// Хэвлэх
+print("Hello World")
+
+// Нөхцөл шалгах
+if x > 5 {
+    print("Tom")
+} else {
+    print("Bhut")
+}
+
+// While давталж
+let i = 0
+while i < 10 {
+    print(i)
+    i = i + 1
+}
+
+// For давталж
+for let i = 0; i < 5; i = i + 1 {
+    print(i)
+}
+
+// Массив
+let arr = [1, 2, 3, 4, 5]
+print(arr[0])
+
+// Тэмдэгт нийлүүлэх
+let s1 = "Сайн "
+let s2 = "уу"
+let s3 = s1 + s2
+print(s3)
+
+// Тэмдэгт урт
+let s = "Hunnu"
+print(len(s))
+```
+
+### Жишээ програм
+
+```hunnu
+// Фибоначчи функц
+fn fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+fn main() {
+    // 10-р FIBONAЧИ тоо
+    print(fib(10))
+    
+    // Массив ашиглах
+    let numbers = [10, 20, 30, 40, 50]
+    print(numbers[0])
+    
+    // Тэмдэгт ажиллах
+    let name = "Hunnu"
+    let message = "Programming Language: " + name
+    print(message)
+    print(len(message))
+}
+```
+
+---
+
+## Project Structure / Төслийн бүтэц
 
 ```
 hunnu-lang/
@@ -108,7 +221,7 @@ hunnu-lang/
 └── CMakeLists.txt
 ```
 
-## Roadmap
+## Roadmap / Зорилтууд
 
 See [`future-improvements.md`](future-improvements.md) for the full list. Near-term priorities:
 
@@ -117,6 +230,6 @@ See [`future-improvements.md`](future-improvements.md) for the full list. Near-t
 - Arrays and string operations
 - Better runtime error messages with line numbers
 
-## License
+## License / Зөвшөөрөл
 
 MIT

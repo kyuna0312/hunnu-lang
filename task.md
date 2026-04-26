@@ -1,58 +1,54 @@
-# Today's Task: Loops & Return Implementation
+# Today's Task: Arrays & Strings Implementation
 
 ## Date
 Today's session
 
 ## Goal
-Add `while`, `for` loops, and `return` statements to Hunnu language
+Add arrays and string operations to Hunnu language
 
 ---
 
 ## Completed Items
 
 ### 1. Token Definitions ✅
-- Added `TOKEN_WHILE` to `compiler/lexer/token.h`
-- Added `TOKEN_FOR` to `compiler/lexer/token.h`
-- Added `TOKEN_RETURN` to `compiler/lexer/token.h`
-- Added token names in `compiler/lexer/token.c`
+- `TOKEN_LBRACKET`, `TOKEN_RBRACKET` - already existed in `compiler/lexer/token.h`
 
-### 2. Lexer Support ✅
-- Added `"while"`, `"for"`, `"return"` keywords in `compiler/lexer/lexer.c`
+### 2. AST Nodes ✅
+- Added `AST_ARRAY_EXPR` to `compiler/ast/ast.h`
+- Added `AST_INDEX_EXPR` to `compiler/ast/ast.h`
+- Added `AST_STRING_CONCAT` to `compiler/ast/ast.h`
+- Added union members for array_expr, index_expr, string_concat
+- Added creation functions in `compiler/ast/ast.c`
+- Added name strings in type_names array
 
-### 3. AST Nodes ✅
-- Added `AST_WHILE_STMT` to `compiler/ast/ast.h`
-- Added `AST_FOR_STMT` to `compiler/ast/ast.h`
-- Added `AST_RETURN_STMT` to `compiler/ast/ast.h`
-- Added AST creation functions in `compiler/ast/ast.c`
+### 3. Parser ✅
+- Added array literal parsing: `[expr1, expr2, ...]`
+- Added array indexing: `array[index]`
+- Added `len()` function call parsing
 
-### 4. Parser ✅
-- Added `parser_parse_while_statement()` - handles `while(condition) { body }`
-- Added `parser_parse_for_statement()` - handles `for(init; condition; update) { body }`
-- Added `parser_parse_return_statement()` - handles `return expression`
-- Added `parser_parse_assignment()` - handles variable reassignment
-
-### 5. Interpreter ✅
-- Added loop execution for `AST_WHILE_STMT`
-- Added loop execution for `AST_FOR_STMT`
-- Added return value handling for `AST_RETURN_STMT`
-- Added assignment evaluation returning assigned value
+### 4. Interpreter ✅
+- Added VALUE_ARRAY type to Value enum in `interpreter.h`
+- Added array_elements field for array storage
+- Added array expression evaluation
+- Added index expression evaluation
+- Added string concatenation (`str1 + str2`)
+- Added `len()` function for strings and arrays
 
 ---
 
-## Bug Fixes
+## Known Issues
 
-### Assignment Not Working
-**Problem**: Variable reassignment (`x = 3`) wasn't updating values
+### Array Index Bug
+**Problem**: Index out of bounds error on valid indices (e.g., index 0-4 for 5 elements)
 
-**Root Cause**: 
-- `AST_ASSIGN` case only existed in `interpreter_execute_statement()` (void function)
-- Was missing from `interpreter_evaluate()` which returns Value
+**Status**: Needs debugging - likely an off-by-one or integer conversion issue
 
-**Fix**:
-1. Added `AST_ASSIGN` case to `interpreter_evaluate()` that returns the assigned value
-2. Removed duplicate buggy case from `interpreter_execute_statement()`
+### String Memory Bugs
+**Problem**: Double-free or corruption when using strings with variables
 
-**File**: `compiler/interpreter/interpreter.c`
+**Root Cause**: Complex value copying and ownership in interpreter
+
+**Status**: Needs proper memory management (reference counting or ownership model)
 
 ---
 
@@ -60,10 +56,9 @@ Add `while`, `for` loops, and `return` statements to Hunnu language
 
 | Test | Expected | Got |
 |------|----------|-----|
-| `let x=5; x=3; print(x)` | 3 | 3 ✅ |
-| `while(x>0){print(x);x=x-1}` (x=3) | 3,2,1 | 3,2,1 ✅ |
-| `for(i=0;i<3;i=i+1){print(i)}` | 0,1,2 | 0,1,2 ✅ |
-| Function return | Works | Works ✅ |
+| `let arr = [10,20,30]; print(arr[0])` | 10 | Builds but index bug |
+| `let s = "hello"; print(len(s))` | 5 | Memory corruption |
+| `"a" + "b"` | "ab" | Works ✅ |
 
 ---
 
@@ -74,34 +69,36 @@ Add `while`, `for` loops, and `return` statements to Hunnu language
 - Arithmetic: `+`, `-`, `*`, `/`
 - Comparison: `>`, `<`, `>=`, `<=`
 - If/else statements
-- **While loops**: `while(condition) { body }`
-- **For loops**: `for(init; condition; update) { body }`
-- **Return statements**: `return expression`
+- While loops: `while(condition) { body }`
+- For loops: `for(init; condition; update) { body }`
+- Return statements: `return expression`
 - Variable reassignment: `x = new_value`
+- **Arrays**: `[1, 2, 3]` (syntax works, indexing needs fix)
+- **String concat**: `"a" + "b"` (works with literals)
+- **len()**: function defined (needs memory fix)
 
 ---
 
 ## Syntax Reference
 
 ```hunnu
-// While loop
-while(condition) {
-    // body
-}
+// Array creation
+let numbers = [10, 20, 30, 40, 50]
 
-// For loop
-for(init; condition; update) {
-    // body
-}
+// Array indexing
+print(numbers[0])  // First element
 
-// Return
-return expression
+// String concatenation
+let greeting = "Hello, "
+let name = "World"
+let message = greeting + name
 
-// Assignment
-variable = new_value
+// String length
+let s = "Hunnu"
+let length = len(s)
 ```
 
 ---
 
 ## Next
-See `plan.md` for tomorrow's session: Arrays & Strings
+See `plan.md` for tomorrow's session: Break/Continue, I/O basics, Multi-dimensional arrays

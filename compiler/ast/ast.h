@@ -21,7 +21,10 @@ typedef enum {
     AST_LITERAL,
     AST_IDENTIFIER,
     AST_CALL_EXPR,
-    AST_ASSIGN
+    AST_ASSIGN,
+    AST_ARRAY_EXPR,
+    AST_INDEX_EXPR,
+    AST_STRING_CONCAT
 } ASTNodeType;
 
 typedef struct ASTNode {
@@ -116,6 +119,21 @@ typedef struct ASTNode {
             char* name;
             struct ASTNode* value;
         } assign;
+        
+        struct {
+            struct ASTNode** elements;
+            size_t count;
+        } array_expr;
+        
+        struct {
+            struct ASTNode* array;
+            struct ASTNode* index;
+        } index_expr;
+        
+        struct {
+            struct ASTNode* left;
+            struct ASTNode* right;
+        } string_concat;
     } data;
 } ASTNode;
 
@@ -137,6 +155,9 @@ ASTNode* ast_literal_create_bool(int value, int32_t line, int32_t column);
 ASTNode* ast_identifier_create(const char* name, int32_t line, int32_t column);
 ASTNode* ast_call_expr_create(const char* name, ASTNode** args, size_t arg_count, int32_t line, int32_t column);
 ASTNode* ast_assign_create(const char* name, ASTNode* value, int32_t line, int32_t column);
+ASTNode* ast_array_expr_create(ASTNode** elements, size_t count, int32_t line, int32_t column);
+ASTNode* ast_index_expr_create(ASTNode* array, ASTNode* index, int32_t line, int32_t column);
+ASTNode* ast_string_concat_create(ASTNode* left, ASTNode* right, int32_t line, int32_t column);
 
 void ast_free(ASTNode* node);
 void ast_print(ASTNode* node, int indent);

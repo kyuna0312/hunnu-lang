@@ -14,7 +14,8 @@ typedef struct Value {
         VALUE_INT,
         VALUE_STRING,
         VALUE_BOOL,
-        VALUE_NONE
+        VALUE_NONE,
+        VALUE_ARRAY
     } type;
     union {
         int64_t int_value;
@@ -22,6 +23,8 @@ typedef struct Value {
         int bool_value;
     } value;
     int has_value;
+    size_t array_length;
+    struct Value** array_elements;
 } Value;
 
 void interpreter_set_return(Interpreter* interp, Value value);

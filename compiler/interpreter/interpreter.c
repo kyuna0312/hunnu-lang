@@ -116,6 +116,17 @@ Value value_create_none(void) {
     Value v;
     v.type = VALUE_NONE;
     v.has_value = 0;
+    v.array_length = 0;
+    return v;
+}
+
+Value value_create_array(Value** arr, size_t length) {
+    Value v;
+    v.type = VALUE_ARRAY;
+    v.value.int_value = 0;
+    v.has_value = 1;
+    v.array_length = length;
+    v.array_elements = arr;
     return v;
 }
 
@@ -124,6 +135,30 @@ void value_free(Value* value) {
     if (value->type == VALUE_STRING) {
         free(value->value.string_value);
     }
+}
+
+char* value_to_string(Value* value) {
+    if (!value) return strdup("");
+    
+    char* buf = (char*)malloc(64);
+    switch (value->type) {
+        case VALUE_INT:
+            snprintf(buf, 64, "%ld", (long)value->value.int_value);
+            break;
+        case VALUE_STRING:
+            free(buf);
+            return strdup(value->value.string_value);
+        case VALUE_BOOL:
+            snprintf(buf, 64, "%s", value->value.bool_value ? "true" : "false");
+            break;
+        case VALUE_NONE:
+            snprintf(buf, 64, "nil");
+            break;
+        default:
+            snprintf(buf, 64, "?");
+            break;
+    }
+    return buf;
 }
 
 void value_print(Value* value) {
@@ -191,6 +226,9 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             if (val) {
                 Value copy;
                 copy.type = val->type;
+                copy.has_value = val->has_value;
+                copy.array_length = val->array_length;
+                copy.array_elements = val->array_elements;
                 if (val->type == VALUE_STRING) {
                     copy.value.string_value = strdup(val->value.string_value);
                 } else {
@@ -211,6 +249,13 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             if (op == TOKEN_PLUS) {
                 if (left.type == VALUE_INT && right.type == VALUE_INT) {
                     result = value_create_int(left.value.int_value + right.value.int_value);
+                } else if (left.type == VALUE_STRING && right.type == VALUE_STRING) {
+                    size_t len = strlen(left.value.string_value) + strlen(right.value.string_value) + 1;
+                    char* combined = (char*)malloc(len);
+                    strcpy(combined, left.value.string_value);
+                    strcat(combined, right.value.string_value);
+                    result = value_create_string(combined);
+                    free(combined);
                 }
             }
             
@@ -287,6 +332,70 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             Value value = interpreter_evaluate(interp, node->data.assign.value);
             interpreter_define(interp, node->data.assign.name, value);
             return value;
+        }
+        
+        case AST_ARRAY_EXPR: {
+            Value** elements = (Value**)malloc(sizeof(Value*) * node->data.array_expr.count);
+            for (size_t i = 0; i < node->data.array_expr.count; i++) {
+                Value* elem = (Value*)malloc(sizeof(Value));
+                *elem = interpreter_evaluate(interp, node->data.array_expr.elements[i]);
+                elements[i] = elem;
+            }
+            return value_create_array(elements, node->data.array_expr.count);
+        }
+        
+        case AST_INDEX_EXPR: {
+            Value array_val = interpreter_evaluate(interp, node->data.index_expr.array);
+            Value index_val = interpreter_evaluate(interp, node->data.index_expr.index);
+            
+            if (array_val.type == VALUE_ARRAY && index_val.type == VALUE_INT) {
+                int64_t idx = index_val.value.int_value;
+                if (idx >= 0 && (size_t)idx < array_val.array_length) {
+                    Value* result = array_val.array_elements[idx];
+                    Value copy;
+                    copy.type = result->type;
+                    copy.has_value = result->has_value;
+                    copy.array_length = result->array_length;
+                    copy.array_elements = result->array_elements;
+                    if (result->type == VALUE_STRING) {
+                        copy.value.string_value = strdup(result->value.string_value);
+                    } else {
+                        copy.value = result->value;
+                    }
+                    value_free(&array_val);
+                    value_free(&index_val);
+                    return copy;
+                } else {
+                    fprintf(stderr, "Error: Index out of bounds\n");
+                    value_free(&array_val);
+                    value_free(&index_val);
+                    return value_create_none();
+                }
+            }
+            
+            fprintf(stderr, "Error: Can only index into arrays\n");
+            value_free(&array_val);
+            value_free(&index_val);
+            return value_create_none();
+        }
+        
+        case AST_CALL_EXPR: {
+            char* name = node->data.call_expr.name;
+            
+            if (strcmp(name, "len") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                int64_t len = 0;
+                if (arg.type == VALUE_STRING) {
+                    len = (int64_t)strlen(arg.value.string_value);
+                } else if (arg.type == VALUE_ARRAY) {
+                    len = (int64_t)arg.array_length;
+                }
+                value_free(&arg);
+                return value_create_int(len);
+            }
+            
+            fprintf(stderr, "Error: Unknown function '%s'\n", name);
+            return value_create_none();
         }
         
         default:

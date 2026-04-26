@@ -1,1 +1,5 @@
-fn main(){let result=baz();print(result)}fn baz(){return 42}
+fn main() {
+    let numbers = [10, 20, 30, 40, 50]
+    print(numbers[0])
+    print(numbers[4])
+}
