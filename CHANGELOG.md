@@ -1,84 +1,84 @@
-# Өөрчлөлийн тэмдэглэг
+# Changelog
 
-> Хүмүүн хэлний өөрчлөлүүд.
+All notable changes to the Hunnu language project.
 
 ---
 
-## [Хэзээ ч тодорхойгүй]
+## [Unreleased]
 
-### Phase 4: Bytecode Компилятор + VM ✅
-*2025 оны 4 сар*
+### Phase 4: Bytecode Compiler + VM ✅
+*April 2025*
 
-#### Bytecode Заавар
-- `opcodes.h` — заавар цуглуулага нэмсэн
-- Constants, арифметик, харьцуулалт, удирдлага заавар
-- Хувьсагч хандалт, массив, индекс, функц дуудах
+#### Bytecode Instruction Set
+- Added `opcodes.h` with full instruction enumeration
+- Instructions for constants, arithmetic, comparison, control flow
+- Local variable access, arrays, indexing, function calls
 
 ```c
-// Жишээ bytecode
-OP_CONSTANT_INT 10       // тоо оруулах
-OP_CONSTANT_INT 20       // өөр тоо оруулах
-OP_ADD                 // нэмэх
-OP_SET_LOCAL 0          // хувьсагч 0-д хадгалах
-OP_GET_LOCAL 0          // хувьсагч 0-г аврах
-OP_GET_INDEX           // массив индекс
-OP_CALL                // функц дуудох
-OP_RETURN             // буцаах
+// Example bytecode
+OP_CONSTANT_INT 10       // push integer
+OP_CONSTANT_INT 20       // push another
+OP_ADD                 // add them
+OP_SET_LOCAL 0          // store in local 0
+OP_GET_LOCAL 0          // retrieve local 0
+OP_GET_INDEX           // array indexing
+OP_CALL                // function call
+OP_RETURN             // return from function
 ```
 
-#### Bytecode Компилятор
-- `compiler/compiler.c` нэмсэн — AST → bytecode
-- AST-аар гүйлдэж bytecode гаргах
-- Тогтмол хотолбор (strings)
-- Програм, функц, блок, хувьсагч, if/while, массив, print дэмжлэх
+#### Bytecode Compiler
+- Added `compiler/compiler.c` - AST to bytecode compilation
+- Walks AST and emits corresponding bytecode
+- Manages constant pool for strings
+- Supports: program, function, block, variable declarations, if/while, arrays, print
 
-#### Виртуал Машин
-- `vm.c` нэмсэн — стек дээр суурилсан VM
-- Удамлах стек (256 слот хүртэл)
-- Хувьсагч хадгалалт
-- Суурилсан функц (print, input, to_int, to_float, to_str)
-- Bytecode тайлбарлах давталт
+#### Virtual Machine
+- Added `compiler/vm.c` - stack-based VM execution
+- Value stack (256 slots max)
+- Local variable storage
+- Builtin function dispatch (print, input, to_int, to_float, to_str)
+- Bytecode interpreter loop
 
-#### CLI Нэгдэл
-- `build` команды — bytecode гаргах
-- `--vm` туг — VM-ээр ажиллуулах
+#### CLI Integration
+- Added `build` command to output bytecode
+- Added `--vm` flag to `run` command for VM execution
 
 ```bash
-./hunnu build examples/main.hn   # bytecode гаргах
-./hunnu run examples/main.hn --vm  # VM-ээр ажиллуулах
+./hunnu build examples/main.hn   # output bytecode
+./hunnu run examples/main.hn --vm  # run with VM
 ```
 
-#### Файлууд
-- `compiler/vm/opcodes.h` - заавар enum
-- `compiler/vm/compiler.h` - компилятор төрөл
-- `compiler/vm/compiler.c` - bytecode компилятор
-- `compiler/vm/vm.h` - VM толгой
-- `compiler/vm/vm.c` - VM ажиллуулах
-- `cli/main.c`, `cli/cli.h` - команды, тугнууд
-- `interpreter/interpreter.c`, `interpreter/interpreter.h` - утга үүсгэх тусламжууд
+#### Files
+- `compiler/vm/opcodes.h` - instruction enum
+- `compiler/vm/compiler.h` - compiler types
+- `compiler/vm/compiler.c` - bytecode compiler
+- `compiler/vm/vm.h` - VM header
+- `compiler/vm/vm.c` - VM execution
+- Updated `cli/main.c`, `cli/cli.h` - new commands and flags
+- Updated `interpreter/interpreter.c`, `interpreter/interpreter.h` - value creation helpers
 
 ---
 
-### Phase 3: Стандарт сан + DX ✅
-*2025 оны 4 сар*
+### Phase 3: Standard Library & Dev Experience ✅
+*April 2025*
 
-#### Стандарт Сан функцүүд
-- `input()` - стандарт оролдоос унших
-- `to_str()` - тэмдэгт болгох
-- `to_int()` - тоо болгох
-- `to_float()` - бодит тоо болгох
+#### Standard Library Functions
+- `input()` - read user input from stdin
+- `to_str()` - convert to string
+- `to_int()` - convert to integer
+- `to_float()` - convert to float
 
-#### CLI Сайжруулалт
-- `--debug` / `-d` туг — токен болон AST хэвлэх
+#### CLI Improvements
+- Added `--debug` / `-d` flag to show tokens and AST
 
 ---
 
-### Phase 2: Түлхүүр онцлогууд ✅
-*2025 оны 4 сар*
+### Phase 2: Core Language Features ✅
+*April 2025*
 
-#### Нийлэх Оператор
-- `+=`, `-=`, `*=`, `/=` оператор нэмсэн
-- Парсер дээр `x = x + y` болгон
+#### Compound Assignment
+- Added `+=`, `-=`, `*=`, `/=` operators
+- Desugared in parser to `x = x + y` form
 
 ```hunnu
 let x = 10
@@ -88,8 +88,8 @@ x *= 2   // x = 24
 x /= 4   // x = 6
 ```
 
-#### else if Гинж
-- `if` өгүүлбэрийг гинжлэгдсэн `else if` дэмжлэхтэй болгосон
+#### else if Chains
+- Improved `if` statement to support chained `else if`
 
 ```hunnu
 if x > 90 {
@@ -101,9 +101,9 @@ if x > 90 {
 }
 ```
 
-#### Бодит Тоо
-- `TOKEN_FLOAT_LITERAL` болон `VALUE_FLOAT` төрөл нэмсэн
-- int/float хольсонтой бүрэн арифметик дэмжлэх
+#### Floating-Point Numbers
+- Added `TOKEN_FLOAT_LITERAL` and `VALUE_FLOAT` type
+- Full arithmetic support with mixed int/float
 
 ```hunnu
 let pi = 3.14159
@@ -112,44 +112,44 @@ print(pi * r * r)  // 12.5664
 print(10 + 3.5)    // 13.5
 ```
 
-#### null/nil Т literals
-- `null` болон `nil` түлхүүр үгс нэмсэн
+#### null/nil Literal
+- Added `null` and `nil` keywords
 
 ```hunnu
 let x = null
 let y = nil
 ```
 
-#### Тэмдэгт Орлоос
-- Бүрэн орлоос дараалал: `\n`, `\t`, `\\`, `\"`
+#### String Escapes
+- Full escape sequence support: `\n`, `\t`, `\\`, `\"`
 
 ```hunnu
-print("Hello\nWorld")       // шинэ мөр
-print("Tab\there")          //.tab
-print("Quote: \"test\"")     // орчуулсан ил引用
-print("Backslash: \\")      // орчуулсан урвуу зууа
+print("Hello\nWorld")       // newline
+print("Tab\there")          // tab
+print("Quote: \"test\"")     // escaped quote
+print("Backslash: \\")      // escaped backslash
 ```
 
 ---
 
-### Phase 1: Үндсэн засварууд ✅
-*2025 оны 4 сар*
+### Phase 1: Foundation Fixes ✅
+*April 2025*
 
-#### Хувьсагч Хүрээлэл (Scope Stack)
--.Global нэрийн орон replacing хийх хүрээллийн гинжээр
-- Блокоор хүрээлсэн хувьсагууд зөв сөлдөхөөр
+#### Variable Scoping (Scope Stack)
+- Replaced flat global namespace with scope chain
+- Block-scoped variables with proper shadowing
 
 ```hunnu
-let x = 10              // глобаль хүрээлэл
+let x = 10              // global scope
 {
-    let x = 20          // гаднах x-г сөлдөн
+    let x = 20          // shadows outer x
     print(x)            // 20
 }
-print(x)                // 10 (гаднах x хадгалагдсан)
+print(x)                // 10 (outer x preserved)
 ```
 
 #### break/continue
--Сигнал туг ашиглан fully буюу бүрэн хэрэгжлэх
+- Full implementation with signal flags
 
 ```hunnu
 let i = 0
@@ -159,29 +159,29 @@ while i < 10 {
     if i == 3 { continue }
     print(i)
 }
-// Хэвлэх: 1, 2, 4
+// Prints: 1, 2, 4
 ```
 
-#### Санах Ой засварууд
-- Парсер дээрх холбогдох зааг засварлагдсан
-- Тэмдэгт гүнзгий хуулах implemented
-- Массив элемент эзэмшил тодорхойлогдсон
+#### Memory Fixes
+- Parser dangling pointer bug fixed
+- String deep copy implemented
+- Array element ownership clarified
 
 ---
 
-## Өмнөх онцлогууд
-- Хувьсагууд: `let x = 5`
-- Арифметик: `+`, `-`, `*`, `/`, `%`
-- Харьцуулалт: `>`, `<`, `>=`, `<=`, `==`, `!=`
-- Логик: `and`, `or`, `not`
-- if/else өгүүлбэрүүд
-- while давталт: `while(condition) { body }`
-- for давталт: `for(init; condition; update) { body }`
-- Функц: `fn нэр(параметр) { body }`
-- return өгүүлбэрүүд: `return илэрхийлэл`
-- print: `print(утга)`
-- Дахин оноох: `x = шинэ_утга`
-- Массив: `[1, 2, 3]` + хандалт `arr[i]`
-- Тэмдэгт нийлэх: `"a" + "b"`
-- len() суурилсан функц
-- Нэрээр-first class функц дуудлага (by name)
+## Previous Features
+- Variables: `let x = 5`
+- Arithmetic: `+`, `-`, `*`, `/`, `%`
+- Comparison: `>`, `<`, `>=`, `<=`, `==`, `!=`
+- Boolean: `and`, `or`, `not`
+- If/else statements
+- While loops: `while(condition) { body }`
+- For loops: `for(init; condition; update) { body }`
+- Functions: `fn name(param) { body }`
+- Return statements: `return expression`
+- Print: `print(value)`
+- Variable reassignment: `x = new_value`
+- Arrays: `[1, 2, 3]` + indexing `arr[i]`
+- String concatenation: `"Hello" + "World"`
+- `len()` built-in function
+- First-class function calls (by name)

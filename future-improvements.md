@@ -1,88 +1,83 @@
-# Дараагийн Сайжруулалтууд
+# Future Improvements
 
-> MVP-аас цааш Хүмүүн хэлний боломжит сайжруулалтууд.
+> Potential enhancements for Hunnu beyond the MVP.
 
 ---
 
-## Хэлний Онцлогууд
+## Language Features
 
-### Түлхүүр
-- **Bytecode + VM** ✅ (ДУУСАН)
-- **Модуль/импорт** — Кодоо файлуудаар хуваах
-- **Стандарт сан** — нийтлэг функцүүд
+### High Priority
+- **Bytecode compiler + VM** ✅ (DONE)
+- **Modules / import system** — split code across files
+- **Standard library** — built-in functions for common tasks
 
-### Дунд
-- **Struct/Record** — холбогдох өгөгдөл бүлэглэх
+### Medium Priority
+- **Structs / records** — grouping related data
 
 ```hunnu
 type Point = { x: int, y: int }
 let p = Point { x: 5, y: 10 }
 ```
 
-- **Pattern matching** — задалж устгах болон кейс шинжилгээ
+- **Pattern matching** — destructuring and case analysis
 
 ```hunnu
-match утга {
-    [] -> "хоосон"
-    [толстой, ...бусад] -> "эхний: " + str(толстой)
+match value {
+    [] -> "empty"
+    [head, ...rest] -> "first: " + str(head)
 }
 ```
 
-- **ADT (Нийлэх төрөл)** — нийлэх төрлүүд
+- **Algebraic Data Types (ADTs)** — sum types
 
 ```hunnu
 type Maybe[T] = Just(T) | Nothing
 type List[T] = Cons(T, List[T]) | Nil
 ```
 
-### Доошоо
-- **Пайп оператор** — функц гинжлэх
-- **Сүүлд үнэлэх** — хойшлуулсан тооцоо
-- **Структурал төрлүүд** — duck бичиглэл
-- **Аажимтай бичиглэл** — сонголттой төрөл тэмдэглэг
-- **Протокол/Трейт** — интерфейс тодорхойлолт
+### Lower Priority
+- **Pipe operator** — function chaining
+- **Lazy evaluation** — deferred computation
+- **Structural types** — duck typing
+- **Gradual typing** — optional type annotations
+- **Protocols/Traits** — interface definitions
 
 ---
 
-## Хэрэгжлэл
+## Implementation
 
-### Түлхүүр
-- **Оновчлол** — гүйцэтгэл сайжруулах
-- **Алдааны мэссэж** — мөрийн дугаартай сайн диагностик
-- **디bugger** — кодоор алхах
+### High Priority
+- **Optimization** — performance improvements
+- **Error messages** — better diagnostics with line numbers
+- **Debugger** — stepping through code
 
-### Дунд
-- **REPL** — интерактив консол
-- **Багц менеджер** — хамаарлын удирдлага
-- **LSP сервер** — IDE интеграц
+### Medium Priority
+- **REPL** — interactive console
+- **Package manager** — dependency management
+- **IDE integration** — LSP server
 
-### Доошоо
-- **Self-hosting** — Хүмүүн дээр компилятор бичих
-- **JIT компиляц** — Just-in-time код үүсгэх
-- **AOT компиляц** — урдчилан бинар гаралт
-
----
-
-## Тест
-
-- Юнит тест — компилятор фазуудад
-- Интеграц тест — хэлний онцлогуудад
-- Бенчмарк — гүйцэтгэл хэмжих
-- Fuzzing — булангийн тохиолдолд
+### Lower Priority
+- **Self-hosting** — implement compiler in Hunnu
+- **JIT compilation** — just-in-time code generation
+- **AOT compilation** — ahead-of-time binary output
 
 ---
 
-## Бичиг
+## Infrastructure
 
-- Хэлний тодорхойлолт
-- API бичиг
-- Зааварчилгаа
-- Жишээ цуглуулага
+### Testing
+- Unit tests for compiler phases
+- Integration tests for language features
+- Benchmark suite
+- Fuzzing for edge cases
 
----
+### Documentation
+- Language specification
+- API documentation
+- Tutorial for beginners
+- Cookbook with recipes
 
-## Олон нийтийн
-
-- Стандарт сангийн хувь нэмэр
-- Хэрэгслийн экосистем
-- Багц сан
+### Community
+- Standard library contributions
+- Tooling ecosystem
+- Package registry
