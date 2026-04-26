@@ -14,38 +14,36 @@ struct Lexer {
 };
 
 static const char* keyword_names[] = {
-    "let",
-    "fn",
-    "if",
-    "else",
-    "true",
-    "false",
-    "print",
-    "while",
-    "for",
-    "return",
-    "break",
-    "continue",
-    "null",
-    "nil",
+    "let",        "хувьсагч",   // variable declaration
+    "fn",         "функц",    // function
+    "if",         "хэрвээ",   // if
+    "else",                     // else  
+    "true",       "үнэн",     // true
+    "false",      "худал",     // false
+    "print",      "хэвлэх",   // print
+    "while",      "давталт",  // while
+    "for",        "тооллого", // for
+    "return",     "буцаах",   // return
+    "break",      "зогсоох",  // break
+    "continue",   "үргэлжлүүлэх", // continue
+    "null",       "хоосон",  // null
     NULL
 };
 
 static TokenType keyword_types[] = {
-    TOKEN_LET,
-    TOKEN_FN,
-    TOKEN_IF,
+    TOKEN_LET,    TOKEN_LET,
+    TOKEN_FN,     TOKEN_FN,
+    TOKEN_IF,    TOKEN_IF,
     TOKEN_ELSE,
-    TOKEN_TRUE,
-    TOKEN_FALSE,
-    TOKEN_PRINT,
-    TOKEN_WHILE,
-    TOKEN_FOR,
-    TOKEN_RETURN,
-    TOKEN_BREAK,
-    TOKEN_CONTINUE,
-    TOKEN_NULL,
-    TOKEN_NIL_KEYWORD,
+    TOKEN_TRUE,  TOKEN_TRUE,
+    TOKEN_FALSE, TOKEN_FALSE,
+    TOKEN_PRINT,  TOKEN_PRINT,
+    TOKEN_WHILE,  TOKEN_WHILE,
+    TOKEN_FOR,    TOKEN_FOR,
+    TOKEN_RETURN, TOKEN_RETURN,
+    TOKEN_BREAK,  TOKEN_BREAK,
+    TOKEN_CONTINUE, TOKEN_CONTINUE,
+    TOKEN_NULL,   TOKEN_NULL,
     TOKEN_UNKNOWN
 };
 
@@ -136,7 +134,7 @@ Token* lexer_read_identifier(Lexer* lexer) {
     int32_t start_line = lexer->line;
     int32_t start_column = lexer->column - 1;
     
-    while (isalnum(lexer_peek(lexer)) || lexer_peek(lexer) == '_') {
+    while (isalnum(lexer_peek(lexer)) || lexer_peek(lexer) == '_' || ((unsigned char)lexer_peek(lexer) > 127)) {
         lexer_advance(lexer);
     }
     
@@ -304,7 +302,7 @@ Token* lexer_next_token(Lexer* lexer) {
     
     char c = lexer_peek(lexer);
     
-    if (isalpha(c) || c == '_') {
+    if (isalpha(c) || c == '_' || ((unsigned char)c > 127)) {
         lexer_advance(lexer);
         return lexer_read_identifier(lexer);
     }
