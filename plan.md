@@ -1,234 +1,273 @@
-# Hunnu Language — Development Plan
+# Hunnu хэл — Хөгжлийн төлөвлөгөө
 
-> A living document tracking the state, priorities, and vision for Hunnu.
-
----
-
-## Current Language State
-
-### Working Features
-- Variables: `let x = 5`
-- Arithmetic: `+`, `-`, `*`, `/`, `%`
-- Comparison: `>`, `<`, `>=`, `<=`, `==`, `!=`
-- Boolean: `and`, `or`, `not`
-- If/else statements with `else if` chains
-- While loops: `while(condition) { body }`
-- For loops: `for(init; condition; update) { body }`
-- Functions: `fn name(param) { body }`
-- Return statements: `return expression`
-- Print: `print(value)`
-- Variable reassignment: `x = new_value`
-- Compound assignment: `x += 1`, `x -= 2`, `x *= 3`, `x /= 4`
-- Arrays: `[1, 2, 3]` + indexing `arr[i]`
-- String concatenation: `"Hello" + "World"`
-- String escapes: `\n`, `\t`, `\\`, `\"`
-- `len()` built-in function
-- `input()` — read user input from stdin
-- `to_str()`, `to_int()`, `to_float()` — type conversions
-- First-class function calls (by name)
-- **Scoped variables** — block-scoped with scope stack
-- **break/continue** — loop control flow
-- Proper variable scoping in blocks and functions
-- **Floating-point numbers**: `3.14159`, `2.0`
-- **null/nil literal**: `let x = null` or `let y = nil`
-- **CLI**: `--debug` flag shows tokens and AST
-- **Bytecode compiler**: `./hunnu build file.hn` outputs bytecode
-- **VM execution**: `./hunnu run file.hn --vm` uses VM instead of interpreter
-
-### Missing / Broken
-- (All Phase 1 items completed!)
+> Hunnu-ийн одоогийн байдал, тэргүүлэх ажлууд болон алсын хараа.
 
 ---
 
-## Priority Roadmap
+## Одоогийн төлөв
 
-### Phase 1: Foundation Fixes ✅
+### Ажиллаж байгаа онцлогууд
 
-| Priority | Item | Files | Status |
-|----------|------|-------|--------|
-| 🔴 | Variable scoping (scope stack) | interpreter.c | ✅ DONE |
-| 🔴 | break/continue execution | interpreter.c, token.h, parser.c | ✅ DONE |
-| 🔴 | Array index bounds checking | interpreter.c | ✅ DONE |
-| 🔴 | String memory safety (dangling pointers) | parser.c, interpreter.c | ✅ DONE |
-
-### Phase 2: Core Language Features ✅
-
-| Priority | Item | Files | Status |
-|----------|------|-------|--------|
-| 🟡 | Compound assignment: `+=`, `-=`, etc | parser.c | ✅ DONE |
-| 🟡 | `else if` chains | parser.c | ✅ DONE |
-| 🟡 | Floating-point numbers | lexer.c, token.h, interpreter.c | ✅ DONE |
-| 🟡 | `null`/`nil` literal | lexer.c, token.h, ast.h | ✅ DONE |
-| 🟢 | String escapes: `\n`, `\t`, `\\` | lexer.c | ✅ DONE |
-| 🟢 | Multi-line strings | lexer.c | ⚠️ SKIPPED (strings already work across lines) |
-
-### Phase 3: Standard Library & Dev Experience ✅
-
-| Priority | Item | Files | Status |
-|----------|------|-------|--------|
-| 🟡 | `input()` — read stdin | interpreter.c, parser.c | ✅ DONE |
-| 🟡 | `to_str()`, `to_int()`, `to_float()` conversions | interpreter.c, parser.c | ✅ DONE |
-| 🟢 | `--debug` / `--ast` CLI flag | cli.c | ✅ DONE |
-| 🟢 | Runtime errors with line numbers | interpreter.c | ⚠️ Already has (basic) |
-
-### Phase 4: Advanced Features ✅
-
-| Priority | Item | Files | Status |
-|----------|------|-------|--------|
-| 🔵 | Bytecode compiler + VM | compiler/vm/ | ✅ DONE |
-| 🔵 | Modules / import system | | TODO |
-| 🔵 | Structs / records | | TODO |
-| 🔵 | Pattern matching | | TODO |
-| 🔵 | Algebraic Data Types (ADTs) | | TODO |
+| Онцлог | Синтакс | Жишээ |
+|--------|---------|--------|
+| Хувьсагч | `let x = 5` | `let x = 5` |
+| Арифметик | `+`, `-`, `*`, `/`, `%` | `x + y * z` |
+| Харьцуулалт | `>`, `<`, `>=`, `<=`, `==`, `!=` | `if x > 0 { ... }` |
+|，布л | `and`, `or`, `not` | `if a and b { ... }` |
+| `if` / `else` | `if x > 0 { ... } else { ... }` | `if x > 0 { " их " } else { " бага " }` |
+| `else if` | `else if` гинж | `else if x > 5 { ... } else { ... }` |
+| `while` давталт | `while(condition) { body }` | `while i < 10 { i = i + 1 }` |
+| `for` давталт | `for(init; condition; update) { body }` | `for let i = 0; i < 3; i = i + 1 { ... }` |
+| Функц | `fn name(params) { body }` | `fn add(a, b) { return a + b }` |
+| `return` | `return expression` | `return a + b` |
+| `print` | `print(value)` | `print("Hello")` |
+| Дахин оноох | `x = new_value` | `x = 10` |
+| `+=`, `-=`, `*=`, `/=` | `x += 1` | `x += 5` |
+| Массив | `[1, 2, 3]` | `let arr = [1, 2, 3]` |
+| Массив хандалт | `arr[i]` | `arr[0]` |
+| Тэмдэгт нийлэх | `"a" + "b"` | `"Hello " + "World"` |
+| Тэмдэгт орлоос | `\n`, `\t`, `\\`, `\"` | `"Hello\nWorld"` |
+| `len()` | `len(s)` | `len("abc")` |
+| `input()` | `input()` | `let name = input()` |
+| `to_int()` | `to_int(s)` | `to_int("42")` |
+| `to_float()` | `to_float(s)` | `to_float("3.14")` |
+| `to_str()` | `to_str(n)` | `to_str(42)` |
+| `float` тоо | `3.14159` | `let pi = 3.14` |
+| `null`/`nil` | `let x = null` | `let x = nil` |
+| `break` | `break` | `while i < 10 { if i == 5 { break } }` |
+| `continue` | `continue` | `while i < 10 { i = i + 1; if i == 3 { continue } }` |
+| Хүрээлэл | `{ let x = 10 ... }` | Хувьсагч хүрээлэх |
 
 ---
 
-## Long-Term Vision
+## CLI хэрэглээ
 
-These are aspirational features that define Hunnu's future direction.
+```bash
+# Эх код ажиллуулах (interpreter)
+./hunnu run examples/main.hn
 
-### Self-Hosting (Bootstrap)
-A language should be able to implement itself. Once Hunnu is mature:
-- Rewrite compiler/interpreter in Hunnu
-- Create trusted bootchain
-- Enable metaprogramming and macros
+# VM-ээр ажиллуулах
+./hunnu run examples/main.hn --vm
 
-### Polish Notation (Prefix Syntax)
-Alternative syntax mode for metaprogramming:
+# Bytecode гаргах
+./hunnu build examples/main.hn
 
-```hunnu
-+ 5 3                    # 5 + 3
-* + 2 3 4                # (2 + 3) * 4
-if > x 0 { + x 1 }       # if x > 0 { x + 1 }
+# Токенүүд хэвлэх (debug)
+./hunnu run examples/main.hn --debug
+
+# AST хэвлэх (debug)
+./hunnu ast examples/main.hn
 ```
 
-Benefits:
-- No operator precedence ambiguity
-- Uniform syntax = simpler parser
-- Code is data (homoiconic)
-- Opens door to Lisp-style macros
+---
 
-### Functional Programming Features
-Inspired by Elixir, Lean, and Haskell:
+## Фаз
+
+### Phase 1: Үндсэн засварууд ✅
+*2025 оны 4-р сар*
+
+| # | Онцлог | Тайлбар |
+|----|--------|---------|
+| 1 | Хувьсагч хүрээлэл (scope stack) | `{ ... }` дотор хувьсагч |
+| 2 | `break`/`continue` | Давталтаас гарах |
+| 3 | Массив хязгаар шалгах | `arr[i]` IndexError |
+| 4 | Тэмдэгт санах ой | Dangling pointer засах |
+
+**Файлууд:** `interpreter.c`, `parser.c`
+
+### Phase 2: Түлхүүр онцлогууд ✅
+*2025 оны 4-р сар*
+
+| # | Онцлог | Тайлбар |
+|----|--------|---------|
+| 1 | `+=`, `-=`, `*=`, `/=` | Нийлэх, хасах, үржүүлэх, хуваах |
+| 2 | `else if` гинж | Олон нөхцөл шалгах |
+| 3 | `float` тоо | `3.14`, `2.0` |
+| 4 | `null`/`nil` | `let x = null` |
+
+**Файлууд:** `lexer.c`, `token.h`, `parser.c`, `interpreter.c`
+
+### Phase 3: Стандарт сан + DX ✅
+*2025 оны 4-р сар*
+
+| # | Онцлог | Тайлбар |
+|----|--------|---------|
+| 1 | `input()` | Стандарт оролдсон |
+| 2 | `to_int()`, `to_float()`, `to_str()` | Төрөл шилжүүлэх |
+| 3 | `--debug` | Токен, AST хэвлэх |
+
+**Файлууд:** `interpreter.c`, `cli/main.c`
+
+### Phase 4: Bytecode + VM ✅
+*2025 оны 4-р сар*
+
+| # | Онцлог | Тайлбар |
+|----|--------|---------|
+| 1 | Bytecode компилятор | AST → bytecode |
+| 2 | Virtual Machine | Bytecode ажиллуулах |
+| 3 | `build` команды | Bytecode гаргах |
+| 4 | `--vm` туг | VM ажиллуулах |
+
+**Файлууд:** `compiler/vm/`
+
+---
+
+## Дараагийн алхсууд
+
+### Түлхүүр (2025)
+
+| # | Онцлог | Тайлбар |
+|----|--------|---------|
+| 1 | Модуль/`import` | Файлууд хооронд импорт |
+| 2 | Стандарт сан | нийтлэг функцүүд |
+
+### Дунд (2026+)
+
+| # | Онцлог | Тайлбар |
+|----|--------|---------|
+| 1 | Struct/Record | `type Point = { x: int, y: int }` |
+| 2 | Pattern matching | `match x { ... }` |
+| 3 | ADT (Sum type) | `type Maybe[T] = Just(T) \| Nothing` |
+
+### Алсын хараа
+
+| # | Онцлог | Тайлбар |
+|----|--------|---------|
+| 1 | Self-hosting | Хэлээ өөрөө бичигдсэн |
+| 2 | JIT | JIT компиляц |
+| 3 | AOT | Бинар гаралт |
+
+---
+
+## Жишээ код
+
+### Hello World
 
 ```hunnu
-# Pattern matching
-match x {
-    [] -> "empty"
-    [head, ...rest] -> "head: " + str(head)
+fn main() {
+    print("Hello, World!")
+}
+```
+
+### Фибоначчи
+
+```hunnu
+fn fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
 }
 
-# Pipe operator
-x |> double |> add(5) |> str
-
-# Guards
-fib(n) where n > 1 -> fib(n-1) + fib(n-2)
-
-# Lazy evaluation
-let lazy_val = lazy expensive_compute()
+fn main() {
+    print(fib(10))  // 55
+}
 ```
 
-### Flexible Type System
-Balance compile-time safety with runtime flexibility:
+### Массивтай ажиллах
 
 ```hunnu
-# Gradual typing (optional annotations)
-let x = 5              # inferred as int
-let y: int = 5         # explicitly typed
-
-# Structural types
-let point = { x: 5, y: 10 }  # inferred as { x: int, y: int }
-
-# Protocols/Traits
-protocol Printable {
-    fn format(self) -> string
+fn main() {
+    let numbers = [10, 20, 30, 40, 50]
+    print(numbers[0])  // 10
+    print(len(numbers))  // 5
 }
-
-# ADTs (sum types)
-type Maybe[T] = Just(T) | Nothing
-type List[T] = Cons(T, List[T]) | Nil
-
-# Dependent types (stretch goal)
-type Vec[T, n: int] = ...  # vector of length n
 ```
 
-### Error Handling Model
-Move toward explicit, pattern-matching-based errors:
+### While давталт
 
 ```hunnu
-# Result types
-let result = parse_int("42")
-match result {
-    Ok(n) -> n * 2
-    Err(e) -> handle_error(e)
+fn main() {
+    let i = 0
+    let sum = 0
+    while i < 10 {
+        i = i + 1
+        sum = sum + i
+    }
+    print(sum)  // 55
 }
-
-# Supervision trees for fault-tolerant systems
 ```
-
----
-
-## Implementation Order
-
-```
-Phase 1 (Foundation)      Phase 2 (Core)         Phase 3 (Lib/DX)        Phase 4 (Advanced)
-─────────────────────      ──────────────         ────────────────        ──────────────────
-┌─────────────────┐        ┌─────────────┐        ┌───────────────┐        ┌─────────────┐
-│ Scoped envs     │        │ += -= *= /= │        │ input()       │        │ Bytecode VM │
-│ break/continue  │──────▶│ else if     │───────▶│ str/int()     │───────▶│ Modules     │
-│ Array bounds    │        │ Float nums  │        │ CLI debug flag│        │ Structs     │
-│ String memory   │        │ null/nil    │        │ Line errors   │        │ Pattern mat │
-└─────────────────┘        │ String esc  │        └───────────────┘        │ ADTs        │
-                           └─────────────┘                                   └─────────────┘
-                                                                                    │
-                                                                                    ▼
-                              Self-hosting ◀────────────── Polish notation ◀───────┤
-                                                                                    │
-                              Flexible types ◀────────────── Functional features ◀──┘
-```
-
----
-
-## Files Map
-
-| Component | Files | Purpose |
-|-----------|-------|---------|
-| Lexer | `compiler/lexer/lexer.c`, `compiler/lexer/token.h` | Tokenization |
-| Parser | `compiler/parser/parser.c`, `compiler/parser/parser.h` | AST construction |
-| AST | `compiler/ast/ast.h`, `compiler/ast/ast.c` | Node definitions |
-| Interpreter | `compiler/interpreter/interpreter.c` | Tree-walk execution |
-| Bytecode Compiler | `compiler/vm/compiler.c`, `compiler/vm/opcodes.h` | AST to bytecode |
-| Virtual Machine | `compiler/vm/vm.c` | Bytecode execution |
-| CLI | `cli/main.c`, `cli/cli.h` | Command-line interface |
-
----
-
-## Notes
-
-- Build: `cd build && make && ./hunnu run examples/main.hn`
-- Always test after changes
-- Run valgrind on memory-related issues: `valgrind --leak-check=full ./hunnu run test.hn`
-- Check for existing tokens before adding new ones (`token.h`)
-
-## Phase 1 Fixes Summary
-
-### Variable Scoping (Scope Stack)
-Replaced flat global namespace with a scope chain:
-- `Scope` struct with parent pointer for chain traversal
-- `scope_lookup()` searches up the chain (variable shadowing works)
-- `scope_define()` only defines in current scope (new `let` shadows outer)
-- Block bodies use current scope (no new scope for while/for loops)
-- Block statements create new scope (for `let` declarations inside `{}`)
 
 ### break/continue
-- Added `AST_BREAK_STMT` and `AST_CONTINUE_STMT` AST node types
-- Parser handles `break` and `continue` keywords
-- Interpreter uses `has_break` and `has_continue` flags
-- While/for loops check flags after body execution
-- `continue` clears flag and re-evaluates condition
-- `break` exits the loop entirely
 
-### Memory Fixes
-- **Parser dangling pointer**: `ast_call_expr_create()` for `len()` was receiving address of local variable — fixed by allocating args array on heap
-- **value_copy for strings**: Deep copies string to prevent double-free
-- **value_free for arrays**: Only frees array_elements pointer, not individual elements (shallow ownership)
+```hunnu
+fn main() {
+    let i = 0
+    let count = 0
+    while i < 10 {
+        i = i + 1
+        if i == 3 { continue }
+        if i == 8 { break }
+        count = count + 1
+    }
+    print(count)  // 6
+}
+```
+
+### Төрөл шилжүүлэх
+
+```hunnu
+fn main() {
+    let x = "42"
+    let n = to_int(x)
+    print(n + 1)  // 43
+
+    let f = to_float("3.14")
+    print(f * 2)  // 6.28
+
+    let s = to_str(123)
+    print(s + "456")  // 123456
+}
+```
+
+---
+
+## Файлын бүтэц
+
+```
+hunnu-lang/
+├── compiler/
+│   ├── lexer/          # Токенчлог
+│   │   ├── lexer.c
+│   │   └── token.h
+│   ├── parser/        # Парсер (AST)
+│   │   ├── parser.c
+│   │   └── parser.h
+│   ├── ast/          # AST төрөл
+│   │   ├── ast.c
+│   │   └── ast.h
+│   ├── interpreter/  # Уламжлалт тоглогч
+│   │   ├── interpreter.c
+│   │   └── interpreter.h
+│   └── vm/          # Bytecode + VM
+│       ├── opcodes.h
+│       ├── compiler.c
+│       ├── compiler.h
+│       ├── vm.c
+│       └── vm.h
+├── cli/              # CLI
+│   ├── main.c
+│   └── cli.h
+├── examples/         # Жишээ код
+└── CMakeLists.txt
+```
+
+---
+
+## Хөгжлийн түүх
+
+```
+2025-04  Phase 1: Үндсэн засварууд
+2025-04  Phase 2: Түлхүүр онцлогууд
+2025-04  Phase 3: Стандарт сан + DX
+2025-04  Phase 4: Bytecode + VM
+```
+
+---
+
+## Холбоо
+
+- Вэб: https://hunnu-lang.dev
+- GitHub: https://github.com/hunnu-labs/hunnu-lang
+
+MIT License © 2025 Hunnu
