@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Хүннү language project.
+All notable changes to the Hunnu language project.
 
 ---
 
@@ -55,7 +55,6 @@ OP_RETURN             // return from function
 - `compiler/vm/vm.h` - VM header
 - `compiler/vm/vm.c` - VM execution
 - Updated `cli/main.c`, `cli/cli.h` - new commands and flags
-- Updated `interpreter/interpreter.c`, `interpreter/interpreter.h` - value creation helpers
 
 ---
 
@@ -123,13 +122,6 @@ let y = nil
 #### String Escapes
 - Full escape sequence support: `\n`, `\t`, `\\`, `\"`
 
-```hunnu
-print("Hello\nWorld")       // newline
-print("Tab\there")          // tab
-print("Quote: \"test\"")     // escaped quote
-print("Backslash: \\")      // escaped backslash
-```
-
 ---
 
 ### Phase 1: Foundation Fixes ✅
@@ -139,33 +131,41 @@ print("Backslash: \\")      // escaped backslash
 - Replaced flat global namespace with scope chain
 - Block-scoped variables with proper shadowing
 
-```hunnu
-let x = 10              // global scope
-{
-    let x = 20          // shadows outer x
-    print(x)            // 20
-}
-print(x)                // 10 (outer x preserved)
-```
-
 #### break/continue
 - Full implementation with signal flags
-
-```hunnu
-let i = 0
-while i < 10 {
-    i = i + 1
-    if i == 5 { break }
-    if i == 3 { continue }
-    print(i)
-}
-// Prints: 1, 2, 4
-```
 
 #### Memory Fixes
 - Parser dangling pointer bug fixed
 - String deep copy implemented
-- Array element ownership clarified
+
+---
+
+### Mongolian Keywords ✅
+*Added: April 2025*
+
+Hunnu now supports both English and Mongolian (Cyrillic) keywords:
+
+| English | Mongolian |
+|---------|-----------|
+| `let` | `хувьсагч` |
+| `fn` | `функц` |
+| `if` | `хэрвээ` |
+| `true` | `үнэн` |
+| `false` | `худал` |
+| `print` | `хэвлэх` |
+| `while` | `давталт` |
+| `for` | `тооллого` |
+| `return` | `буцаах` |
+| `break` | `зогсоох` |
+| `continue` | `үргэлжлүүлэх` |
+| `null` | `хоосон` |
+
+```hunnu
+функц main() {
+    хувьсагч тоо = 10
+    хэвлэх(тоо)
+}
+```
 
 ---
 
@@ -175,13 +175,12 @@ while i < 10 {
 - Comparison: `>`, `<`, `>=`, `<=`, `==`, `!=`
 - Boolean: `and`, `or`, `not`
 - If/else statements
-- While loops: `while(condition) { body }`
-- For loops: `for(init; condition; update) { body }`
-- Functions: `fn name(param) { body }`
-- Return statements: `return expression`
-- Print: `print(value)`
-- Variable reassignment: `x = new_value`
-- Arrays: `[1, 2, 3]` + indexing `arr[i]`
-- String concatenation: `"Hello" + "World"`
+- While loops
+- For loops
+- Functions
+- Return statements
+- Print
+- Variable reassignment
+- Arrays + indexing
+- String concatenation
 - `len()` built-in function
-- First-class function calls (by name)

@@ -1,6 +1,6 @@
 # Future Improvements
 
-> Potential enhancements for Хүннү beyond the MVP.
+> Potential enhancements for Hunnu beyond the MVP.
 
 ---
 
@@ -57,7 +57,7 @@ type List[T] = Cons(T, List[T]) | Nil
 - **IDE integration** — LSP server
 
 ### Lower Priority
-- **Self-hosting** — implement compiler in Хүннү
+- **Self-hosting** — implement compiler in Hunnu
 - **JIT compilation** — just-in-time code generation
 - **AOT compilation** — ahead-of-time binary output
 

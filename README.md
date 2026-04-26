@@ -1,4 +1,4 @@
-# Хүннү
+# Hunnu
 
 A lightweight, expression-oriented programming language written in C.
 
@@ -25,6 +25,25 @@ A lightweight, expression-oriented programming language written in C.
 | String len | `len(s)` | `len(s)` |
 | Floats | `let pi = 3.14159` | `let pi = 3.14` |
 | null/nil | `let x = null` | `let x = null` |
+
+### Mongolian Keywords
+
+Hunnu supports both English and Mongolian keywords:
+
+| English | Mongolian (Cyrillic) |
+|---------|---------------------|
+| `let` | `хувьсагч` |
+| `fn` | `функц` |
+| `if` | `хэрвээ` |
+| `true` | `үнэн` |
+| `false` | `худал` |
+| `print` | `хэвлэх` |
+| `while` | `давталт` |
+| `for` | `тооллого` |
+| `return` | `буцаах` |
+| `break` | `зогсоох` |
+| `continue` | `үргэлжлүүлэх` |
+| `null` | `хоосон` |
 
 ---
 
@@ -74,99 +93,6 @@ fn main() {
 }
 ```
 
-### For Loop with Break and Continue
-
-```hunnu
-fn main() {
-    let i = 0
-    let count = 0
-    while i < 10 {
-        i = i + 1
-        if i == 5 { continue }
-        if i == 8 { break }
-        count = count + 1
-    }
-    print(count)  // 6
-}
-```
-
-### Compound Assignment
-
-```hunnu
-fn main() {
-    let x = 10
-    x += 5
-    x -= 3
-    x *= 2
-    print(x)  // 24
-}
-```
-
-### else if Chains
-
-```hunnu
-fn main() {
-    let score = 85
-    if score >= 90 {
-        print("A")
-    } else if score >= 80 {
-        print("B")
-    } else if score >= 70 {
-        print("C")
-    } else {
-        print("F")
-    }
-}
-```
-
-### Floating Point
-
-```hunnu
-fn main() {
-    let pi = 3.14159
-    let r = 2.0
-    print(pi * r * r)  // 12.5664
-    print(10 + 3.5)    // 13.5
-}
-```
-
-### String Escapes
-
-```hunnu
-fn main() {
-    print("Hello\nWorld")       // newline
-    print("Tab\there")           // tab
-    print("Quote: \"test\"")      // escaped quote
-    print("Backslash: \\")       // escaped backslash
-}
-```
-
-### Scoped Variables
-
-```hunnu
-fn main() {
-    let x = 10
-    {
-        let x = 20          // shadows outer x
-        print(x)            // 20
-    }
-    print(x)                // 10
-}
-```
-
-### Functions
-
-```hunnu
-fn add(a, b) {
-    return a + b
-}
-
-fn main() {
-    let result = add(5, 3)
-    print(result)
-}
-```
-
 ### Arrays
 
 ```hunnu
@@ -177,17 +103,19 @@ fn main() {
 }
 ```
 
-### Strings
+### Mongolian Keywords
 
 ```hunnu
-fn main() {
-    let greeting = "Hello, "
-    let name = "World"
-    let message = greeting + name
-    print(message)
+функц main() {
+    хувьсагч тоо = 10
+    хувьсагч бусад = 50
+    хэвлэх(тоо)
     
-    let s = "Хүннү"
-    print(len(s))
+    хэрвээ тоо > 5 {
+        хэвлэх("greater than 5")
+    } бусад {
+        хэвлэх("less than 5")
+    }
 }
 ```
 
@@ -224,4 +152,4 @@ See [`plan.md`](plan.md) for the full development roadmap.
 
 ## License
 
-MIT License
+MIT
