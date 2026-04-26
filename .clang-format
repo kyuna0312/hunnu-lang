@@ -1,0 +1,46 @@
+---
+# Hunnu C Code Style Configuration
+# Based on Linux kernel style with modifications for this project
+
+Language: C
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+
+# Brace wrapping
+BreakBeforeBraces: Linux
+
+# Function definitions
+FixNamespaceComments: true
+
+# Comments
+ReflowComments: true
+
+# Indentation
+IndentCaseLabels: false
+IndentPPDirectives: AfterHeader
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+
+# Alignment
+PointerAlignment: Left
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+
+# Line breaking
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# Includes
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# Other
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false

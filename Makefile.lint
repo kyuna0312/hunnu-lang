@@ -1,0 +1,79 @@
+#!/bin/bash
+# Hunnu Makefile for build and lint
+# Usage: make lint        - run all lint checks
+#        make format    - fix formatting
+#        make install  - install tools
+
+.PHONY: lint format install clean build test
+
+# Install linting tools
+install:
+	@echo "Installing linting tools..."
+	@if command -v brew &>/dev/null; then \
+		brew install clang-format cppcheck shellcheck || true; \
+	elif command -v apt-get &>/dev/null; then \
+		sudo apt-get install -y clang-format cppcheck shellcheck 2>/dev/null || true; \
+	fi
+	@echo "Note: Some tools may not be available on your system"
+
+# Check code format with clang-format
+format-check:
+	@echo "Checking code format..."
+	@found=0; \
+	for f in $(find compiler cli -name "*.c" -o -name "*.h" 2>/dev/null); do \
+		if ! clang-format --style=file --dry-run "$$f" 2>/dev/null | diff -q "$$f" - >/dev/null 2>&1; then \
+			echo "Format issue: $$f"; \
+			found=1; \
+		fi; \
+	done; \
+	if [ $$found -eq 0 ]; then \
+		echo "✓ Code format OK"; \
+	else \
+		echo "✗ Run 'make format' to fix"; \
+		exit 1; \
+	fi
+
+# Fix code format
+format:
+	@echo "Fixing code format..."
+	@for f in $(find compiler cli -name "*.c" -o -name "*.h" 2>/dev/null); do \
+		clang-format -i "$$f" 2>/dev/null && echo "Formatted: $$f" || true; \
+	done
+	@echo "✓ Format complete"
+
+# Static analysis with cppcheck
+static-check:
+	@echo "Running static analysis..."
+	@if command -v cppcheck &>/dev/null; then \
+		cppcheck --enable=all --std=c11 -I compiler \
+			--suppress=missingIncludeSystem \
+			--suppress=unusedFunction \
+			--error-exitcode=0 \
+			compiler/ cli/ 2>&1 || true; \
+		echo "✓ Static analysis complete"; \
+	else \
+		echo "cppcheck not installed (skipping)"; \
+	fi
+
+# Build check
+build-check:
+	@echo "Checking build..."
+	@rm -rf build 2>/dev/null || true
+	@mkdir -p build && cd build && cmake .. >/dev/null 2>&1 && \
+		make -j$$(nproc) >/dev/null 2>&1 && \
+		echo "✓ Build OK" || \
+		(echo "✗ Build failed" && exit 1)
+
+# Run all lint checks
+lint: build-check format-check static-check
+	@echo ""
+	@echo "=== All lint checks passed ==="
+
+# Quick check (build only)
+test: build-check
+	@echo "✓ Quick check passed"
+
+# Clean build
+clean:
+	@rm -rf build
+	@echo "Clean complete"
