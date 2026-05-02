@@ -56,6 +56,8 @@ typedef enum {
     OP_CALL,
     OP_RETURN,
     
+    OP_DEFINE_FN,
+    
     OP_HALT
 } OpCode;
 

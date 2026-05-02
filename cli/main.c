@@ -196,7 +196,8 @@ void print_usage(const char* prog_name) {
     printf("\nOptions:\n");
     printf("  -v, --version   Show version information\n");
     printf("  -h, --help     Show this help message\n");
-    printf("  --vm           Use bytecode VM (for run command)\n");
+    printf("  --vm           Use C bytecode VM (for run command)\n");
+    printf("  --vm-rust      Use Rust bytecode VM (for run command)\n");
     printf("  --debug        Enable debug output (for run command)\n");
     printf("\nExamples:\n");
     printf("  %s run examples/main.hn\n", prog_name);
@@ -214,7 +215,7 @@ void print_version(void) {
     printf("%s\n", version_get_description());
 }
 
-int cmd_run(const char* filename, int debug, int use_vm) {
+int cmd_run(const char* filename, int debug, int use_vm, int use_vm_rust) {
     int source_size = 0;
     char* source = read_source_with_imports(filename, &source_size);
     if (!source) {
@@ -254,7 +255,29 @@ int cmd_run(const char* filename, int debug, int use_vm) {
 
     int result;
     
-    if (use_vm) {
+    if (use_vm_rust) {
+        // Compile to bytecode and pipe to Rust VM
+        CompiledProgram* compiled = compile_program(program);
+        
+        // Write to temporary file
+        const char* temp_file = "/tmp/hunnu_bytecode.bin";
+        if (compiled_program_write(compiled, temp_file) != 0) {
+            fprintf(stderr, "Error: Failed to write bytecode\n");
+            compiled_program_free(compiled);
+            ast_free(program);
+            lexer_free(lexer);
+            free(source);
+            return 1;
+        }
+        
+        // Execute Rust VM
+        char cmd[512];
+        snprintf(cmd, sizeof(cmd), "cd %s/vm-rust && cargo run -- %s", 
+                 getenv("PWD") ? getenv("PWD") : ".", temp_file);
+        result = system(cmd);
+        
+        compiled_program_free(compiled);
+    } else if (use_vm) {
         CompiledProgram* compiled = compile_program(program);
         if (debug) {
             compiled_program_print(compiled);
@@ -270,7 +293,7 @@ int cmd_run(const char* filename, int debug, int use_vm) {
     ast_free(program);
     lexer_free(lexer);
     free(source);
-
+    
     return result;
 }
 
@@ -348,14 +371,17 @@ int main(int argc, char* argv[]) {
         }
         int debug = 0;
         int use_vm = 0;
+        int use_vm_rust = 0;
         for (int i = 3; i < argc; i++) {
             if (strcmp(argv[i], "--debug") == 0 || strcmp(argv[i], "-d") == 0) {
                 debug = 1;
             } else if (strcmp(argv[i], "--vm") == 0 || strcmp(argv[i], "-v") == 0) {
                 use_vm = 1;
+            } else if (strcmp(argv[i], "--vm-rust") == 0) {
+                use_vm_rust = 1;
             }
         }
-        return cmd_run(argv[2], debug, use_vm);
+        return cmd_run(argv[2], debug, use_vm, use_vm_rust);
     }
 
     if (strcmp(argv[1], "tokens") == 0) {

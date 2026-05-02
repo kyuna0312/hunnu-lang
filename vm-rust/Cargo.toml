@@ -4,4 +4,12 @@ version = "0.1.0"
 edition = "2021"
 description = "Bytecode virtual machine for the Hunnu programming language"
 
+[[bin]]
+name = "hunnu-vm"
+path = "src/main.rs"
+
+[lib]
+name = "hunnu_vm"
+path = "src/lib.rs"
+
 [dependencies]

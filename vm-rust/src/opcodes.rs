@@ -39,6 +39,7 @@ pub enum OpCode {
     Call = 33,
     Return = 34,
     Halt = 35,
+    DefineFn = 36,
 }
 
 impl OpCode {
@@ -80,6 +81,7 @@ impl OpCode {
             33 => Some(OpCode::Call),
             34 => Some(OpCode::Return),
             35 => Some(OpCode::Halt),
+            36 => Some(OpCode::DefineFn),
             _ => None,
         }
     }

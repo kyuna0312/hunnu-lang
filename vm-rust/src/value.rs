@@ -1,6 +1,6 @@
 /// Value type representing runtime values in Hunnu
 /// Matches the C Value struct in compiler/interpreter/interpreter.h
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Int(i64),
     Float(f64),
@@ -28,7 +28,6 @@ impl Value {
                 if f.fract() == 0.0 {
                     print!("{}", f);
                 } else {
-                    // Remove trailing zeros
                     let s = format!("{}", f);
                     print!("{}", s);
                 }

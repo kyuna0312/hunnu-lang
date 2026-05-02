@@ -8,6 +8,7 @@
 
 #define STACK_MAX 256
 #define MAX_LOCALS 256
+#define MAX_FRAMES 64
 
 typedef struct {
     Value stack[STACK_MAX];
@@ -19,6 +20,19 @@ typedef struct {
     CompiledProgram* program;
     size_t ip;
 } VM;
+
+typedef struct {
+    size_t ip;
+    Value locals[MAX_LOCALS];
+    int local_count;
+    size_t return_ip;
+} CallFrame;
+
+typedef struct {
+    const char* name;
+    size_t entry_point;
+    uint8_t arg_count;
+} Function;
 
 static void vm_init(VM* vm) {
     vm->stack_count = 0;
@@ -198,7 +212,7 @@ static void vm_call_builtin(VM* vm, const char* name, int arg_count) {
     }
 }
 
-static void vm_run(VM* vm) {
+static int vm_run(VM* vm, CallFrame* frames, int* frame_count, Function* functions, int function_count) {
     uint8_t* bytecode = vm->program->code.bytecode;
     size_t count = vm->program->code.count;
     
@@ -306,7 +320,7 @@ static void vm_run(VM* vm) {
             
             case OP_GET_LOCAL: {
                 uint8_t idx = bytecode[vm->ip++];
-                if (idx < vm->local_count) {
+                if (idx < (uint8_t)vm->local_count) {
                     vm_push(vm, vm->locals[idx]);
                 } else {
                     Value v = value_create_none();
@@ -318,8 +332,7 @@ static void vm_run(VM* vm) {
             case OP_SET_LOCAL: {
                 uint8_t idx = bytecode[vm->ip++];
                 Value* v_ptr = vm_peek(vm);
-                /* uint8_t is always 0-255, within MAX_LOCALS limit */
-                if (idx >= vm->local_count) {
+                if (idx >= (uint8_t)vm->local_count) {
                     vm->local_count = idx + 1;
                 }
                 vm->locals[idx] = *v_ptr;
@@ -328,12 +341,12 @@ static void vm_run(VM* vm) {
             
             case OP_CREATE_ARRAY: {
                 uint8_t count = bytecode[vm->ip++];
-                Value Array = value_create_array(count);
+                Value array = value_create_array(count);
                 for (int i = count - 1; i >= 0; i--) {
-                    Array.array_elements[i] = (Value*)malloc(sizeof(Value));
-                    *Array.array_elements[i] = vm_pop(vm);
+                    array.array_elements[i] = (Value*)malloc(sizeof(Value));
+                    *array.array_elements[i] = vm_pop(vm);
                 }
-                vm_push(vm, Array);
+                vm_push(vm, array);
                 break;
             }
             
@@ -391,29 +404,117 @@ static void vm_run(VM* vm) {
                 uint8_t arg_count = bytecode[vm->ip++];
                 Value fn = vm_pop(vm);
                 if (fn.type == VALUE_STRING) {
-                    vm_call_builtin(vm, fn.value.string_value, arg_count);
+                    int found = 0;
+                    for (int i = 0; i < function_count; i++) {
+                        if (strcmp(functions[i].name, fn.value.string_value) == 0) {
+                            found = 1;
+                            size_t return_ip = vm->ip;
+                            
+                            // Save current state
+                            frames[*frame_count].ip = vm->ip;
+                            frames[*frame_count].local_count = vm->local_count;
+                            for (int j = 0; j < vm->local_count; j++) {
+                                frames[*frame_count].locals[j] = vm->locals[j];
+                            }
+                            frames[*frame_count].return_ip = return_ip;
+                            (*frame_count)++;
+                            
+                            // Set up new function call
+                            vm->ip = functions[i].entry_point;
+                            vm->local_count = 0;
+                            for (int j = 0; j < functions[i].arg_count; j++) {
+                                if (vm->stack_count > 0) {
+                                    vm->locals[j] = vm_pop(vm);
+                                    vm->local_count++;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        vm_call_builtin(vm, fn.value.string_value, arg_count);
+                    }
                 }
+                value_free(&fn);
                 break;
             }
             
             case OP_RETURN: {
-                return;
+                if (*frame_count <= 0) {
+                    return 0;
+                }
+                (*frame_count)--;
+                vm->ip = frames[*frame_count].return_ip;
+                vm->local_count = frames[*frame_count].local_count;
+                for (int j = 0; j < vm->local_count; j++) {
+                    vm->locals[j] = frames[*frame_count].locals[j];
+                }
+                break;
             }
             
             case OP_HALT: {
-                return;
+                return 0;
             }
             
             default:
                 break;
         }
     }
+    return 0;
 }
 
 int vm_execute(CompiledProgram* program) {
     VM vm;
     vm_init(&vm);
     vm.program = program;
-    vm_run(&vm);
-    return 0;
+    
+    CallFrame frames[MAX_FRAMES];
+    int frame_count = 0;
+    
+    Function functions[256];
+    int function_count = 0;
+    
+    // First pass: collect function definitions
+    uint8_t* bytecode = program->code.bytecode;
+    size_t count = program->code.count;
+    size_t ip = 0;
+    
+    while (ip < count) {
+        OpCode op = bytecode[ip++];
+        switch (op) {
+            case OP_DEFINE_FN: {
+                uint8_t name_idx = bytecode[ip++];
+                size_t entry = read_int64(bytecode, &ip);
+                uint8_t arg_count = bytecode[ip++];
+                if (program->constants[name_idx].type == VALUE_STRING) {
+                    functions[function_count].name = program->constants[name_idx].value.string_value;
+                    functions[function_count].entry_point = entry;
+                    functions[function_count].arg_count = arg_count;
+                    function_count++;
+                }
+                break;
+            }
+            case OP_CONSTANT_INT:
+            case OP_CONSTANT_FLOAT:
+                ip += 8;
+                break;
+            case OP_CONSTANT_STRING:
+                ip += 1;
+                break;
+            case OP_JUMP:
+            case OP_JUMP_IF_FALSE:
+                ip += 8;
+                break;
+            case OP_GET_LOCAL:
+            case OP_SET_LOCAL:
+            case OP_CREATE_ARRAY:
+            case OP_CALL:
+                ip += 1;
+                break;
+            default:
+                break;
+        }
+    }
+    
+    return vm_run(&vm, frames, &frame_count, functions, function_count);
 }

@@ -52,4 +52,12 @@ void disassemble_chunk(BytecodeChunk* chunk);
  */
 void compiled_program_print(CompiledProgram* program);
 
+/**
+ * @brief Write compiled program to binary file
+ * @param program Compiled program
+ * @param filename Output filename
+ * @return 0 on success, non-zero on failure
+ */
+int compiled_program_write(CompiledProgram* program, const char* filename);
+
 #endif

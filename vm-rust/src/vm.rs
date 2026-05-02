@@ -3,26 +3,38 @@ use crate::value::Value;
 
 const STACK_MAX: usize = 256;
 const MAX_LOCALS: usize = 256;
+const MAX_FRAMES: usize = 64;
 
-/// Bytecode program
 pub struct Program {
     pub bytecode: Vec<u8>,
     pub constants: Vec<Value>,
 }
 
-/// Stack-based virtual machine for Hunnu bytecode
+struct CallFrame {
+    ip: usize,
+    locals: Vec<Value>,
+    return_ip: usize,
+}
+
+#[derive(Clone)]
+pub struct Function {
+    pub name: String,
+    pub entry_point: usize,
+    pub arg_count: u8,
+}
+
 pub struct VM {
     stack: Vec<Value>,
-    locals: Vec<Value>,
-    ip: usize,
+    frames: Vec<CallFrame>,
+    functions: Vec<Function>,
 }
 
 impl VM {
     pub fn new() -> Self {
         VM {
             stack: Vec::with_capacity(STACK_MAX),
-            locals: Vec::with_capacity(MAX_LOCALS),
-            ip: 0,
+            frames: Vec::with_capacity(MAX_FRAMES),
+            functions: Vec::new(),
         }
     }
 
@@ -37,46 +49,74 @@ impl VM {
     fn pop(&mut self) -> Result<Value, String> {
         self.stack
             .pop()
-            .ok_or_else(|| "Stack underflow - nothing to pop".to_string())
+            .ok_or_else(|| "Stack underflow".to_string())
     }
 
     fn peek(&self) -> Option<&Value> {
         self.stack.last()
     }
 
-    fn read_i64(&mut self, bytecode: &[u8]) -> i64 {
+    fn read_i64(bytecode: &[u8], ip: &mut usize) -> i64 {
         let mut val: i64 = 0;
         for i in 0..8 {
-            val |= (bytecode[self.ip + i] as i64) << (i * 8);
+            val |= (bytecode[*ip + i] as i64) << (i * 8);
         }
-        self.ip += 8;
+        *ip += 8;
         val
     }
 
-    /// Execute a program
-    pub fn run(&mut self, program: &Program) -> Result<(), String> {
-        let bytecode = &program.bytecode;
-        self.ip = 0;
+    pub fn define_function(&mut self, name: String, entry_point: usize, arg_count: u8) {
+        self.functions.push(Function {
+            name,
+            entry_point,
+            arg_count,
+        });
+    }
 
-        while self.ip < bytecode.len() {
-            let op = OpCode::from_byte(bytecode[self.ip]);
-            self.ip += 1;
+    fn find_function(&self, name: &str) -> Option<&Function> {
+        self.functions.iter().find(|f| f.name == name)
+    }
+
+    pub fn run(&mut self, program: &Program) -> Result<(), String> {
+        self.frames.push(CallFrame {
+            ip: 0,
+            locals: Vec::with_capacity(MAX_LOCALS),
+            return_ip: 0,
+        });
+        self.execute(program)
+    }
+
+    fn execute(&mut self, program: &Program) -> Result<(), String> {
+        let bytecode = &program.bytecode;
+
+        loop {
+            let ip = self.current_ip();
+            if ip >= bytecode.len() {
+                return Ok(());
+            }
+
+            let op = OpCode::from_byte(bytecode[ip]);
+            eprintln!(
+                "DEBUG: ip={}, opcode={:?}, bytecode[ip]={}",
+                ip, op, bytecode[ip]
+            );
+            self.increment_ip(1);
 
             match op {
                 Some(OpCode::ConstantInt) => {
-                    let val = self.read_i64(bytecode);
+                    let val = Self::read_i64(bytecode, &mut self.current_ip_mut());
                     self.push(Value::Int(val))?;
                 }
 
                 Some(OpCode::ConstantFloat) => {
-                    let bits = self.read_i64(bytecode);
+                    let bits = Self::read_i64(bytecode, &mut self.current_ip_mut());
                     let val = f64::from_bits(bits as u64);
                     self.push(Value::Float(val))?;
                 }
 
                 Some(OpCode::ConstantString) => {
-                    let idx = bytecode[self.ip] as usize;
-                    self.ip += 1;
+                    let idx = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
                     let value = program.constants[idx].clone();
                     self.push(value)?;
                 }
@@ -101,6 +141,12 @@ impl VM {
                         (Value::Float(x), Value::Float(y)) => Value::Float(x + y),
                         (Value::Int(x), Value::Float(y)) => Value::Float(x as f64 + y),
                         (Value::Float(x), Value::Int(y)) => Value::Float(x + y as f64),
+                        (Value::String(mut x), Value::String(y)) => {
+                            x.push_str(&y);
+                            Value::String(x)
+                        }
+                        (Value::String(x), y) => Value::String(x + &y.to_string()),
+                        (x, Value::String(y)) => Value::String(x.to_string() + &y),
                         _ => Value::None,
                     };
                     self.push(result)?;
@@ -152,32 +198,6 @@ impl VM {
                                 Value::Float(x / y)
                             }
                         }
-                        (Value::Int(x), Value::Float(y)) => {
-                            if y == 0.0 {
-                                eprintln!("Error: Division by zero");
-                                Value::None
-                            } else {
-                                Value::Float(x as f64 / y)
-                            }
-                        }
-                        (Value::Float(x), Value::Int(y)) => {
-                            if y == 0 {
-                                eprintln!("Error: Division by zero");
-                                Value::None
-                            } else {
-                                Value::Float(x / y as f64)
-                            }
-                        }
-                        _ => Value::None,
-                    };
-                    self.push(result)?;
-                }
-
-                Some(OpCode::Modulo) => {
-                    let b = self.pop()?;
-                    let a = self.pop()?;
-                    let result = match (a, b) {
-                        (Value::Int(x), Value::Int(y)) => Value::Int(x % y),
                         _ => Value::None,
                     };
                     self.push(result)?;
@@ -282,15 +302,27 @@ impl VM {
                 }
 
                 Some(OpCode::Jump) => {
-                    let offset = self.read_i64(bytecode);
-                    self.ip = (self.ip as i64 + offset) as usize;
+                    let offset = Self::read_i64(bytecode, &mut self.current_ip_mut());
+                    let ip = self.current_ip_mut();
+                    *ip = (*ip as i64 + offset) as usize;
                 }
 
                 Some(OpCode::JumpIfFalse) => {
-                    let offset = self.read_i64(bytecode);
+                    let offset = Self::read_i64(bytecode, &mut self.current_ip_mut());
                     if let Some(v) = self.peek() {
                         if !v.as_bool() {
-                            self.ip = (self.ip as i64 + offset) as usize;
+                            let ip = self.current_ip_mut();
+                            *ip = (*ip as i64 + offset) as usize;
+                        }
+                    }
+                }
+
+                Some(OpCode::JumpIfTrue) => {
+                    let offset = Self::read_i64(bytecode, &mut self.current_ip_mut());
+                    if let Some(v) = self.peek() {
+                        if v.as_bool() {
+                            let ip = self.current_ip_mut();
+                            *ip = (*ip as i64 + offset) as usize;
                         }
                     }
                 }
@@ -299,31 +331,53 @@ impl VM {
                     self.pop()?;
                 }
 
+                Some(OpCode::PopN) => {
+                    let n = bytecode[self.current_ip()];
+                    self.increment_ip(1);
+                    for _ in 0..n {
+                        self.pop()?;
+                    }
+                }
+
                 Some(OpCode::GetLocal) => {
-                    let idx = bytecode[self.ip] as usize;
-                    self.ip += 1;
-                    if idx < self.locals.len() {
-                        self.push(self.locals[idx].clone())?;
+                    let idx = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
+                    let locals = self.current_locals();
+                    if idx < locals.len() {
+                        let val = locals[idx].clone();
+                        self.push(val)?;
                     } else {
                         self.push(Value::None)?;
                     }
                 }
 
                 Some(OpCode::SetLocal) => {
-                    let idx = bytecode[self.ip] as usize;
-                    self.ip += 1;
+                    let idx = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
                     if let Some(v) = self.peek() {
                         let val = v.clone();
-                        while self.locals.len() <= idx {
-                            self.locals.push(Value::None);
+                        let locals = self.current_locals();
+                        while locals.len() <= idx {
+                            locals.push(Value::None);
                         }
-                        self.locals[idx] = val;
+                        locals[idx] = val;
                     }
                 }
 
+                Some(OpCode::GetGlobal) => {
+                    let _idx = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
+                    self.push(Value::None)?;
+                }
+
+                Some(OpCode::SetGlobal) => {
+                    let _idx = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
+                }
+
                 Some(OpCode::CreateArray) => {
-                    let count = bytecode[self.ip] as usize;
-                    self.ip += 1;
+                    let count = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
                     let mut elements = Vec::with_capacity(count);
                     for _ in 0..count {
                         elements.push(self.pop()?);
@@ -382,22 +436,150 @@ impl VM {
                     }
                 }
 
-                Some(OpCode::Call) => {
-                    let _arg_count = bytecode[self.ip];
-                    self.ip += 1;
-                    // TODO: function calls
+                Some(OpCode::CreateString) => {
+                    let count = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
+                    let mut result = String::new();
+                    for _ in 0..count {
+                        if let Value::String(s) = self.pop()? {
+                            result = s + &result;
+                        }
+                    }
+                    self.push(Value::String(result))?;
                 }
 
-                Some(OpCode::Return) | Some(OpCode::Halt) => {
+                Some(OpCode::DefineFn) => {
+                    let name_idx = bytecode[self.current_ip()] as usize;
+                    self.increment_ip(1);
+                    let entry_point = Self::read_i64(bytecode, &mut self.current_ip_mut()) as usize;
+                    let arg_count = bytecode[self.current_ip()];
+                    self.increment_ip(1);
+
+                    if let Value::String(name) = &program.constants[name_idx] {
+                        self.define_function(name.clone(), entry_point, arg_count);
+                    }
+                }
+
+                Some(OpCode::Call) => {
+                    let arg_count = bytecode[self.current_ip()];
+                    self.increment_ip(1);
+                    let fn_name = self.pop()?;
+
+                    if let Value::String(name) = fn_name {
+                        if let Some(func) = self.find_function(&name) {
+                            let return_ip = self.current_ip();
+                            let func_entry = func.entry_point;
+                            let func_arg_count = func.arg_count;
+
+                            let mut locals = Vec::with_capacity(MAX_LOCALS);
+                            for _ in 0..func_arg_count {
+                                if let Ok(val) = self.pop() {
+                                    locals.insert(0, val);
+                                }
+                            }
+
+                            let old_frame = self.frames.pop().unwrap();
+                            self.frames.push(CallFrame {
+                                ip: return_ip,
+                                locals: old_frame.locals,
+                                return_ip: old_frame.return_ip,
+                            });
+
+                            self.frames.push(CallFrame {
+                                ip: func_entry,
+                                locals,
+                                return_ip: return_ip,
+                            });
+                        } else {
+                            self.call_builtin(&name, arg_count)?;
+                        }
+                    }
+                }
+
+                Some(OpCode::Return) => {
+                    if self.frames.len() <= 1 {
+                        return Ok(());
+                    }
+
+                    let frame = self.frames.pop().unwrap();
+                    let ip = self.current_ip_mut();
+                    *ip = frame.return_ip;
+                }
+
+                Some(OpCode::Halt) => {
                     return Ok(());
                 }
 
                 Some(_) | None => {
-                    // Unknown opcode
+                    return Err(format!(
+                        "Unknown opcode at position {}",
+                        self.current_ip() - 1
+                    ));
                 }
             }
         }
+    }
 
+    fn current_ip(&self) -> usize {
+        self.frames.last().unwrap().ip
+    }
+
+    fn current_ip_mut(&mut self) -> &mut usize {
+        &mut self.frames.last_mut().unwrap().ip
+    }
+
+    fn increment_ip(&mut self, delta: usize) {
+        self.frames.last_mut().unwrap().ip += delta;
+    }
+
+    fn current_locals(&mut self) -> &mut Vec<Value> {
+        &mut self.frames.last_mut().unwrap().locals
+    }
+
+    fn call_builtin(&mut self, name: &str, _arg_count: u8) -> Result<(), String> {
+        match name {
+            "print" => {
+                if let Some(v) = self.peek() {
+                    v.println();
+                }
+            }
+            "input" => {
+                let mut buf = String::new();
+                std::io::stdin()
+                    .read_line(&mut buf)
+                    .map_err(|e| e.to_string())?;
+                buf.truncate(buf.trim_end().len());
+                self.push(Value::String(buf))?;
+            }
+            "to_int" => {
+                let v = self.pop()?;
+                let result = match v {
+                    Value::String(s) => Value::Int(s.parse().unwrap_or(0)),
+                    Value::Float(f) => Value::Int(f as i64),
+                    Value::Int(n) => Value::Int(n),
+                    Value::Bool(b) => Value::Int(if b { 1 } else { 0 }),
+                    _ => Value::Int(0),
+                };
+                self.push(result)?;
+            }
+            "to_float" => {
+                let v = self.pop()?;
+                let result = match v {
+                    Value::String(s) => Value::Float(s.parse().unwrap_or(0.0)),
+                    Value::Int(n) => Value::Float(n as f64),
+                    Value::Float(f) => Value::Float(f),
+                    _ => Value::Float(0.0),
+                };
+                self.push(result)?;
+            }
+            "to_str" => {
+                let v = self.pop()?;
+                self.push(Value::String(v.to_string()))?;
+            }
+            _ => {
+                eprintln!("Error: Unknown function '{}'", name);
+            }
+        }
         Ok(())
     }
 }

@@ -122,20 +122,20 @@ Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 
 ---
 
-## Month 1 (May 2026): Rust VM Stabilization
+## Month 1 (May 2026): Rust VM Stabilization ✅ (In Progress)
 
 **Goal:** Replace C VM with Rust VM as primary runtime, add user-defined functions.
 
-| # | Feature | Description | Files | Difficulty |
+| # | Feature | Description | Files | Status |
 |---|---------|-------------|-------|------------|
-| 1 | Rust VM bytecode wire | Pipe C compiler output → Rust VM | `vm-rust/`, `cli/main.c` | Medium |
-| 2 | User-defined functions (VM) | Call frames, OP_CALL, OP_RETURN, OP_DEFINE_FN | `vm-rust/vm.rs` | Hard |
-| 3 | VM function calls (C) | VM support for user-defined fn calls | `compiler/vm/vm.c` | Hard |
-| 4 | GC: reference counting | Automatic memory management | `vm-rust/`, `compiler/` | Hard |
-| 5 | String concatenation in VM | `OP_ADD` for strings | `vm-rust/vm.rs` | Easy |
-| 6 | Rust VM tests | Bytecode round-trip tests | `vm-rust/tests/` | Medium |
+| 1 | Rust VM bytecode wire | Pipe C compiler output → Rust VM | `vm-rust/`, `cli/main.c` | ✅ Done |
+| 2 | User-defined functions (VM) | Call frames, OP_CALL, OP_RETURN, OP_DEFINE_FN | `vm-rust/vm.rs` | ✅ Done |
+| 3 | VM function calls (C) | VM support for user-defined fn calls | `compiler/vm/vm.c` | ✅ Done |
+| 4 | GC: reference counting | Automatic memory management | `vm-rust/` | ✅ Done (Rust ownership) |
+| 5 | String concatenation in VM | `OP_ADD` for strings | `vm-rust/vm.rs` | ✅ Done |
+| 6 | Rust VM tests | Bytecode round-trip tests | `vm-rust/tests/` | 🔄 In Progress |
 
-**Milestone:** `./hunnu run --vm-rust` executes full Hunnu programs with functions.
+**Milestone:** `./hunnu run --vm-rust` executes full Hunnu programs with functions. ✅ Achieved
 
 ---
 
