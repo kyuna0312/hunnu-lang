@@ -58,6 +58,37 @@ The path: C interpreter → Rust VM → AOT compiler → Kernel + ML ecosystem.
 
 ```
 Month 1 (May 2026)    Month 2 (Jun 2026)    Month 3 (Jul 2026)
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Rust VM      │     │  FFI Ecosystem │     │  AOT Compiler │
+│  GC / Memory  │  →  │  Standard Lib  │  →  │  Structs      │
+│  User Fn Calls│     │  Python Bind   │     │  Pointers     │
+│  ──────────── │     │  ────────────  │     │  ──────────── │
+│  Goal: Stable │     │  Goal: Usable  │     │  Goal: Native │
+│  Rust Runtime │     │  Language      │     │  Binaries     │
+└──────────────┘     └──────────────┘     └──────────────┘
+
+Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Generics     │     │  no_std / Bare │     │  Self-Hosting │
+│  Traits       │  →  │  Metal Target  │  →  │  Package Mgr  │
+│  FP: Patterns │     │  OOP: Classes  │     │  0.1 Release  │
+│  Modules      │     │  Boot Example  │     │  FP + OOP     │
+│  ──────────── │     │  ────────────  │     │  ──────────── │
+│  Goal: Type   │     │  Goal: Kernel  │     │  Goal: v0.1  │
+│  System       │     │  Prototype     │     │  Usable Lang  │
+└──────────────┘     └──────────────┘     └──────────────┘
+```
+
+### Functional Programming Integration
+- **Month 3-4:** First-class functions, lambdas, pattern matching
+- **Month 4:** Higher-order functions (map, filter, reduce)
+- **Month 6:** Full FP + OOP integration
+
+### Object-Oriented Programming Integration
+- **Month 3:** Structs with methods
+- **Month 4-5:** Classes, inheritance, polymorphism
+- **Month 6:** Complete OOP support with traits/interfaces
+Month 1 (May 2026)    Month 2 (Jun 2026)    Month 3 (Jul 2026)
 ┌───────────────┐     ┌───────────────┐     ┌───────────────┐
 │  Rust VM      │     │  FFI Ecosystem │     │  AOT Compiler │
 │  GC / Memory  │  →  │  Standard Lib  │  →  │  Structs      │
@@ -295,6 +326,117 @@ Month 1-2               Month 3-4               Month 5-6
 
 ---
 
+## Functional Programming Features
+
+**Goal:** Support functional programming paradigm with immutability, higher-order functions, and pattern matching.
+
+### Month 3-4 Additions
+
+| # | Feature | Description | Files | Difficulty |
+|---|---------|-------------|-------|------------|
+| 1 | Immutable variables | `let x = 5` (default), `mut` for mutable | `compiler/` | Medium |
+| 2 | First-class functions | Functions as values, closures | `compiler/` | Hard |
+| 3 | Higher-order functions | `map`, `filter`, `reduce` builtins | `stdlib/` | Medium |
+| 4 | Lambda expressions | `fn(x) { x + 1 }` or `|x| x + 1` | `compiler/` | Hard |
+| 5 | Pattern matching | `match` with destructuring | `compiler/` | Hard |
+| 6 | Tail call optimization | TCO for recursive functions | `compiler/` | Very Hard |
+| 7 | Immutability by default | Enforce immutable collections | `compiler/` | Hard |
+| 8 | Function composition | `f · g` or `compose(f, g)` | `stdlib/` | Easy |
+
+**Milestone:** `let doubled = map(arr, |x| x * 2); print(doubled)`
+
+### Functional Standard Library (`stdlib/fn.hn`)
+
+```hunnu
+// Higher-order functions
+fn map(arr, f) { ... }
+fn filter(arr, pred) { ... }
+fn reduce(arr, f, init) { ... }
+fn compose(f, g) { return fn(x) { f(g(x)) } }
+fn curry(f, ...args) { ... }
+
+// List operations
+fn head(list) { ... }
+fn tail(list) { ... }
+fn foldleft(list, f, acc) { ... }
+```
+
+---
+
+## Object-Oriented Programming Features
+
+**Goal:** Support OOP with classes, inheritance, polymorphism, and encapsulation.
+
+### Month 4-5 Additions
+
+| # | Feature | Description | Files | Difficulty |
+|---|---------|-------------|-------|------------|
+| 1 | Structs/Records | `type Point = { x: int, y: int }` | `compiler/` | Medium |
+| 2 | Methods | `point.distance(other)` syntax | `compiler/` | Hard |
+| 3 | Classes | `class Animal { ... }` with `new` | `compiler/` | Very Hard |
+| 4 | Inheritance | `class Dog extends Animal { ... }` | `compiler/` | Very Hard |
+| 5 | Polymorphism | Virtual method table (vtable) | `compiler/` | Very Hard |
+| 6 | Encapsulation | `public`/`private` visibility | `compiler/` | Medium |
+| 7 | Interfaces/Traits | `interface Drawable { ... }` | `compiler/` | Very Hard |
+| 8 | `this`/`self` | Reference to current instance | `compiler/` | Medium |
+| 9 | Static methods | `ClassName.method()` | `compiler/` | Easy |
+| 10 | Constructors | `init()` / `new()` special methods | `compiler/` | Medium |
+
+**Milestone:** `let dog = Animal.new(); dog.speak()`
+
+### OOP Standard Library (`stdlib/oop.hn`)
+
+```hunnu
+// Base class example
+class Animal {
+    let name = ""
+    
+    fn init(name) {
+        this.name = name
+    }
+    
+    fn speak() {
+        print("Animal sound")
+    }
+}
+
+class Dog extends Animal {
+    fn speak() {
+        print("Woof! I am " + this.name)
+    }
+}
+
+let dog = Dog.new("Buddy")
+dog.speak()  // Prints: Woof! I am Buddy
+```
+
+### OOP + Functional Integration
+
+Hunnu aims to be a **multi-paradigm** language:
+
+- Use **functional style** for data transformations (map, filter, reduce)
+- Use **OOP style** for modeling entities with state and behavior
+- **Mix and match**: pass methods as first-class functions, use immutability with objects
+
+```hunnu
+// Functional + OOP together
+class Processor {
+    let data = []
+    
+    fn init(data) { this.data = data }
+    
+    fn process() {
+        // Use functional style inside OOP method
+        return filter(this.data, |x| x > 10)
+    }
+}
+
+let p = Processor.new([5, 15, 3, 20])
+let result = p.process()  // [15, 20]
+```
+
+---
+
 ## Technology Choices
 
 | Component | Current | Month 3+ | Rationale |
@@ -350,8 +492,9 @@ hunnu-lang/
 │   ├── lexer/
 │   ├── parser/
 │   ├── ast/
-│   ├── typecheck/
-│   └── codegen/      # LLVM IR generation
+│   ├── typecheck/    # Type system + generics
+│   ├── codegen/      # LLVM IR generation
+│   └── opt/          # Optimizations (TCO, inlining)
 ├── vm-rust/          # Rust VM (interpreted mode)
 ├── kernel/           # Bare-metal kernel
 │   ├── boot.rs
@@ -362,11 +505,16 @@ hunnu-lang/
 │   ├── core.hn       # Primitives
 │   ├── io.hn         # I/O
 │   ├── math.hn       # Math
-│   └── array.hn      # Array utilities
+│   ├── array.hn      # Array utilities
+│   ├── fn.hn         # Functional helpers (map, filter, reduce)
+│   └── oop.hn        # OOP support (class, extend, this)
 ├── bindings/
 │   └── python/       # PyO3 bindings
 ├── cli/              # Unified CLI
-├── examples/
+├── examples/         # Sample programs
+│   ├── fp/           # Functional programming examples
+│   ├── oop/          # OOP examples
+│   └── mixed/        # FP + OOP mixed examples
 ├── benchmarks/
 ├── docs/
 ├── Cargo.toml
@@ -395,8 +543,11 @@ hunnu-lang/
 | 2 | Standard library modules available | 4+ modules |
 | 3 | Native binary from `hunnu compile` | "Hello World" |
 | 4 | Generic function compiles | `fn id[T](x: T) -> T` |
+| 4 | FP: Higher-order functions work | `map(arr, fn)` |
+| 4 | OOP: Classes and methods work | `class Dog { speak() }` |
 | 5 | QEMU boots Hunnu kernel | VGA text output |
 | 6 | `hunnu new` creates runnable project | Full cycle |
+| 6 | FP + OOP integration complete | Multi-paradigm |
 
 ---
 
