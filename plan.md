@@ -43,8 +43,9 @@ The path: C interpreter → Rust VM → AOT compiler → Kernel + ML ecosystem.
 ## CLI Usage
 
 ```bash
-./hunnu run examples/main.hn          # Interpreter
-./hunnu run examples/main.hn --vm     # C VM
+./hunnu run examples/main.hn          # Interpreter (C tree-walk)
+./hunnu run examples/main.hn --vm     # C VM (bytecode)
+./hunnu run examples/main.hn --vm-rust  # Rust VM (FFI integration)
 ./hunnu run examples/main.hn --debug  # Show tokens + AST
 ./hunnu build examples/main.hn        # Show bytecode
 ./hunnu tokens examples/main.hn       # Lexer debug
@@ -256,15 +257,16 @@ Month 1-2               Month 3-4               Month 5-6
 
 ## Technical Debt (Current)
 
-| Issue | Location | Severity | Fix Plan |
-|-------|----------|----------|----------|
-| No garbage collection | interpreter.c | High | Month 1: ref counting in Rust VM |
-| VM user-defined functions | vm.c, vm/compiler.c | High | Month 1: call frames |
-| Global-only variables | vm/compiler.c | Medium | Month 1: scope stack in VM |
-| Identifier resolution | vm/compiler.c | Medium | Month 1: symbol table |
-| Memory leaks in VM | vm.c | Medium | Month 1: Rust ownership model |
-| No type checking | parser.c | Low | Month 2: type checker pass |
-| Hardcoded builtin names | vm.c | Low | Month 2: builtin registry |
+| Issue | Location | Severity | Fix Plan | Status |
+|-------|----------|----------|----------|------------|
+| No garbage collection | interpreter.c | High | Month 1: ref counting in Rust VM | ✅ Fixed (Rust ownership) |
+| VM user-defined functions | vm.c, vm/compiler.c | High | Month 1: call frames | ✅ Fixed |
+| Global-only variables | vm/compiler.c | Medium | Month 1: scope stack in VM | ✅ Fixed |
+| Identifier resolution | vm/compiler.c | Medium | Month 1: symbol table | ✅ Fixed |
+| Memory leaks in VM | vm.c | Medium | Month 1: Rust ownership model | ✅ Fixed |
+| No type checking | parser.c | Low | Month 2: type checker pass | Pending |
+| Hardcoded builtin names | vm.c | Low | Month 2: builtin registry | Pending |
+| FFI integration | cli/main.c, vm-rust/ | Medium | Month 1: C + Rust FFI | ✅ Fixed |
 
 ---
 
@@ -299,30 +301,46 @@ Month 1-2               Month 3-4               Month 5-6
 |-----------|---------|----------|-----------|
 | Lexer/Parser | C | Rust | Safer, better error handling |
 | Interpreter | C (tree-walk) | Deprecated | VM is faster |
-| VM | C + Rust prototype | Rust | Ownership model eliminates leaks |
-| Compiler | — | LLVM + Rust | Native binary output |
+| VM | C + Rust (FFI) | Rust | Ownership model eliminates leaks |
+| Compiler | C (bytecode) | LLVM + Rust | Native binary output |
 | Kernel | — | Rust | no_std, safe systems code |
 | Python Bindings | — | PyO3 | Easy embedding |
 | Package Manager | — | Rust + Git | Cargo-style deps |
+
+### C + Rust Integration (Month 1 Completed)
+- C compiler generates bytecode from Hunnu source
+- Rust VM executes bytecode with memory safety (ownership model)
+- FFI (Foreign Function Interface) bridges C and Rust
+- Integrated CMake build system compiles both C and Rust together
+- CLI (`cli/main.c`) calls Rust VM via `hunnu_vm_run()` FFI function
 
 ---
 
 ## File Structure
 
-### Current
+### Current (Month 1 - Completed)
 ```
 hunnu-lang/
 ├── compiler/
-│   ├── lexer/          # Tokenizer (C)
-│   ├── parser/        # Parser (C)
-│   ├── ast/          # AST nodes (C)
-│   ├── interpreter/  # Tree-walk interpreter (C)
-│   └── vm/          # Bytecode compiler + VM (C)
+│   ├── ast/          # Abstract syntax tree definitions
+│   ├── interpreter/  # Runtime execution (C tree-walk)
+│   ├── lexer/       # Tokenization (lexer.c, token.h)
+│   ├── parser/       # Syntax analysis
+│   └── vm/           # Bytecode compiler + C VM
 ├── vm-rust/           # Rust VM [Month 1 focus]
+│   ├── src/
+│   │   ├── lib.rs     # FFI interface + tests
+│   │   ├── vm.rs     # VM implementation
+│   │   ├── opcodes.rs
+│   │   └── value.rs
+│   ├── include/
+│   │   └── hunnu_vm.h  # C header for FFI
+│   └── Cargo.toml
 ├── cli/              # Command-line interface
-├── examples/         # Example programs
-├── plan.md           # This file
-└── CMakeLists.txt
+├── examples/         # Sample .hn programs
+├── build/            # Build output (gitignored)
+├── CMakeLists.txt    # Integrated C + Rust build
+└── AGENTS.md         # Development guidelines (English-only rule)
 ```
 
 ### Target (Month 6)
