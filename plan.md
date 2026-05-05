@@ -122,7 +122,7 @@ Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 
 ---
 
-## Month 1 (May 2026): Rust VM Stabilization ✅ (In Progress)
+## Month 1 (May 2026): Rust VM Stabilization ✅ (Completed)
 
 **Goal:** Replace C VM with Rust VM as primary runtime, add user-defined functions.
 
@@ -133,9 +133,13 @@ Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 | 3 | VM function calls (C) | VM support for user-defined fn calls | `compiler/vm/vm.c` | ✅ Done |
 | 4 | GC: reference counting | Automatic memory management | `vm-rust/` | ✅ Done (Rust ownership) |
 | 5 | String concatenation in VM | `OP_ADD` for strings | `vm-rust/vm.rs` | ✅ Done |
-| 6 | Rust VM tests | Bytecode round-trip tests | `vm-rust/tests/` | 🔄 In Progress |
+| 6 | Rust VM tests | Bytecode round-trip tests | `vm-rust/src/lib.rs` | ✅ Done |
+| 7 | C + Rust FFI integration | Call Rust VM from C via FFI | `vm-rust/src/lib.rs`, `cli/main.c` | ✅ Done |
+| 8 | Integrated CMake build | Build C and Rust together | `CMakeLists.txt` | ✅ Done |
 
 **Milestone:** `./hunnu run --vm-rust` executes full Hunnu programs with functions. ✅ Achieved
+
+**Test Results:** 8/8 Rust VM tests passing ✅
 
 ---
 

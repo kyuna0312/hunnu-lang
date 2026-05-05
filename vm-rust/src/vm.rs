@@ -1,5 +1,6 @@
 use crate::opcodes::OpCode;
 use crate::value::Value;
+use std::io::Write;
 
 const STACK_MAX: usize = 256;
 const MAX_LOCALS: usize = 256;
@@ -23,21 +24,44 @@ pub struct Function {
     pub arg_count: u8,
 }
 
-pub struct VM {
+pub struct VM<W: Write> {
     stack: Vec<Value>,
     frames: Vec<CallFrame>,
     functions: Vec<Function>,
+    output: W,
 }
 
-impl VM {
-    pub fn new() -> Self {
+impl<W: Write> VM<W> {
+    pub fn new_with_output(output: W) -> Self {
         VM {
             stack: Vec::with_capacity(STACK_MAX),
             frames: Vec::with_capacity(MAX_FRAMES),
             functions: Vec::new(),
+            output,
         }
     }
 
+    pub fn get_output(&self) -> &W {
+        &self.output
+    }
+}
+
+impl VM<Vec<u8>> {
+    pub fn new() -> VM<Vec<u8>> {
+        VM {
+            stack: Vec::with_capacity(STACK_MAX),
+            frames: Vec::with_capacity(MAX_FRAMES),
+            functions: Vec::new(),
+            output: Vec::new(),
+        }
+    }
+
+    pub fn take_output(&mut self) -> String {
+        String::from_utf8(std::mem::take(&mut self.output)).unwrap_or_default()
+    }
+}
+
+impl<W: Write> VM<W> {
     fn push(&mut self, value: Value) -> Result<(), String> {
         if self.stack.len() >= STACK_MAX {
             return Err(format!("Stack overflow (max {} values)", STACK_MAX));
@@ -180,7 +204,7 @@ impl VM {
                     let result = match (a, b) {
                         (Value::Int(x), Value::Int(y)) => {
                             if y == 0 {
-                                eprintln!("Error: Division by zero");
+                                let _ = write!(self.output, "Error: Division by zero");
                                 Value::None
                             } else {
                                 Value::Int(x / y)
@@ -188,7 +212,7 @@ impl VM {
                         }
                         (Value::Float(x), Value::Float(y)) => {
                             if y == 0.0 {
-                                eprintln!("Error: Division by zero");
+                                let _ = write!(self.output, "Error: Division by zero");
                                 Value::None
                             } else {
                                 Value::Float(x / y)
@@ -462,16 +486,13 @@ impl VM {
                     let fn_name = self.pop()?;
 
                     if let Value::String(name) = fn_name {
-                        // Find function first, extract needed data, then release the borrow
                         let func_info = self
                             .find_function(&name)
                             .map(|f| (f.entry_point, f.arg_count));
 
                         if let Some((entry_point, arg_count)) = func_info {
-                            // Save return IP before calling
                             let return_ip = self.current_ip();
 
-                            // Pop arguments for the function
                             let mut locals = Vec::with_capacity(arg_count as usize);
                             for _ in 0..arg_count {
                                 if let Ok(val) = self.pop() {
@@ -479,16 +500,13 @@ impl VM {
                                 }
                             }
 
-                            // Push new frame for the called function
                             self.frames.push(CallFrame {
                                 ip: entry_point,
                                 locals,
                                 return_ip,
                             });
                         } else {
-                            // Call builtin
                             self.call_builtin(&name, arg_count)?;
-                            // Pop arguments after builtin call
                             for _ in 0..arg_count {
                                 let _ = self.pop();
                             }
@@ -501,9 +519,16 @@ impl VM {
                         return Ok(());
                     }
 
+                    // Get return value from current frame's stack
+                    let return_value = self.pop().ok();
                     let frame = self.frames.pop().unwrap();
                     let ip = self.current_ip_mut();
                     *ip = frame.return_ip;
+
+                    // Push return value onto caller's stack
+                    if let Some(v) = return_value {
+                        let _ = self.push(v);
+                    }
                 }
 
                 Some(OpCode::Halt) => {
@@ -539,8 +564,10 @@ impl VM {
     fn call_builtin(&mut self, name: &str, _arg_count: u8) -> Result<(), String> {
         match name {
             "print" => {
-                if let Some(v) = self.peek() {
-                    v.println();
+                let v = self.peek().cloned();
+                if let Some(val) = v {
+                    let _ = write!(self.output, "{}", val);
+                    let _ = writeln!(self.output);
                 }
             }
             "input" => {
@@ -577,7 +604,7 @@ impl VM {
                 self.push(Value::String(v.to_string()))?;
             }
             _ => {
-                eprintln!("Error: Unknown function '{}'", name);
+                let _ = writeln!(self.output, "Error: Unknown function '{}'", name);
             }
         }
         Ok(())

@@ -5,178 +5,295 @@ pub mod vm;
 pub use value::Value;
 pub use vm::{Function, Program, VM};
 
+/// Helper to create a ConstantInt bytecode sequence
+pub fn const_int(value: i64) -> Vec<u8> {
+    let mut bytes = vec![opcodes::OpCode::ConstantInt as u8];
+    for i in 0..8 {
+        bytes.push((value >> (i * 8)) as u8);
+    }
+    bytes
+}
+
+/// Helper to create a ConstantFloat bytecode sequence
+pub fn const_float(value: f64) -> Vec<u8> {
+    let mut bytes = vec![opcodes::OpCode::ConstantFloat as u8];
+    let bits = value.to_bits();
+    for i in 0..8 {
+        bytes.push(((bits >> (i * 8)) & 0xFF) as u8);
+    }
+    bytes
+}
+
+/// Helper to create a ConstantString bytecode sequence
+pub fn const_string(idx: u8) -> Vec<u8> {
+    vec![opcodes::OpCode::ConstantString as u8, idx]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn make_program(bytecode: Vec<u8>, constants: Vec<Value>) -> Program {
-        Program {
+    fn run_vm(bytecode: Vec<u8>, constants: Vec<Value>) -> (Result<(), String>, String) {
+        let program = Program {
             bytecode,
             constants,
-        }
+        };
+        let mut vm: VM<Vec<u8>> = VM::new();
+        let result = vm.run(&program);
+        let output = vm.take_output();
+        (result, output)
     }
 
     #[test]
     fn test_integer_addition() {
-        // OP_CONSTANT_INT 1, OP_CONSTANT_INT 2, OP_ADD, OP_HALT
-        let bytecode = vec![
-            opcodes::OpCode::ConstantInt as u8,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            opcodes::OpCode::ConstantInt as u8,
-            2,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            opcodes::OpCode::Add as u8,
-            opcodes::OpCode::Halt as u8,
-        ];
-        let program = make_program(bytecode, vec![]);
-        let mut vm = VM::new();
-        assert!(vm.run(&program).is_ok());
+        let mut bytecode = Vec::new();
+        bytecode.extend(const_int(1));
+        bytecode.extend(const_int(2));
+        bytecode.push(opcodes::OpCode::Add as u8);
+        bytecode.push(opcodes::OpCode::Halt as u8);
+        let (result, _) = run_vm(bytecode, vec![]);
+        assert!(result.is_ok());
     }
 
     #[test]
     fn test_float_addition() {
-        // OP_CONSTANT_FLOAT 1.5, OP_CONSTANT_FLOAT 2.5, OP_ADD, OP_HALT
-        let f1_bits = (1.5f64).to_bits();
-        let f2_bits = (2.5f64).to_bits();
-        let bytecode = vec![
-            opcodes::OpCode::ConstantFloat as u8,
-            (f1_bits & 0xFF) as u8,
-            ((f1_bits >> 8) & 0xFF) as u8,
-            ((f1_bits >> 16) & 0xFF) as u8,
-            ((f1_bits >> 24) & 0xFF) as u8,
-            ((f1_bits >> 32) & 0xFF) as u8,
-            ((f1_bits >> 40) & 0xFF) as u8,
-            ((f1_bits >> 48) & 0xFF) as u8,
-            ((f1_bits >> 56) & 0xFF) as u8,
-            opcodes::OpCode::ConstantFloat as u8,
-            (f2_bits & 0xFF) as u8,
-            ((f2_bits >> 8) & 0xFF) as u8,
-            ((f2_bits >> 16) & 0xFF) as u8,
-            ((f2_bits >> 24) & 0xFF) as u8,
-            ((f2_bits >> 32) & 0xFF) as u8,
-            ((f2_bits >> 40) & 0xFF) as u8,
-            ((f2_bits >> 48) & 0xFF) as u8,
-            ((f2_bits >> 56) & 0xFF) as u8,
-            opcodes::OpCode::Add as u8,
-            opcodes::OpCode::Halt as u8,
-        ];
-        let program = make_program(bytecode, vec![]);
-        let mut vm = VM::new();
-        assert!(vm.run(&program).is_ok());
+        let mut bytecode = Vec::new();
+        bytecode.extend(const_float(1.5));
+        bytecode.extend(const_float(2.5));
+        bytecode.push(opcodes::OpCode::Add as u8);
+        bytecode.push(opcodes::OpCode::Halt as u8);
+        let (result, _) = run_vm(bytecode, vec![]);
+        assert!(result.is_ok());
     }
 
     #[test]
     fn test_string_concatenation() {
-        // OP_CONSTANT_STRING 0, OP_CONSTANT_STRING 1, OP_ADD, OP_HALT
-        let bytecode = vec![
-            opcodes::OpCode::ConstantString as u8,
-            0,
-            opcodes::OpCode::ConstantString as u8,
-            1,
-            opcodes::OpCode::Add as u8,
-            opcodes::OpCode::Halt as u8,
-        ];
+        let mut bytecode = Vec::new();
+        bytecode.extend(const_string(0));
+        bytecode.extend(const_string(1));
+        bytecode.push(opcodes::OpCode::Add as u8);
+        bytecode.push(opcodes::OpCode::Halt as u8);
         let constants = vec![
             Value::String("Hello ".to_string()),
             Value::String("World".to_string()),
         ];
-        let program = make_program(bytecode, constants);
-        let mut vm = VM::new();
-        assert!(vm.run(&program).is_ok());
+        let (result, _) = run_vm(bytecode, constants);
+        assert!(result.is_ok());
     }
 
     #[test]
     fn test_comparison() {
-        // OP_CONSTANT_INT 5, OP_CONSTANT_INT 3, OP_GREATER, OP_HALT
-        let bytecode = vec![
-            opcodes::OpCode::ConstantInt as u8,
-            5,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            opcodes::OpCode::ConstantInt as u8,
-            3,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            opcodes::OpCode::Greater as u8,
-            opcodes::OpCode::Halt as u8,
-        ];
-        let program = make_program(bytecode, vec![]);
-        let mut vm = VM::new();
-        assert!(vm.run(&program).is_ok());
+        let mut bytecode = Vec::new();
+        bytecode.extend(const_int(5));
+        bytecode.extend(const_int(3));
+        bytecode.push(opcodes::OpCode::Greater as u8);
+        bytecode.push(opcodes::OpCode::Halt as u8);
+        let (result, _) = run_vm(bytecode, vec![]);
+        assert!(result.is_ok());
     }
 
     #[test]
     fn test_jump_if_false() {
-        // if (false) { 1 } else { 2 } -> should push 2
-        // Bytecode: FALSE, JUMP_IF_FALSE (offset to 2), CONST_INT 1, JUMP (offset to HALT), CONST_INT 2, HALT
-        // Positions: 0:FALSE, 1:JUMP_IF_FALSE, 2-9:offset, 10:CONST_INT, 11-18:1, 19:JUMP, 20-27:offset, 28:CONST_INT, 29-36:2, 37:HALT
-        // JUMP_IF_FALSE should jump to position 28 (CONST_INT 2), offset = 28 - 10 = 18
-        // JUMP should jump to position 37 (HALT), offset = 37 - 28 = 9
-        let bytecode = vec![
-            opcodes::OpCode::False as u8,       // [0]
-            opcodes::OpCode::JumpIfFalse as u8, // [1]
-            18,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,                                  // [2-9] jump to [28]
-            opcodes::OpCode::ConstantInt as u8, // [10]
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,                           // [11-18]
-            opcodes::OpCode::Jump as u8, // [19]
-            9,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,                                  // [20-27] jump to [37]
-            opcodes::OpCode::ConstantInt as u8, // [28]
-            2,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,                           // [29-36]
-            opcodes::OpCode::Halt as u8, // [37]
-        ];
-        let program = make_program(bytecode, vec![]);
-        let mut vm = VM::new();
-        assert!(vm.run(&program).is_ok());
+        let mut bytecode = Vec::new();
+        bytecode.push(opcodes::OpCode::False as u8);
+        bytecode.push(opcodes::OpCode::JumpIfFalse as u8);
+        for i in 0..8 {
+            bytecode.push(if i == 0 { 18 } else { 0 });
+        }
+        bytecode.extend(const_int(1));  // This should be skipped
+        bytecode.push(opcodes::OpCode::Jump as u8);
+        for i in 0..8 {
+            bytecode.push(if i == 0 { 9 } else { 0 });
+        }
+        bytecode.extend(const_int(2));  // This should be executed
+        bytecode.push(opcodes::OpCode::Halt as u8);
+        let (result, _) = run_vm(bytecode, vec![]);
+        assert!(result.is_ok());
     }
+
+    #[test]
+    fn test_print_output() {
+        let mut bytecode = Vec::new();
+        bytecode.extend(const_int(42));
+        bytecode.extend(const_string(0));  // "print"
+        bytecode.push(opcodes::OpCode::Call as u8);
+        bytecode.push(1);  // 1 arg
+        bytecode.push(opcodes::OpCode::Halt as u8);
+        let constants = vec![Value::String("print".to_string())];
+        let (result, output) = run_vm(bytecode, constants);
+        assert!(result.is_ok(), "VM run failed: {:?}", result);
+        assert!(output.contains("42"), "Expected output to contain '42', got: '{}'", output);
+    }
+
+    #[test]
+    fn test_arithmetic_and_print() {
+        let mut bytecode = Vec::new();
+        bytecode.extend(const_int(2));
+        bytecode.extend(const_int(3));
+        bytecode.push(opcodes::OpCode::Add as u8);
+        bytecode.extend(const_string(0));  // "print"
+        bytecode.push(opcodes::OpCode::Call as u8);
+        bytecode.push(1);  // 1 arg
+        bytecode.push(opcodes::OpCode::Halt as u8);
+        let constants = vec![Value::String("print".to_string())];
+        let (result, output) = run_vm(bytecode, constants);
+        assert!(result.is_ok(), "VM run failed: {:?}", result);
+        assert!(output.contains("5"), "Expected output to contain '5', got: '{}'", output);
+    }
+
+    #[test]
+    fn test_user_function_call() {
+        let mut bytecode = Vec::new();
+
+        // [0-10] Define function "foo" at entry_point=20
+        bytecode.push(opcodes::OpCode::DefineFn as u8);
+        bytecode.push(0);  // name_idx=0 ("foo")
+        // entry_point=20 (function body starts after main program)
+        for i in 0..8 {
+            bytecode.push(if i == 0 { 20 } else { 0 });
+        }
+        bytecode.push(0);  // arg_count=0
+
+        // [11-12] Main: push "foo"
+        bytecode.extend(const_string(0));  // "foo" (index 0)
+        // [13-14] Call foo with 0 args
+        bytecode.push(opcodes::OpCode::Call as u8);
+        bytecode.push(0);
+        // [15-16] Push "print"
+        bytecode.extend(const_string(1));  // "print" (index 1)
+        // [17-18] Call print with 1 arg
+        bytecode.push(opcodes::OpCode::Call as u8);
+        bytecode.push(1);
+        // [19] HALT
+        bytecode.push(opcodes::OpCode::Halt as u8);
+
+        // [20-28] Function body: CONST_INT 10
+        bytecode.extend(const_int(10));
+        // [29] RETURN
+        bytecode.push(opcodes::OpCode::Return as u8);
+
+        let constants = vec![
+            Value::String("foo".to_string()),
+            Value::String("print".to_string()),
+        ];
+        let (result, output) = run_vm(bytecode, constants);
+        assert!(result.is_ok(), "VM run failed: {:?}", result);
+        assert!(output.contains("10"), "Expected output to contain '10', got: '{}'", output);
+    }
+}
+
+// C FFI interface for Rust VM
+#[no_mangle]
+pub extern "C" fn hunnu_vm_run(bytecode_ptr: *const u8, bytecode_len: usize,
+                                constants_ptr: *const u8, constants_len: usize) -> i32 {
+    use std::io::Write;
+    use std::slice;
+
+    if bytecode_ptr.is_null() || constants_ptr.is_null() {
+        return -1;
+    }
+
+    let bytecode = unsafe {
+        slice::from_raw_parts(bytecode_ptr, bytecode_len)
+    };
+
+    let constants_data = unsafe {
+        slice::from_raw_parts(constants_ptr, constants_len)
+    };
+
+    // Parse constants from the binary format
+    let mut constants = Vec::new();
+    let mut pos = 0;
+
+    // First 8 bytes: constants count
+    if constants_data.len() < 8 {
+        return -1;
+    }
+    let count = i64_from_bytes(&constants_data[0..8]) as usize;
+    pos = 8;
+
+    for _ in 0..count {
+        if pos >= constants_data.len() {
+            return -1;
+        }
+        let value_type = constants_data[pos];
+        pos += 1;
+
+        match value_type {
+            0 => {
+                if pos + 8 > constants_data.len() {
+                    return -1;
+                }
+                let val = i64_from_bytes(&constants_data[pos..pos + 8]);
+                pos += 8;
+                constants.push(Value::Int(val));
+            }
+            1 => {
+                if pos + 8 > constants_data.len() {
+                    return -1;
+                }
+                let bits = u64_from_bytes(&constants_data[pos..pos + 8]);
+                pos += 8;
+                constants.push(Value::Float(f64::from_bits(bits)));
+            }
+            2 => {
+                if pos + 8 > constants_data.len() {
+                    return -1;
+                }
+                let str_len = i64_from_bytes(&constants_data[pos..pos + 8]) as usize;
+                pos += 8;
+                if pos + str_len > constants_data.len() {
+                    return -1;
+                }
+                let s = String::from_utf8_lossy(&constants_data[pos..pos + str_len]).to_string();
+                pos += str_len;
+                constants.push(Value::String(s));
+            }
+            3 => {
+                if pos >= constants_data.len() {
+                    return -1;
+                }
+                let b = constants_data[pos] != 0;
+                pos += 1;
+                constants.push(Value::Bool(b));
+            }
+            4 => constants.push(Value::None),
+            _ => constants.push(Value::None),
+        }
+    }
+
+    let program = Program {
+        bytecode: bytecode.to_vec(),
+        constants,
+    };
+
+    let mut vm: VM<Vec<u8>> = VM::new();
+    match vm.run(&program) {
+        Ok(_) => {
+            // Print captured output to stdout
+            let output = vm.take_output();
+            if !output.is_empty() {
+                print!("{}", output);
+                std::io::stdout().flush().unwrap_or(());
+            }
+            0
+        },
+        Err(_) => -1,
+    }
+}
+
+fn i64_from_bytes(bytes: &[u8]) -> i64 {
+    let mut val: i64 = 0;
+    for i in 0..8 {
+        val |= (bytes[i] as i64) << (i * 8);
+    }
+    val
+}
+
+fn u64_from_bytes(bytes: &[u8]) -> u64 {
+    let mut val: u64 = 0;
+    for i in 0..8 {
+        val |= (bytes[i] as u64) << (i * 8);
+    }
+    val
 }

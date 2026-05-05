@@ -256,13 +256,51 @@ int cmd_run(const char* filename, int debug, int use_vm, int use_vm_rust) {
     int result;
     
     if (use_vm_rust) {
-        // Compile to bytecode and pipe to Rust VM
+        // Compile to bytecode and run with Rust VM
         CompiledProgram* compiled = compile_program(program);
         
-        // Write to temporary file
-        const char* temp_file = "/tmp/hunnu_bytecode.bin";
-        if (compiled_program_write(compiled, temp_file) != 0) {
-            fprintf(stderr, "Error: Failed to write bytecode\n");
+        // Serialize bytecode and constants to memory buffers
+        // First, write bytecode to buffer
+        size_t bytecode_len = compiled->code.count;
+        uint8_t* bytecode_buf = malloc(bytecode_len);
+        if (!bytecode_buf) {
+            fprintf(stderr, "Error: Memory allocation failed\n");
+            compiled_program_free(compiled);
+            ast_free(program);
+            lexer_free(lexer);
+            free(source);
+            return 1;
+        }
+        memcpy(bytecode_buf, compiled->code.bytecode, bytecode_len);
+        
+        // Serialize constants to buffer
+        // Format: 8 bytes (count) + each constant
+        size_t constants_size = 8;  // count
+        for (size_t i = 0; i < compiled->constant_count; i++) {
+            constants_size += 1;  // type byte
+            switch (compiled->constants[i].type) {
+                case VALUE_INT:
+                case VALUE_FLOAT:
+                    constants_size += 8;
+                    break;
+                case VALUE_STRING:
+                    constants_size += 8 + strlen(compiled->constants[i].value.string_value);
+                    break;
+                case VALUE_BOOL:
+                    constants_size += 1;
+                    break;
+                case VALUE_NONE:
+                    break;
+                case VALUE_ARRAY:
+                    constants_size += 8;  // length only for now
+                    break;
+            }
+        }
+        
+        uint8_t* constants_buf = malloc(constants_size);
+        if (!constants_buf) {
+            fprintf(stderr, "Error: Memory allocation failed\n");
+            free(bytecode_buf);
             compiled_program_free(compiled);
             ast_free(program);
             lexer_free(lexer);
@@ -270,12 +308,64 @@ int cmd_run(const char* filename, int debug, int use_vm, int use_vm_rust) {
             return 1;
         }
         
-        // Execute Rust VM
-        char cmd[512];
-        snprintf(cmd, sizeof(cmd), "cd %s/vm-rust && cargo run -- %s", 
-                 getenv("PWD") ? getenv("PWD") : ".", temp_file);
-        result = system(cmd);
+        // Write constants count
+        uint64_t count = (uint64_t)compiled->constant_count;
+        memcpy(constants_buf, &count, 8);
+        size_t pos = 8;
         
+        for (size_t i = 0; i < compiled->constant_count; i++) {
+            Value* v = &compiled->constants[i];
+            uint8_t type_byte;
+            
+            switch (v->type) {
+                case VALUE_INT:
+                    type_byte = 0;
+                    constants_buf[pos++] = type_byte;
+                    memcpy(&constants_buf[pos], &v->value.int_value, 8);
+                    pos += 8;
+                    break;
+                case VALUE_FLOAT:
+                    type_byte = 1;
+                    constants_buf[pos++] = type_byte;
+                    memcpy(&constants_buf[pos], &v->value.float_value, 8);
+                    pos += 8;
+                    break;
+                case VALUE_STRING: {
+                    type_byte = 2;
+                    constants_buf[pos++] = type_byte;
+                    size_t str_len = strlen(v->value.string_value);
+                    uint64_t len = (uint64_t)str_len;
+                    memcpy(&constants_buf[pos], &len, 8);
+                    pos += 8;
+                    memcpy(&constants_buf[pos], v->value.string_value, str_len);
+                    pos += str_len;
+                    break;
+                }
+                case VALUE_BOOL:
+                    type_byte = 3;
+                    constants_buf[pos++] = type_byte;
+                    constants_buf[pos++] = v->value.bool_value ? 1 : 0;
+                    break;
+                case VALUE_NONE:
+                    type_byte = 4;
+                    constants_buf[pos++] = type_byte;
+                    break;
+                case VALUE_ARRAY:
+                    type_byte = 5;
+                    constants_buf[pos++] = type_byte;
+                    uint64_t arr_len = (uint64_t)v->array_length;
+                    memcpy(&constants_buf[pos], &arr_len, 8);
+                    pos += 8;
+                    break;
+            }
+        }
+        
+        // Call Rust VM via FFI
+        extern int hunnu_vm_run(const uint8_t*, size_t, const uint8_t*, size_t);
+        result = hunnu_vm_run(bytecode_buf, bytecode_len, constants_buf, constants_size);
+        
+        free(bytecode_buf);
+        free(constants_buf);
         compiled_program_free(compiled);
     } else if (use_vm) {
         CompiledProgram* compiled = compile_program(program);

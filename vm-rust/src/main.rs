@@ -1,6 +1,6 @@
 use hunnu_vm::value::Value;
 use hunnu_vm::vm::{Program, VM};
-use std::io::Read;
+use std::io::{Read, stdout, Write};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -153,7 +153,7 @@ fn main() {
         bytecode,
         constants,
     };
-    let mut vm = VM::new();
+    let mut vm: VM<std::io::Stdout> = VM::new_with_output(stdout());
 
     if let Err(e) = vm.run(&program) {
         eprintln!("VM Error: {}", e);
