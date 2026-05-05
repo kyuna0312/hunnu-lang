@@ -256,3 +256,15 @@ cd build && cmake .. && make
 - Keep changes small and focused
 - Update examples to demonstrate new features
 - Update this file when project setup changes
+- **Language rule: Do NOT use Chinese characters in code, comments, or documentation**
+
+## Language Rule
+
+**Agents must NOT write Chinese characters (中文) anywhere in the codebase including:**
+- Source code (C, Rust, Python, etc.)
+- Comments and documentation
+- Commit messages
+- Markdown files (README.md, AGENTS.md, plan.md, etc.)
+- Test files and scripts
+
+**All code, comments, and documentation must be written in English only.**

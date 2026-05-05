@@ -1,13 +1,15 @@
-# Hunnu Language — 6-Month Development Plan
+# Hunnu Language v1.0 — 6-Month Development Plan
 
 > May 2026 – October 2026
 > A focused roadmap from interpreted language to native binary compiler.
+
+**Current Version: v1.0.0 (Erdene - Jewel, treasure)**
 
 ---
 
 ## Vision
 
-Hunnu is a lightweight, bilingual (English/Mongolian) programming language with an ambitious long-term goal:
+Hunnu is a lightweight, English-only programming language with an ambitious long-term goal:
 
 1. **Systems programming** — write a Linux-like kernel
 2. **Scientific computing** — numpy-like numerical packages
@@ -19,32 +21,33 @@ The path: C interpreter → Rust VM → AOT compiler → Kernel + ML ecosystem.
 
 ## Features
 
-### Working Features
+### Working Features (English-Only)
 
-| Feature | English | Mongolian |
-|---------|---------|-----------|
-| Variables | `let x = 5` | `хувьсагч x = 5` |
-| Functions | `fn add(a, b) { return a + b }` | `функц нэмэх(a, b) { буцаах a + b }` |
-| If/else | `if x > 0 { ... } else { ... }` | `хэрвээ x > 0 { ... } бусад { ... }` |
-| While loop | `while i < 10 { ... }` | `давталт i < 10 { ... }` |
-| For loop | `for let i = 0; i < 3; i = i + 1 { ... }` | `тооллого хувьсагч i = 0; i < 3; i = i + i + 1 { ... }` |
-| Print | `print("Hello")` | `хэвлэх("Сайн уу")` |
-| Return | `return value` | `буцаах утга` |
-| Break | `break` | `зогсоох` |
-| Continue | `continue` | `үргэлжлүүлэх` |
-| null/nil | `null`, `nil` | `хоосон` |
-| Arrays | `let arr = [1, 2, 3]` | `жагсаалт arr = [1, 2, 3]` |
-| Index assignment | `arr[0] = 5` | `arr[0] = 5` |
-| Imports | `import "lib.hn"` | `импорт "lib.hn"` |
-| FFI | `extern fn puts(s: str) -> int from "libc.so"` | `гаднах fn puts(s: str) -> int from "libc.so"` |
+| Feature | Syntax |
+|---------|--------|
+| Variables | `let x = 5` |
+| Functions | `fn add(a, b) { return a + b }` |
+| If/else | `if x > 0 { ... } else { ... }` |
+| While loop | `while i < 10 { ... }` |
+| For loop | `for let i = 0; i < 3; i = i + 1 { ... }` |
+| Print | `print("Hello")` |
+| Return | `return value` |
+| Break | `break` |
+| Continue | `continue` |
+| null/nil | `null`, `nil` |
+| Arrays | `let arr = [1, 2, 3]` |
+| Index assignment | `arr[0] = 5` |
+| Imports | `import "lib.hn"` |
+| FFI | `extern fn puts(s: str) -> int from "libc.so"` |
 
 ---
 
 ## CLI Usage
 
 ```bash
-./hunnu run examples/main.hn          # Interpreter
-./hunnu run examples/main.hn --vm     # C VM
+./hunnu run examples/main.hn          # Interpreter (C tree-walk)
+./hunnu run examples/main.hn --vm     # C VM (bytecode)
+./hunnu run examples/main.hn --vm-rust  # Rust VM (FFI integration)
 ./hunnu run examples/main.hn --debug  # Show tokens + AST
 ./hunnu build examples/main.hn        # Show bytecode
 ./hunnu tokens examples/main.hn       # Lexer debug
@@ -57,25 +60,36 @@ The path: C interpreter → Rust VM → AOT compiler → Kernel + ML ecosystem.
 
 ```
 Month 1 (May 2026)    Month 2 (Jun 2026)    Month 3 (Jul 2026)
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
 │  Rust VM      │     │  FFI Ecosystem │     │  AOT Compiler │
 │  GC / Memory  │  →  │  Standard Lib  │  →  │  Structs      │
 │  User Fn Calls│     │  Python Bind   │     │  Pointers     │
 │  ──────────── │     │  ────────────  │     │  ──────────── │
 │  Goal: Stable │     │  Goal: Usable  │     │  Goal: Native │
 │  Rust Runtime │     │  Language      │     │  Binaries     │
-└───────────────┘     └───────────────┘     └───────────────┘
+└──────────────┘     └──────────────┘     └──────────────┘
 
 Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
 │  Generics     │     │  no_std / Bare │     │  Self-Hosting │
 │  Traits       │  →  │  Metal Target  │  →  │  Package Mgr  │
-│  Modules      │     │  Boot Example  │     │  0.1 Release  │
+│  FP: Patterns │     │  OOP: Classes  │     │  0.1 Release  │
+│  Modules      │     │  Boot Example  │     │  FP + OOP     │
 │  ──────────── │     │  ────────────  │     │  ──────────── │
 │  Goal: Type   │     │  Goal: Kernel  │     │  Goal: v0.1  │
 │  System       │     │  Prototype     │     │  Usable Lang  │
-└───────────────┘     └───────────────┘     └───────────────┘
+└──────────────┘     └──────────────┘     └──────────────┘
 ```
+
+### Functional Programming Integration
+- **Month 3-4:** First-class functions, lambdas, pattern matching
+- **Month 4:** Higher-order functions (map, filter, reduce)
+- **Month 6:** Full FP + OOP integration
+
+### Object-Oriented Programming Integration
+- **Month 3:** Structs with methods
+- **Month 4-5:** Classes, inheritance, polymorphism
+- **Month 6:** Complete OOP support with traits/interfaces
 
 ---
 
@@ -178,9 +192,11 @@ Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 
 ---
 
-## Month 4 (August 2026): Advanced Type System
+## Month 4 (August 2026): Advanced Type System + FP/OOP
 
-**Goal:** Generics, traits, and modules for expressive code.
+**Goal:** Generics, traits, modules, functional programming, and object-oriented programming.
+
+### Type System
 
 | # | Feature | Description | Files | Difficulty |
 |---|---------|-------------|-------|------------|
@@ -191,7 +207,31 @@ Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 | 5 | `unsafe` blocks | Explicit unsafe code regions | `compiler/` | Medium |
 | 6 | Module system | Public/private visibility, `mod` keyword | `compiler/` | Medium |
 
-**Milestone:** `fn map[T](arr: [T]) -> [T] { ... }` with trait bounds.
+### Functional Programming
+
+| # | Feature | Description | Files | Difficulty |
+|---|---------|-------------|-------|------------|
+| 1 | Immutable variables | `let x = 5` (default), `mut` for mutable | `compiler/` | Medium |
+| 2 | First-class functions | Functions as values, closures | `compiler/` | Hard |
+| 3 | Higher-order functions | `map`, `filter`, `reduce` builtins | `stdlib/` | Medium |
+| 4 | Lambda expressions | `fn(x) { x + 1 }` or `|x| x + 1` | `compiler/` | Hard |
+| 5 | Pattern matching | `match` with destructuring | `compiler/` | Hard |
+| 6 | Tail call optimization | TCO for recursive functions | `compiler/` | Very Hard |
+
+### Object-Oriented Programming
+
+| # | Feature | Description | Files | Difficulty |
+|---|---------|-------------|-------|------------|
+| 1 | Structs/Records | `type Point = { x: int, y: int }` | `compiler/` | Medium |
+| 2 | Methods | `point.distance(other)` syntax | `compiler/` | Hard |
+| 3 | Classes | `class Animal { ... }` with `new` | `compiler/` | Very Hard |
+| 4 | Inheritance | `class Dog extends Animal { ... }` | `compiler/` | Very Hard |
+| 5 | Polymorphism | Virtual method table (vtable) | `compiler/` | Very Hard |
+| 6 | Encapsulation | `public`/`private` visibility | `compiler/` | Medium |
+| 7 | Interfaces/Traits | `interface Drawable { ... }` | `compiler/` | Very Hard |
+| 8 | `this`/`self` | Reference to current instance | `compiler/` | Medium |
+
+**Milestone:** `fn map[T](arr: [T]) -> [T] { ... }` with trait bounds and OOP classes.
 
 ---
 
@@ -213,9 +253,9 @@ Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 
 ---
 
-## Month 6 (October 2026): Self-Hosting + Release
+## Month 6 (October 2026): Self-Hosting + Release + FP/OOP Integration
 
-**Goal:** Hunnu compiler written in Hunnu, package manager, v0.1 release.
+**Goal:** Hunnu compiler written in Hunnu, package manager, v1.0 release, full FP/OOP support.
 
 | # | Feature | Description | Files | Difficulty |
 |---|---------|-------------|-------|------------|
@@ -225,9 +265,11 @@ Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 | 4 | Documentation | Language spec, tutorial, API docs | `docs/` | Medium |
 | 5 | CI/CD | GitHub Actions: build, test, lint | `.github/workflows/` | Easy |
 | 6 | Benchmark suite | Performance comparison with Python, Lua | `benchmarks/` | Medium |
-| 7 | v0.1 release | First tagged release on GitHub | — | Medium |
+| 7 | v1.0 release | First tagged release on GitHub | — | Medium |
+| 8 | FP Standard Library | `stdlib/fn.hn` (map, filter, reduce) | `stdlib/` | Medium |
+| 9 | OOP Standard Library | `stdlib/oop.hn` (class, extend) | `stdlib/` | Medium |
 
-**Milestone:** `hunnu new my-project && hunnu run` produces working app.
+**Milestone:** `hunnu new my-project && hunnu run` produces working app with FP/OOP features.
 
 ---
 
@@ -246,9 +288,9 @@ Month 1-2               Month 3-4               Month 5-6
 │  FFI/dlopen  │        │  Structs     │        │  no_std      │
 │  Python/PyO3 │        │  Generics    │        │  ┌────────┐  │
 │              │        │  Traits      │        │  │Kernel  │  │
-│              │        │  .elf binary │        │  │Pkg Mgr │  │
-│              │        │              │        │  │v0.1    │  │
-│              │        │              │        │  └────────┘  │
+│              │        │  FP: Patterns │        │  │Pkg Mgr │  │
+│              │        │  OOP: Classes │        │  │v1.0   │  │
+│              │        │  .elf binary │        │  └────────┘  │
 └──────────────┘        └──────────────┘        └──────────────┘
 ```
 
@@ -256,15 +298,16 @@ Month 1-2               Month 3-4               Month 5-6
 
 ## Technical Debt (Current)
 
-| Issue | Location | Severity | Fix Plan |
-|-------|----------|----------|----------|
-| No garbage collection | interpreter.c | High | Month 1: ref counting in Rust VM |
-| VM user-defined functions | vm.c, vm/compiler.c | High | Month 1: call frames |
-| Global-only variables | vm/compiler.c | Medium | Month 1: scope stack in VM |
-| Identifier resolution | vm/compiler.c | Medium | Month 1: symbol table |
-| Memory leaks in VM | vm.c | Medium | Month 1: Rust ownership model |
-| No type checking | parser.c | Low | Month 2: type checker pass |
-| Hardcoded builtin names | vm.c | Low | Month 2: builtin registry |
+| Issue | Location | Severity | Fix Plan | Status |
+|-------|----------|----------|----------|------------|
+| No garbage collection | interpreter.c | High | Month 1: ref counting in Rust VM | ✅ Fixed (Rust ownership) |
+| VM user-defined functions | vm.c, vm/compiler.c | High | Month 1: call frames | ✅ Fixed |
+| Global-only variables | vm/compiler.c | Medium | Month 1: scope stack in VM | ✅ Fixed |
+| Identifier resolution | vm/compiler.c | Medium | Month 1: symbol table | ✅ Fixed |
+| Memory leaks in VM | vm.c | Medium | Month 1: Rust ownership model | ✅ Fixed |
+| No type checking | parser.c | Low | Month 2: type checker pass | Pending |
+| Hardcoded builtin names | vm.c | Low | Month 2: builtin registry | Pending |
+| FFI integration | cli/main.c, vm-rust/ | Medium | Month 1: C + Rust FFI | ✅ Fixed |
 
 ---
 
@@ -291,6 +334,21 @@ Month 1-2               Month 3-4               Month 5-6
 - Training loop abstractions
 - Model serialization
 
+### For Functional Programming
+- Immutable variables by default
+- First-class functions and closures
+- Higher-order functions (map, filter, reduce)
+- Pattern matching with destructuring
+- Tail call optimization (TCO)
+
+### For Object-Oriented Programming
+- Classes with inheritance
+- Polymorphism (vtable)
+- Encapsulation (public/private)
+- Interfaces/traits
+- `this`/`self` reference
+- Static methods and constructors
+
 ---
 
 ## Technology Choices
@@ -299,41 +357,59 @@ Month 1-2               Month 3-4               Month 5-6
 |-----------|---------|----------|-----------|
 | Lexer/Parser | C | Rust | Safer, better error handling |
 | Interpreter | C (tree-walk) | Deprecated | VM is faster |
-| VM | C + Rust prototype | Rust | Ownership model eliminates leaks |
-| Compiler | — | LLVM + Rust | Native binary output |
+| VM | C + Rust (FFI) | Rust | Ownership model eliminates leaks |
+| Compiler | C (bytecode) | LLVM + Rust | Native binary output |
 | Kernel | — | Rust | no_std, safe systems code |
 | Python Bindings | — | PyO3 | Easy embedding |
 | Package Manager | — | Rust + Git | Cargo-style deps |
+
+### C + Rust Integration (Month 1 Completed)
+- C compiler generates bytecode from Hunnu source
+- Rust VM executes bytecode with memory safety (ownership model)
+- FFI (Foreign Function Interface) bridges C and Rust
+- Integrated CMake build system compiles both C and Rust together
+- CLI (`cli/main.c`) calls Rust VM via `hunnu_vm_run()` FFI function
 
 ---
 
 ## File Structure
 
-### Current
+### Current (Month 1 - Completed)
+
 ```
 hunnu-lang/
 ├── compiler/
-│   ├── lexer/          # Tokenizer (C)
-│   ├── parser/        # Parser (C)
-│   ├── ast/          # AST nodes (C)
-│   ├── interpreter/  # Tree-walk interpreter (C)
-│   └── vm/          # Bytecode compiler + VM (C)
+│   ├── ast/          # Abstract syntax tree definitions
+│   ├── interpreter/  # Runtime execution (C tree-walk)
+│   ├── lexer/       # Tokenization (lexer.c, token.h)
+│   └── parser/       # Syntax analysis
 ├── vm-rust/           # Rust VM [Month 1 focus]
+│   ├── src/
+│   │   ├── lib.rs     # FFI interface + tests
+│   │   ├── vm.rs     # VM implementation
+│   │   ├── opcodes.rs
+│   │   └── value.rs
+│   ├── include/
+│   │   └── hunnu_vm.h  # C header for FFI
+│   └── Cargo.toml
 ├── cli/              # Command-line interface
-├── examples/         # Example programs
-├── plan.md           # This file
-└── CMakeLists.txt
+├── examples/         # Sample .hn programs
+├── build/            # Build output (gitignored)
+├── CMakeLists.txt    # Integrated C + Rust build
+└── AGENTS.md         # Development guidelines (English-only rule)
 ```
 
 ### Target (Month 6)
+
 ```
 hunnu-lang/
 ├── compiler-rust/     # Full Rust frontend
 │   ├── lexer/
 │   ├── parser/
 │   ├── ast/
-│   ├── typecheck/
-│   └── codegen/      # LLVM IR generation
+│   ├── typecheck/    # Type system + generics
+│   ├── codegen/      # LLVM IR generation
+│   └── opt/          # Optimizations (TCO, inlining)
 ├── vm-rust/          # Rust VM (interpreted mode)
 ├── kernel/           # Bare-metal kernel
 │   ├── boot.rs
@@ -344,11 +420,16 @@ hunnu-lang/
 │   ├── core.hn       # Primitives
 │   ├── io.hn         # I/O
 │   ├── math.hn       # Math
-│   └── array.hn      # Array utilities
+│   ├── array.hn      # Array utilities
+│   ├── fn.hn         # Functional helpers (map, filter, reduce)
+│   └── oop.hn        # OOP support (class, extend, this)
 ├── bindings/
 │   └── python/       # PyO3 bindings
 ├── cli/              # Unified CLI
-├── examples/
+├── examples/         # Sample programs
+│   ├── fp/           # Functional programming examples
+│   ├── oop/          # OOP examples
+│   └── mixed/        # FP + OOP mixed examples
 ├── benchmarks/
 ├── docs/
 ├── Cargo.toml
@@ -364,8 +445,9 @@ hunnu-lang/
 | LLVM codegen complexity | Very High | Start simple: only int/float/strings, expand later |
 | Generics implementation | High | Monomorphize at compile time (like Rust), no runtime cost |
 | Bare-metal boot | Very High | Use `bootloader` crate, focus on VGA text first |
-| Self-hosting timeline | High | Defer to post-v0.1 if not ready |
+| Self-hosting timeline | High | Defer to post-v1.0 if not ready |
 | Scope creep | Medium | Strict monthly milestones, no feature additions mid-month |
+| FP/OOP complexity | High | Implement incrementally: start with structs, then classes |
 
 ---
 
@@ -377,8 +459,88 @@ hunnu-lang/
 | 2 | Standard library modules available | 4+ modules |
 | 3 | Native binary from `hunnu compile` | "Hello World" |
 | 4 | Generic function compiles | `fn id[T](x: T) -> T` |
+| 4 | FP: Higher-order functions work | `map(arr, fn)` |
+| 4 | OOP: Classes and methods work | `class Dog { speak() }` |
 | 5 | QEMU boots Hunnu kernel | VGA text output |
 | 6 | `hunnu new` creates runnable project | Full cycle |
+| 6 | FP + OOP integration complete | Multi-paradigm |
+| 6 | v1.0 release | Usable language |
+
+---
+
+## Functional Programming Examples
+
+```hunnu
+// Higher-order functions
+fn map(arr, f) { ... }
+fn filter(arr, pred) { ... }
+fn reduce(arr, f, init) { ... }
+fn compose(f, g) { return fn(x) { f(g(x)) } }
+
+// Lambda expressions
+let doubled = map([1, 2, 3], |x| x * 2)
+
+// Immutable by default
+let x = 10  // immutable
+let mut y = 20  // mutable
+```
+
+---
+
+## Object-Oriented Programming Examples
+
+```hunnu
+// Class definition
+class Animal {
+    let name = ""
+
+    fn init(name) {
+        this.name = name
+    }
+
+    fn speak() {
+        print("Animal sound")
+    }
+}
+
+class Dog extends Animal {
+    fn speak() {
+        print("Woof! I am " + this.name)
+    }
+}
+
+let dog = Dog.new("Buddy")
+dog.speak()  // Prints: Woof! I am Buddy
+```
+
+---
+
+## FP + OOP Integration
+
+Hunnu aims to be a **multi-paradigm** language:
+
+- Use **functional style** for data transformations (map, filter, reduce)
+- Use **OOP style** for modeling entities with state and behavior
+- **Mix and match**: pass methods as first-class functions, use immutability with objects
+
+```hunnu
+// Functional + OOP together
+class Processor {
+    let data = []
+
+    fn init(data) {
+        this.data = data
+    }
+
+    fn process() {
+        // Use functional style inside OOP method
+        return filter(this.data, |x| x > 10)
+    }
+}
+
+let p = Processor.new([5, 15, 3, 20])
+let result = p.process()  // [15, 20]
+```
 
 ---
 

@@ -4,6 +4,7 @@
  */
 
 #include "lexer.h"
+#include "../i18n/i18n.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -24,7 +25,7 @@ static const char* keyword_names[] = {
     "let",        "хувьсагч",   // variable declaration
     "fn",         "функц",    // function
     "if",         "хэрвээ",   // if
-    "else",                     // else  
+    "else",       "эсвэл",    // else  
     "true",       "үнэн",     // true
     "false",      "худал",     // false
     "print",      "хэвлэх",   // print
@@ -33,6 +34,7 @@ static const char* keyword_names[] = {
     "return",     "буцаах",   // return
     "break",      "зогсоох",  // break
     "continue",   "үргэлжлүүлэх", // continue
+    "match",      "тохирох",  // match
     "null",       "хоосон",  // null
     "import",     "импорт",  // import
     "extern",     "гаднах",  // extern
@@ -43,7 +45,7 @@ static TokenType keyword_types[] = {
     TOKEN_LET,    TOKEN_LET,
     TOKEN_FN,     TOKEN_FN,
     TOKEN_IF,    TOKEN_IF,
-    TOKEN_ELSE,
+    TOKEN_ELSE,   TOKEN_ELSE,
     TOKEN_TRUE,  TOKEN_TRUE,
     TOKEN_FALSE, TOKEN_FALSE,
     TOKEN_PRINT,  TOKEN_PRINT,
@@ -52,6 +54,7 @@ static TokenType keyword_types[] = {
     TOKEN_RETURN, TOKEN_RETURN,
     TOKEN_BREAK,  TOKEN_BREAK,
     TOKEN_CONTINUE, TOKEN_CONTINUE,
+    TOKEN_MATCH,  TOKEN_MATCH,
     TOKEN_NULL,   TOKEN_NULL,
     TOKEN_IMPORT, TOKEN_IMPORT,
     TOKEN_EXTERN, TOKEN_EXTERN,
@@ -415,6 +418,9 @@ Token* lexer_next_token(Lexer* lexer) {
             if (lexer_match(lexer, '=')) {
                 return token_new(TOKEN_EQ, "==", lexer->line, lexer->column);
             }
+            if (lexer_match(lexer, '>')) {
+                return token_new(TOKEN_FAT_ARROW, "=>", lexer->line, lexer->column);
+            }
             return token_new(TOKEN_ASSIGN, "=", lexer->line, lexer->column);
         case '!': 
             lexer_advance(lexer);
@@ -439,6 +445,8 @@ Token* lexer_next_token(Lexer* lexer) {
     }
     
     char unknown[2] = {c, '\0'};
-    fprintf(stderr, "[%d:%d] Warning: Unknown character '%s'\n", lexer->line, lexer->column, unknown);
+    fprintf(stderr, "[%d:%d] Warning: ", lexer->line, lexer->column);
+    i18n_error(ERR_UNKNOWN_CHARACTER, unknown);
+    fprintf(stderr, "\n");
     return token_new(TOKEN_UNKNOWN, unknown, lexer->line, lexer->column);
 }

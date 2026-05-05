@@ -1,6 +1,6 @@
 # Build artifacts
-build/*
-!build/.gitkeep
+build/
+vm-rust/target/
 
 # Editor files
 *.swp

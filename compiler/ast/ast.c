@@ -328,6 +328,19 @@ ASTNode* ast_string_concat_create(ASTNode* left, ASTNode* right, int32_t line, i
     return node;
 }
 
+ASTNode* ast_match_expr_create(ASTNode* value, ASTNode** patterns, ASTNode** bodies,
+                               size_t case_count, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_MATCH_EXPR;
+    node->line = line;
+    node->column = column;
+    node->data.match_expr.value = value;
+    node->data.match_expr.patterns = patterns;
+    node->data.match_expr.bodies = bodies;
+    node->data.match_expr.case_count = case_count;
+    return node;
+}
+
 ASTNode* ast_extern_fn_create(const char* name, const char* lib_name, const char* symbol_name,
                                char** param_names, size_t param_count, int returns_int,
                                int32_t line, int32_t column) {
@@ -444,7 +457,17 @@ static void ast_free_node(ASTNode* node) {
             ast_free_node(node->data.string_concat.left);
             ast_free_node(node->data.string_concat.right);
             break;
-
+        
+        case AST_MATCH_EXPR:
+            ast_free_node(node->data.match_expr.value);
+            for (size_t i = 0; i < node->data.match_expr.case_count; i++) {
+                ast_free_node(node->data.match_expr.patterns[i]);
+                ast_free_node(node->data.match_expr.bodies[i]);
+            }
+            free(node->data.match_expr.patterns);
+            free(node->data.match_expr.bodies);
+            break;
+        
         case AST_EXTERN_FN:
             free(node->data.extern_fn.name);
             if (node->data.extern_fn.lib_name) free(node->data.extern_fn.lib_name);
@@ -550,6 +573,10 @@ static void ast_print_node(ASTNode* node, int indent) {
         case AST_UNARY_EXPR:
             /* These types don't have names to print */
             break;
+        
+        case AST_MATCH_EXPR:
+            printf(" (value)");
+            break;
 
         default:
             break;
@@ -639,6 +666,21 @@ static void ast_print_node(ASTNode* node, int indent) {
         case AST_STRING_CONCAT:
             ast_print_node(node->data.string_concat.left, indent + 1);
             ast_print_node(node->data.string_concat.right, indent + 1);
+            break;
+        
+        case AST_MATCH_EXPR:
+            ast_print_node(node->data.match_expr.value, indent + 1);
+            printf(" match cases:\n");
+            for (size_t i = 0; i < node->data.match_expr.case_count; i++) {
+                indent_print(indent + 1);
+                printf("pattern: ");
+                ast_print_node(node->data.match_expr.patterns[i], 0);
+                printf("\n");
+                indent_print(indent + 1);
+                printf("body: ");
+                ast_print_node(node->data.match_expr.bodies[i], 0);
+                printf("\n");
+            }
             break;
 
         case AST_EXTERN_FN:

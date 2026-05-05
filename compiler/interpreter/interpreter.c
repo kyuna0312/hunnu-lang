@@ -4,6 +4,7 @@
  */
 
 #include "interpreter.h"
+#include "../i18n/i18n.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -321,10 +322,10 @@ char* value_to_string(Value* value) {
             free(buf);
             return strdup(value->value.string_value);
         case VALUE_BOOL:
-            snprintf(buf, 64, "%s", value->value.bool_value ? "true" : "false");
+            snprintf(buf, 64, "%s", i18n_get_value_string(value->value.bool_value ? "true" : "false"));
             break;
         case VALUE_NONE:
-            snprintf(buf, 64, "nil");
+            snprintf(buf, 64, "%s", i18n_get_value_string("nil"));
             break;
         default:
             snprintf(buf, 64, "?");
@@ -335,7 +336,7 @@ char* value_to_string(Value* value) {
 
 void value_print(Value* value) {
     if (!value) {
-        printf("nil");
+        printf("%s", i18n_get_value_string("nil"));
         return;
     }
     
@@ -350,10 +351,10 @@ void value_print(Value* value) {
             printf("%s", value->value.string_value);
             break;
         case VALUE_BOOL:
-            printf("%s", value->value.bool_value ? "true" : "false");
+            printf("%s", i18n_get_value_string(value->value.bool_value ? "true" : "false"));
             break;
         case VALUE_NONE:
-            printf("nil");
+            printf("%s", i18n_get_value_string("nil"));
             break;
         case VALUE_ARRAY:
             printf("[");
@@ -415,7 +416,9 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             if (val) {
                 return value_copy(val);
             }
-            fprintf(stderr, "Error at line %d: Undefined variable '%s'\n", interp->current_line, name);
+            fprintf(stderr, "Error at line %d: ", interp->current_line);
+            i18n_error(ERR_UNDEFINED_VARIABLE, name);
+            fprintf(stderr, "\n");
             return value_create_none();
         }
         
@@ -471,25 +474,33 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             if (op == TOKEN_SLASH) {
                 if (left.type == VALUE_INT && right.type == VALUE_INT) {
                     if (right.value.int_value == 0) {
-                        fprintf(stderr, "Error at line %d: Division by zero\n", interp->current_line);
+                        fprintf(stderr, "Error at line %d: ", interp->current_line);
+                        i18n_error(ERR_DIVISION_BY_ZERO);
+                        fprintf(stderr, "\n");
                     } else {
                         result = value_create_int(left.value.int_value / right.value.int_value);
                     }
                 } else if (left.type == VALUE_FLOAT && right.type == VALUE_FLOAT) {
                     if (right.value.float_value == 0.0) {
-                        fprintf(stderr, "Error at line %d: Division by zero\n", interp->current_line);
+                        fprintf(stderr, "Error at line %d: ", interp->current_line);
+                        i18n_error(ERR_DIVISION_BY_ZERO);
+                        fprintf(stderr, "\n");
                     } else {
                         result = value_create_float(left.value.float_value / right.value.float_value);
                     }
                 } else if (left.type == VALUE_INT && right.type == VALUE_FLOAT) {
                     if (right.value.float_value == 0.0) {
-                        fprintf(stderr, "Error at line %d: Division by zero\n", interp->current_line);
+                        fprintf(stderr, "Error at line %d: ", interp->current_line);
+                        i18n_error(ERR_DIVISION_BY_ZERO);
+                        fprintf(stderr, "\n");
                     } else {
                         result = value_create_float((double)left.value.int_value / right.value.float_value);
                     }
                 } else if (left.type == VALUE_FLOAT && right.type == VALUE_INT) {
                     if (right.value.int_value == 0) {
-                        fprintf(stderr, "Error at line %d: Division by zero\n", interp->current_line);
+                        fprintf(stderr, "Error at line %d: ", interp->current_line);
+                        i18n_error(ERR_DIVISION_BY_ZERO);
+                        fprintf(stderr, "\n");
                     } else {
                         result = value_create_float(left.value.float_value / (double)right.value.int_value);
                     }
@@ -584,15 +595,21 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                     value_free(&index_val);
                     return copy;
                 } else {
-                    fprintf(stderr, "Error at line %d: Index out of bounds (index %ld, length %zu)\n",
-                            interp->current_line, (long)idx, array_val.array_length);
+                    fprintf(stderr, "Error at line %d: ", interp->current_line);
+                    i18n_error(ERR_INDEX_OUT_OF_BOUNDS, (long)idx, array_val.array_length);
+                    fprintf(stderr, "\n");
                     value_free(&array_val);
                     value_free(&index_val);
                     return value_create_none();
                 }
             }
             
-            fprintf(stderr, "Error at line %d: Can only index into arrays\n", interp->current_line);
+            fprintf(stderr, "Error at line %d: ", interp->current_line);
+            i18n_error(ERR_CAN_ONLY_INDEX_ARRAYS);
+            fprintf(stderr, "\n");
+            value_free(&array_val);
+            value_free(&index_val);
+            return value_create_none();
             value_free(&array_val);
             value_free(&index_val);
             return value_create_none();
@@ -624,15 +641,18 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                     value_free(&assign_val);
                     return result;
                 } else {
-                    fprintf(stderr, "Error at line %d: Index out of bounds (index %ld, length %zu)\n",
-                            interp->current_line, (long)idx, array_ptr->array_length);
+                    fprintf(stderr, "Error at line %d: ", interp->current_line);
+                    i18n_error(ERR_INDEX_OUT_OF_BOUNDS, (long)idx, array_ptr->array_length);
+                    fprintf(stderr, "\n");
                     value_free(&index_val);
                     value_free(&assign_val);
                     return value_create_none();
                 }
             }
             
-            fprintf(stderr, "Error at line %d: Can only index into arrays\n", interp->current_line);
+            fprintf(stderr, "Error at line %d: ", interp->current_line);
+            i18n_error(ERR_CAN_ONLY_INDEX_ARRAYS);
+            fprintf(stderr, "\n");
             value_free(&index_val);
             value_free(&assign_val);
             return value_create_none();
@@ -640,6 +660,15 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
         
         case AST_CALL_EXPR: {
             char* name = node->data.call_expr.name;
+            
+            /* Handle 'print' as built-in function */
+            if (strcmp(name, "print") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                value_print(&arg);
+                printf("\n");
+                value_free(&arg);
+                return value_create_none();
+            }
             
             if (strcmp(name, "len") == 0 && node->data.call_expr.arg_count == 1) {
                 Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
@@ -673,12 +702,13 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 } else if (arg.type == VALUE_FLOAT) {
                     snprintf(buffer, sizeof(buffer), "%g", arg.value.float_value);
                 } else if (arg.type == VALUE_BOOL) {
-                    snprintf(buffer, sizeof(buffer), "%s", arg.value.bool_value ? "true" : "false");
+                    snprintf(buffer, sizeof(buffer), "%s",
+                            i18n_get_value_string(arg.value.bool_value ? "true" : "false"));
                 } else if (arg.type == VALUE_STRING) {
                     value_free(&arg);
                     return arg;
                 } else {
-                    snprintf(buffer, sizeof(buffer), "nil");
+                    snprintf(buffer, sizeof(buffer), "%s", i18n_get_value_string("nil"));
                 }
                 value_free(&arg);
                 return value_create_string(buffer);
@@ -723,8 +753,9 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                         Value arg_values[8];
                         size_t arg_count = node->data.call_expr.arg_count;
                         if (arg_count > 8) {
-                            fprintf(stderr, "Error at line %d: Too many arguments for extern function '%s'\n",
-                                    interp->current_line, name);
+                            fprintf(stderr, "Error at line %d: ", interp->current_line);
+                            i18n_error(ERR_TOO_MANY_ARGS_EXTERN, name);
+                            fprintf(stderr, "\n");
                             return value_create_none();
                         }
                         
@@ -751,11 +782,12 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                             case 2: result = ((fn2)ef->func_ptr)(args[0], args[1]); break;
                             case 3: result = ((fn3)ef->func_ptr)(args[0], args[1], args[2]); break;
                             case 4: result = ((fn4)ef->func_ptr)(args[0], args[1], args[2], args[3]); break;
-                            default:
-                                fprintf(stderr, "Error at line %d: Extern function '%s' has too many args\n",
-                                        interp->current_line, name);
-                                for (size_t j = 0; j < arg_count; j++) value_free(&arg_values[j]);
-                                return value_create_none();
+                        default:
+                            fprintf(stderr, "Error at line %d: ", interp->current_line);
+                            i18n_error(ERR_EXTERN_TOO_MANY_ARGS, name);
+                            fprintf(stderr, "\n");
+                            for (size_t j = 0; j < arg_count; j++) value_free(&arg_values[j]);
+                            return value_create_none();
                         }
                         
                         /* Free argument values */
@@ -765,14 +797,82 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                         
                         return value_create_int(result);
                     } else {
-                        fprintf(stderr, "Error at line %d: Extern function '%s' not loaded\n",
-                                interp->current_line, name);
+                        fprintf(stderr, "Error at line %d: ", interp->current_line);
+                        i18n_error(ERR_EXTERN_NOT_LOADED, name);
+                        fprintf(stderr, "\n");
                         return value_create_none();
                     }
                 }
             }
             
-            fprintf(stderr, "Error at line %d: Unknown function '%s'\n", interp->current_line, name);
+            fprintf(stderr, "Error at line %d: ", interp->current_line);
+            i18n_error(ERR_UNKNOWN_FUNCTION, name);
+            fprintf(stderr, "\n");
+            return value_create_none();
+        }
+        
+        case AST_MATCH_EXPR: {
+            Value match_value = interpreter_evaluate(interp, node->data.match_expr.value);
+            size_t case_count = node->data.match_expr.case_count;
+            
+            for (size_t i = 0; i < case_count; i++) {
+                ASTNode* pattern = node->data.match_expr.patterns[i];
+                ASTNode* body = node->data.match_expr.bodies[i];
+                
+                int matched = 0;
+                
+                /* Check if pattern is '_' wildcard */
+                if (pattern->type == AST_IDENTIFIER && 
+                    strcmp(pattern->data.identifier.name, "_") == 0) {
+                    matched = 1;
+                }
+                /* Check if pattern is a literal */
+                else if (pattern->type == AST_LITERAL) {
+                    Value pattern_val;
+                    if (pattern->data.literal.literal_type == TOKEN_INT_LITERAL) {
+                        pattern_val = value_create_int(pattern->data.literal.value.int_value);
+                    } else if (pattern->data.literal.literal_type == TOKEN_FLOAT_LITERAL) {
+                        pattern_val = value_create_float(pattern->data.literal.value.float_value);
+                    } else if (pattern->data.literal.literal_type == TOKEN_STRING_LITERAL) {
+                        pattern_val = value_create_string(pattern->data.literal.value.string_value);
+                    } else if (pattern->data.literal.literal_type == TOKEN_BOOL_LITERAL) {
+                        pattern_val = value_create_bool(pattern->data.literal.value.bool_value);
+                    } else {
+                        pattern_val = value_create_none();
+                    }
+                    
+                    /* Compare values */
+                    if (match_value.type == pattern_val.type) {
+                        if (match_value.type == VALUE_INT && 
+                            match_value.value.int_value == pattern_val.value.int_value) {
+                            matched = 1;
+                        } else if (match_value.type == VALUE_FLOAT && 
+                                   match_value.value.float_value == pattern_val.value.float_value) {
+                            matched = 1;
+                        } else if (match_value.type == VALUE_STRING && 
+                                   strcmp(match_value.value.string_value, 
+                                          pattern_val.value.string_value) == 0) {
+                            matched = 1;
+                        } else if (match_value.type == VALUE_BOOL && 
+                                   match_value.value.bool_value == pattern_val.value.bool_value) {
+                            matched = 1;
+                        }
+                    }
+                    value_free(&pattern_val);
+                }
+                /* Identifier binding pattern */
+                else if (pattern->type == AST_IDENTIFIER) {
+                    matched = 1;
+                }
+                
+                if (matched) {
+                    Value result = interpreter_evaluate(interp, body);
+                    value_free(&match_value);
+                    return result;
+                }
+            }
+            
+            value_free(&match_value);
             return value_create_none();
         }
         
@@ -841,7 +941,9 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
         
         case AST_EXTERN_FN: {
             if (interp->extern_fn_count >= MAX_EXTERN_FNS) {
-                fprintf(stderr, "Error at line %d: Too many extern declarations\n", node->line);
+                fprintf(stderr, "Error at line %d: ", node->line);
+                i18n_error(ERR_TOO_MANY_EXTERN_DECLS);
+                fprintf(stderr, "\n");
                 break;
             }
             
@@ -861,15 +963,18 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
             }
             
             if (!ef->handle) {
-                fprintf(stderr, "Error at line %d: Cannot load library: %s\n", node->line, dlerror());
+                fprintf(stderr, "Error at line %d: ", node->line);
+                i18n_error(ERR_CANNOT_LOAD_LIBRARY, dlerror());
+                fprintf(stderr, "\n");
                 break;
             }
             
             /* Resolve symbol */
             ef->func_ptr = dlsym(ef->handle, ef->symbol_name);
             if (!ef->func_ptr) {
-                fprintf(stderr, "Error at line %d: Cannot find symbol '%s': %s\n",
-                        node->line, ef->symbol_name, dlerror());
+                fprintf(stderr, "Error at line %d: ", node->line);
+                i18n_error(ERR_CANNOT_FIND_SYMBOL, ef->symbol_name, dlerror());
+                fprintf(stderr, "\n");
                 dlclose(ef->handle);
                 ef->handle = NULL;
                 break;
@@ -999,6 +1104,12 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
             break;
         }
         
+        case AST_MATCH_EXPR: {
+            Value result = interpreter_evaluate(interp, node);
+            value_free(&result);
+            break;
+        }
+        
         case AST_INDEX_ASSIGN: {
             Value arr = interpreter_evaluate(interp, node->data.index_assign.array);
             Value idx_val = interpreter_evaluate(interp, node->data.index_assign.index);
@@ -1011,8 +1122,9 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
                     arr.array_elements[idx] = (Value*)malloc(sizeof(Value));
                     *arr.array_elements[idx] = value_copy(&val);
                 } else {
-                    fprintf(stderr, "Error at line %d: Index out of bounds (index %ld, length %zu)\n",
-                            interp->current_line, (long)idx, arr.array_length);
+                    fprintf(stderr, "Error at line %d: ", interp->current_line);
+                    i18n_error(ERR_INDEX_OUT_OF_BOUNDS, (long)idx, arr.array_length);
+                    fprintf(stderr, "\n");
                 }
             }
             

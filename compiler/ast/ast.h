@@ -34,6 +34,7 @@ typedef enum {
     AST_INDEX_EXPR,
     AST_INDEX_ASSIGN,
     AST_STRING_CONCAT,
+    AST_MATCH_EXPR,
     AST_EXTERN_FN,
 } ASTNodeType;
 
@@ -173,6 +174,14 @@ typedef struct ASTNode {
             struct ASTNode* right;
         } string_concat;
         
+        /** Match expression */
+        struct {
+            struct ASTNode* value;
+            struct ASTNode** patterns;
+            struct ASTNode** bodies;
+            size_t case_count;
+        } match_expr;
+        
         /** External function declaration */
         struct {
             char* name;           /* Hunnu function name */
@@ -211,6 +220,8 @@ ASTNode* ast_array_expr_create(ASTNode** elements, size_t count, int32_t line, i
 ASTNode* ast_index_expr_create(ASTNode* array, ASTNode* index, int32_t line, int32_t column);
 ASTNode* ast_index_assign_create(ASTNode* array, ASTNode* index, ASTNode* value, int32_t line, int32_t column);
 ASTNode* ast_string_concat_create(ASTNode* left, ASTNode* right, int32_t line, int32_t column);
+ASTNode* ast_match_expr_create(ASTNode* value, ASTNode** patterns, ASTNode** bodies,
+                               size_t case_count, int32_t line, int32_t column);
 ASTNode* ast_extern_fn_create(const char* name, const char* lib_name, const char* symbol_name,
                                char** param_names, size_t param_count, int returns_int,
                                int32_t line, int32_t column);
