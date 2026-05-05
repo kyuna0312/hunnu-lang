@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(hunnu_lang VERSION 0.2.0 LANGUAGES C)
+project(hunnu_lang VERSION 1.0.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -20,6 +20,7 @@ set(HUNNU_SOURCES
     compiler/parser/parser.c
     compiler/ast/ast.c
     compiler/interpreter/interpreter.c
+    compiler/i18n/i18n.c
     compiler/version.c
     compiler/vm/compiler.c
     compiler/vm/vm.c

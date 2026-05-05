@@ -29,6 +29,7 @@ typedef enum {
     TOKEN_RETURN,
     TOKEN_BREAK,
     TOKEN_CONTINUE,
+    TOKEN_MATCH,
     TOKEN_NULL,
     TOKEN_NIL_KEYWORD,
     TOKEN_IMPORT,
@@ -68,6 +69,7 @@ typedef enum {
     TOKEN_NOT,
     
     TOKEN_ARROW,
+    TOKEN_FAT_ARROW,
     TOKEN_NEWLINE,
     TOKEN_UNKNOWN
 } TokenType;

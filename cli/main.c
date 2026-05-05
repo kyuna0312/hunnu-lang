@@ -8,6 +8,7 @@
 #include "compiler/interpreter/interpreter.h"
 #include "compiler/vm/compiler.h"
 #include "compiler/vm/vm.h"
+#include "compiler/i18n/i18n.h"
 
 #define MAX_SOURCE_SIZE (1024 * 1024)
 #define MAX_IMPORT_DEPTH 16
@@ -54,11 +55,12 @@ static char* expand_imports_recursive(const char* source, long source_size,
  */
 static char* expand_imports_recursive(const char* source, long source_size,
                                        const char* base_dir, int depth, int* out_size) {
-    if (depth >= MAX_IMPORT_DEPTH) {
-        fprintf(stderr, "Error: Maximum import depth exceeded (%d)\n", MAX_IMPORT_DEPTH);
-        *out_size = (int)source_size;
-        return strdup(source);
-    }
+        if (depth >= MAX_IMPORT_DEPTH) {
+            i18n_error(ERR_IMPORT_DEPTH_EXCEEDED, MAX_IMPORT_DEPTH);
+            fprintf(stderr, "\n");
+            *out_size = (int)source_size;
+            return strdup(source);
+        }
     
     char* output = (char*)malloc(MAX_SOURCE_SIZE);
     size_t out_pos = 0;
@@ -128,7 +130,8 @@ static char* expand_imports_recursive(const char* source, long source_size,
                         free(imp_dir_copy);
                         free(imp_raw);
                     } else {
-                        fprintf(stderr, "Error: Cannot open imported file '%s'\n", full_path);
+                        i18n_error(ERR_CANNOT_OPEN_IMPORT, full_path);
+                        fprintf(stderr, "\n");
                     }
                     
                     free(full_path);
@@ -166,7 +169,8 @@ static char* read_source_with_imports(const char* filename, int* out_size) {
     long file_size = 0;
     char* source = read_raw_file(filename, &file_size);
     if (!source) {
-        fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
+        i18n_error(ERR_CANNOT_OPEN_FILE, filename);
+        fprintf(stderr, "\n");
         return NULL;
     }
     
@@ -241,7 +245,8 @@ int cmd_run(const char* filename, int debug, int use_vm, int use_vm_rust) {
     ASTNode* program = parse(lexer);
     
     if (!program) {
-        fprintf(stderr, "Error: Failed to parse source file\n");
+        i18n_error(ERR_FAILED_PARSE);
+        fprintf(stderr, "\n");
         free(source);
         lexer_free(lexer);
         return 1;
@@ -438,6 +443,8 @@ int cmd_ast(const char* filename) {
 }
 
 int main(int argc, char* argv[]) {
+    i18n_init();
+
     if (argc < 2) {
         print_usage(argv[0]);
         return 1;
@@ -455,28 +462,43 @@ int main(int argc, char* argv[]) {
 
     if (strcmp(argv[1], "run") == 0) {
         if (argc < 3) {
-            fprintf(stderr, "Error: Missing filename argument\n");
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
             print_usage(argv[0]);
             return 1;
         }
         int debug = 0;
         int use_vm = 0;
         int use_vm_rust = 0;
-        for (int i = 3; i < argc; i++) {
+        const char* filename = NULL;
+        
+        for (int i = 2; i < argc; i++) {
             if (strcmp(argv[i], "--debug") == 0 || strcmp(argv[i], "-d") == 0) {
                 debug = 1;
-            } else if (strcmp(argv[i], "--vm") == 0 || strcmp(argv[i], "-v") == 0) {
+            } else if (strcmp(argv[i], "--vm") == 0) {
                 use_vm = 1;
             } else if (strcmp(argv[i], "--vm-rust") == 0) {
                 use_vm_rust = 1;
+            } else if (strcmp(argv[i], "--lang") == 0 && i + 1 < argc) {
+                i18n_set_language(argv[++i]);
+            } else if (argv[i][0] != '-') {
+                filename = argv[i];
             }
         }
-        return cmd_run(argv[2], debug, use_vm, use_vm_rust);
+        
+        if (!filename) {
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
+            print_usage(argv[0]);
+            return 1;
+        }
+        return cmd_run(filename, debug, use_vm, use_vm_rust);
     }
 
     if (strcmp(argv[1], "tokens") == 0) {
         if (argc < 3) {
-            fprintf(stderr, "Error: Missing filename argument\n");
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
             print_usage(argv[0]);
             return 1;
         }
@@ -485,7 +507,8 @@ int main(int argc, char* argv[]) {
 
     if (strcmp(argv[1], "ast") == 0) {
         if (argc < 3) {
-            fprintf(stderr, "Error: Missing filename argument\n");
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
             print_usage(argv[0]);
             return 1;
         }
@@ -494,7 +517,8 @@ int main(int argc, char* argv[]) {
 
     if (strcmp(argv[1], "build") == 0) {
         if (argc < 3) {
-            fprintf(stderr, "Error: Missing filename argument\n");
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
             print_usage(argv[0]);
             return 1;
         }
@@ -510,11 +534,12 @@ int main(int argc, char* argv[]) {
         ASTNode* program = parse(lexer);
         lexer_free(lexer);
 
-        if (!program) {
-            fprintf(stderr, "Error: Failed to parse source file\n");
-            free(source);
-            return 1;
-        }
+    if (!program) {
+        i18n_error(ERR_FAILED_PARSE);
+        fprintf(stderr, "\n");
+        free(source);
+        return 1;
+    }
 
         CompiledProgram* compiled = compile_program(program);
         compiled_program_print(compiled);
@@ -526,7 +551,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    fprintf(stderr, "Error: Unknown command '%s'\n", argv[1]);
+    i18n_error(ERR_UNKNOWN_COMMAND, argv[1]);
+    fprintf(stderr, "\n");
     print_usage(argv[0]);
     return 1;
 }

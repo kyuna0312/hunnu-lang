@@ -45,10 +45,13 @@ typedef enum {
     VERSION_COUNT
 } HunnuVersion;
 
-/** Current version - Алтангэрэл (Golden light) */
+/** Current version - Эрдэнэ (Jewel, treasure) - v1.0.0 */
 #ifndef HUNNU_VERSION_CURRENT
-#define HUNNU_VERSION_CURRENT VERSION_ALTANGEREL
+#define HUNNU_VERSION_CURRENT VERSION_ERDENE
 #endif
+
+/** Version string for display */
+#define HUNNU_VERSION_STRING "1.0.0"
 
 /** Version names (Mongolian) */
 static const char* version_names[] = {
