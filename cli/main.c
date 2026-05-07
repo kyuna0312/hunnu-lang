@@ -11,6 +11,10 @@
 #include "compiler/vm/vm.h"
 #include "compiler/i18n/i18n.h"
 
+#if defined(HUNNU_HAVE_RUST_COMPILER)
+#  include <hunnu_compiler.h>
+#endif
+
 void print_usage(const char* prog_name) {
     printf("Usage: %s <command> [options] <file>\n", prog_name);
     printf("\nCommands:\n");
@@ -24,6 +28,7 @@ void print_usage(const char* prog_name) {
     printf("  -h, --help     Show this help message\n");
     printf("  --vm           Use C bytecode VM (for run command)\n");
     printf("  --vm-rust      Use Rust bytecode VM (for run command)\n");
+    printf("  --rust         Use Rust frontend (lexer + parser, for tokens/ast)\n");
     printf("  --debug        Enable debug output (for run command)\n");
     printf("\nExamples:\n");
     printf("  %s run examples/main.hn\n", prog_name);
@@ -326,7 +331,37 @@ int main(int argc, char* argv[]) {
             print_usage(argv[0]);
             return 1;
         }
-        return cmd_tokens(argv[2]);
+        int use_rust = 0;
+        const char* tfilename = NULL;
+        for (int i = 2; i < argc; i++) {
+            if (strcmp(argv[i], "--rust") == 0) {
+                use_rust = 1;
+            } else if (argv[i][0] != '-') {
+                tfilename = argv[i];
+            }
+        }
+        if (!tfilename) {
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
+            print_usage(argv[0]);
+            return 1;
+        }
+#if defined(HUNNU_HAVE_RUST_COMPILER)
+        if (use_rust) {
+            int src_size = 0;
+            char* src = read_source_with_imports(tfilename, &src_size);
+            if (!src) return 1;
+            char* result = hunnu_rust_lex(src);
+            if (result) {
+                printf("Tokens (Rust frontend):\n");
+                printf("----------------------\n%s", result);
+                hunnu_rust_free_string(result);
+            }
+            free(src);
+            return 0;
+        }
+#endif
+        return cmd_tokens(tfilename);
     }
 
     if (strcmp(argv[1], "ast") == 0) {
@@ -336,7 +371,37 @@ int main(int argc, char* argv[]) {
             print_usage(argv[0]);
             return 1;
         }
-        return cmd_ast(argv[2]);
+        int use_rust = 0;
+        const char* afilename = NULL;
+        for (int i = 2; i < argc; i++) {
+            if (strcmp(argv[i], "--rust") == 0) {
+                use_rust = 1;
+            } else if (argv[i][0] != '-') {
+                afilename = argv[i];
+            }
+        }
+        if (!afilename) {
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
+            print_usage(argv[0]);
+            return 1;
+        }
+#if defined(HUNNU_HAVE_RUST_COMPILER)
+        if (use_rust) {
+            int src_size = 0;
+            char* src = read_source_with_imports(afilename, &src_size);
+            if (!src) return 1;
+            char* result = hunnu_rust_parse(src);
+            if (result) {
+                printf("AST (Rust frontend):\n");
+                printf("-------------------\n%s", result);
+                hunnu_rust_free_string(result);
+            }
+            free(src);
+            return 0;
+        }
+#endif
+        return cmd_ast(afilename);
     }
 
     if (strcmp(argv[1], "build") == 0) {
@@ -392,9 +457,9 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        printf("Compiling %s to %s (Month 3 AOT Compiler)...\n", filename, output);
-        printf("Note: Full LLVM codegen is in progress (compiler-rust/).\n");
-        printf("For now, using C compiler as fallback...\n");
+        printf("Compiling %s to %s (Month 3 AOT)...\n", filename, output);
+        printf("Note: LLVM codegen is in compiler-rust/ (feature-gated: `--features llvm-codegen`).\n");
+        printf("Using system C compiler as fallback.\n");
         
         /* Use system C compiler as temporary solution */
         char command[512];
