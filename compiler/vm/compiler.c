@@ -1,8 +1,8 @@
 #include "compiler.h"
+#include "../value.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../interpreter/interpreter.h"
 
 typedef struct {
     uint8_t* bytecode;
@@ -363,90 +363,4 @@ void compiled_program_print(CompiledProgram* program) {
         value_print(&program->constants[i]);
         printf("\n");
     }
-}
-
-/**
- * @brief Write compiled program to binary file
- * Format:
- * - 8 bytes: bytecode length (uint64_t, little-endian)
- * - bytecode bytes
- * - 8 bytes: constants count (uint64_t, little-endian)
- * - for each constant:
- *   - 1 byte: type (0=int, 1=float, 2=string, 3=bool, 4=none, 5=array)
- *   - type-dependent payload
- */
-int compiled_program_write(CompiledProgram* program, const char* filename) {
-    FILE* fp = fopen(filename, "wb");
-    if (!fp) {
-        fprintf(stderr, "Error: Cannot open output file '%s'\n", filename);
-        return 1;
-    }
-
-    // Write bytecode length and bytes
-    uint64_t bytecode_len = (uint64_t)program->code.count;
-    fwrite(&bytecode_len, sizeof(uint64_t), 1, fp);
-    fwrite(program->code.bytecode, 1, program->code.count, fp);
-
-    // Write constants count
-    uint64_t constants_count = (uint64_t)program->constant_count;
-    fwrite(&constants_count, sizeof(uint64_t), 1, fp);
-
-    // Write each constant
-    for (size_t i = 0; i < program->constant_count; i++) {
-        Value* v = &program->constants[i];
-        uint8_t type_byte;
-
-        switch (v->type) {
-            case VALUE_INT:
-                type_byte = 0;
-                fwrite(&type_byte, 1, 1, fp);
-                fwrite(&v->value.int_value, sizeof(int64_t), 1, fp);
-                break;
-
-            case VALUE_FLOAT:
-                type_byte = 1;
-                fwrite(&type_byte, 1, 1, fp);
-                fwrite(&v->value.float_value, sizeof(double), 1, fp);
-                break;
-
-            case VALUE_STRING: {
-                type_byte = 2;
-                fwrite(&type_byte, 1, 1, fp);
-                size_t str_len = strlen(v->value.string_value);
-                uint64_t len = (uint64_t)str_len;
-                fwrite(&len, sizeof(uint64_t), 1, fp);
-                fwrite(v->value.string_value, 1, str_len, fp);
-                break;
-            }
-
-            case VALUE_BOOL:
-                type_byte = 3;
-                fwrite(&type_byte, 1, 1, fp);
-                fwrite(&v->value.bool_value, sizeof(uint8_t), 1, fp);
-                break;
-
-            case VALUE_NONE:
-                type_byte = 4;
-                fwrite(&type_byte, 1, 1, fp);
-                break;
-
-            case VALUE_ARRAY: {
-                type_byte = 5;
-                fwrite(&type_byte, 1, 1, fp);
-                uint64_t arr_len = (uint64_t)v->array_length;
-                fwrite(&arr_len, sizeof(uint64_t), 1, fp);
-                // Note: This doesn't serialize array elements properly
-                // Arrays need special handling for full serialization
-                break;
-            }
-
-            default:
-                type_byte = 4;  // None as fallback
-                fwrite(&type_byte, 1, 1, fp);
-                break;
-        }
-    }
-
-    fclose(fp);
-    return 0;
 }

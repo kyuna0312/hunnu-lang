@@ -1,10 +1,7 @@
-/**
- * @file interpreter.c
- * @brief AST interpreter implementation
- */
-
 #include "interpreter.h"
 #include "../i18n/i18n.h"
+#include "value.h"
+#include "scope.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -13,7 +10,6 @@
 
 #define MAX_EXTERN_FNS 64
 
-/** External function entry */
 typedef struct {
     char* name;
     char* symbol_name;
@@ -23,16 +19,6 @@ typedef struct {
     int param_count;
 } ExternFn;
 
-/** Variable scope */
-typedef struct Scope {
-    char** names;
-    Value* values;
-    size_t capacity;
-    size_t count;
-    struct Scope* parent;
-} Scope;
-
-/** Interpreter state */
 struct Interpreter {
     Scope* current_scope;
     Value return_value;
@@ -44,79 +30,6 @@ struct Interpreter {
     size_t extern_fn_count;
 };
 
-/**
- * @brief Creates a new scope
- * @param capacity Initial capacity
- * @param parent Parent scope
- * @return New scope
- */
-static Scope* scope_create(size_t capacity, Scope* parent) {
-    Scope* scope = (Scope*)malloc(sizeof(Scope));
-    scope->capacity = capacity;
-    scope->count = 0;
-    scope->parent = parent;
-    scope->names = (char**)malloc(sizeof(char*) * capacity);
-    scope->values = (Value*)malloc(sizeof(Value) * capacity);
-    return scope;
-}
-
-static void scope_free(Scope* scope) {
-    if (!scope) return;
-    for (size_t i = 0; i < scope->count; i++) {
-        free(scope->names[i]);
-        value_free(&scope->values[i]);
-    }
-    free(scope->names);
-    free(scope->values);
-    free(scope);
-}
-
-static Value* scope_lookup(Scope* scope, const char* name) {
-    Scope* current = scope;
-    while (current) {
-        for (size_t i = 0; i < current->count; i++) {
-            if (strcmp(current->names[i], name) == 0) {
-                return &current->values[i];
-            }
-        }
-        current = current->parent;
-    }
-    return NULL;
-}
-
-static Value* scope_lookup_local(Scope* scope, const char* name) {
-    for (size_t i = 0; i < scope->count; i++) {
-        if (strcmp(scope->names[i], name) == 0) {
-            return &scope->values[i];
-        }
-    }
-    return NULL;
-}
-
-Value value_copy(const Value* val);
-
-static void scope_define(Scope* scope, const char* name, Value value) {
-    Value* existing = scope_lookup_local(scope, name);
-    if (existing) {
-        value_free(existing);
-        *existing = value_copy(&value);
-        return;
-    }
-    
-    if (scope->count >= scope->capacity) {
-        scope->capacity *= 2;
-        scope->names = (char**)realloc(scope->names, sizeof(char*) * scope->capacity);
-        scope->values = (Value*)realloc(scope->values, sizeof(Value) * scope->capacity);
-    }
-    scope->names[scope->count] = strdup(name);
-    scope->values[scope->count] = value_copy(&value);
-    scope->count++;
-}
-
-/**
- * @brief Creates a new interpreter
- * @return Newly allocated interpreter
- */
 Interpreter* interpreter_new(void) {
     Interpreter* interp = (Interpreter*)malloc(sizeof(Interpreter));
     interp->current_scope = scope_create(64, NULL);
@@ -129,64 +42,32 @@ Interpreter* interpreter_new(void) {
     return interp;
 }
 
-/**
- * @brief Sets return value for function
- * @param interp Interpreter
- * @param value Return value
- */
 void interpreter_set_return(Interpreter* interp, Value value) {
     interp->return_value = value;
     interp->has_return = 1;
 }
 
-/**
- * @brief Gets return value
- * @param interp Interpreter
- * @return Return value
- */
 Value interpreter_get_return(Interpreter* interp) {
     return interp->return_value;
 }
 
-/**
- * @brief Clears return value
- * @param interp Interpreter
- */
 void interpreter_clear_return(Interpreter* interp) {
     interp->has_return = 0;
 }
 
-/**
- * @brief Checks if break was encountered
- * @param interp Interpreter
- * @return 1 if break, 0 otherwise
- */
 int interpreter_has_break(Interpreter* interp) {
     return interp->has_break;
 }
 
-/**
- * @brief Checks if continue was encountered
- * @param interp Interpreter
- * @return 1 if continue, 0 otherwise
- */
 int interpreter_has_continue(Interpreter* interp) {
     return interp->has_continue;
 }
 
-/**
- * @brief Clears break/continue flags
- * @param interp Interpreter
- */
 void interpreter_clear_break_continue(Interpreter* interp) {
     interp->has_break = 0;
     interp->has_continue = 0;
 }
 
-/**
- * @brief Frees interpreter
- * @param interp Interpreter to free
- */
 void interpreter_free(Interpreter* interp) {
     if (!interp) return;
     for (size_t i = 0; i < interp->extern_fn_count; i++) {
@@ -198,195 +79,6 @@ void interpreter_free(Interpreter* interp) {
     }
     scope_free(interp->current_scope);
     free(interp);
-}
-
-/** Copies a value (deep copy) */
-Value value_copy(const Value* val) {
-    Value copy;
-    copy.type = val->type;
-    copy.has_value = val->has_value;
-    
-    if (val->type == VALUE_STRING) {
-        copy.value.string_value = strdup(val->value.string_value);
-    } else if (val->type == VALUE_ARRAY) {
-        copy.array_length = val->array_length;
-        copy.array_elements = (Value**)malloc(sizeof(Value*) * val->array_length);
-        for (size_t i = 0; i < val->array_length; i++) {
-            copy.array_elements[i] = (Value*)malloc(sizeof(Value));
-            *copy.array_elements[i] = value_copy(val->array_elements[i]);
-        }
-    } else {
-        copy.value = val->value;
-        copy.array_length = val->array_length;
-    }
-    if (val->type != VALUE_ARRAY) {
-        copy.array_elements = val->array_elements;
-    }
-    return copy;
-}
-
-Value value_create_int(int64_t val) {
-    Value v;
-    v.type = VALUE_INT;
-    v.value.int_value = val;
-    v.has_value = 1;
-    v.array_length = 0;
-    v.array_elements = NULL;
-    return v;
-}
-
-Value value_create_float(double val) {
-    Value v;
-    v.type = VALUE_FLOAT;
-    v.value.float_value = val;
-    v.has_value = 1;
-    v.array_length = 0;
-    v.array_elements = NULL;
-    return v;
-}
-
-Value value_create_string(char* val) {
-    Value v;
-    v.type = VALUE_STRING;
-    v.value.string_value = strdup(val);
-    v.has_value = 1;
-    v.array_length = 0;
-    v.array_elements = NULL;
-    return v;
-}
-
-Value value_create_bool(int val) {
-    Value v;
-    v.type = VALUE_BOOL;
-    v.value.bool_value = val;
-    v.has_value = 1;
-    v.array_length = 0;
-    v.array_elements = NULL;
-    return v;
-}
-
-Value value_create_none(void) {
-    Value v;
-    v.type = VALUE_NONE;
-    v.has_value = 0;
-    v.array_length = 0;
-    v.array_elements = NULL;
-    return v;
-}
-
-Value value_create_array(size_t length) {
-    Value v;
-    v.type = VALUE_ARRAY;
-    v.value.int_value = 0;
-    v.has_value = 1;
-    v.array_length = length;
-    v.array_elements = (Value**)calloc(length, sizeof(Value*));
-    return v;
-}
-
-Value value_create_array_val(Value** arr, size_t length) {
-    Value v;
-    v.type = VALUE_ARRAY;
-    v.value.int_value = 0;
-    v.has_value = 1;
-    v.array_length = length;
-    v.array_elements = arr;
-    return v;
-}
-
-void value_free(Value* value) {
-    if (!value) return;
-    if (value->type == VALUE_STRING) {
-        free(value->value.string_value);
-    } else if (value->type == VALUE_ARRAY) {
-        for (size_t i = 0; i < value->array_length; i++) {
-            value_free(value->array_elements[i]);
-            free(value->array_elements[i]);
-        }
-        free(value->array_elements);
-        value->array_length = 0;
-        value->array_elements = NULL;
-    }
-    value->type = VALUE_NONE;
-}
-
-char* value_to_string(Value* value) {
-    if (!value) return strdup("");
-    
-    char* buf = (char*)malloc(64);
-    switch (value->type) {
-        case VALUE_INT:
-            snprintf(buf, 64, "%ld", (long)value->value.int_value);
-            break;
-        case VALUE_STRING:
-            free(buf);
-            return strdup(value->value.string_value);
-        case VALUE_BOOL:
-            snprintf(buf, 64, "%s", i18n_get_value_string(value->value.bool_value ? "true" : "false"));
-            break;
-        case VALUE_NONE:
-            snprintf(buf, 64, "%s", i18n_get_value_string("nil"));
-            break;
-        default:
-            snprintf(buf, 64, "?");
-            break;
-    }
-    return buf;
-}
-
-void value_print(Value* value) {
-    if (!value) {
-        printf("%s", i18n_get_value_string("nil"));
-        return;
-    }
-    
-    switch (value->type) {
-        case VALUE_INT:
-            printf("%ld", (long)value->value.int_value);
-            break;
-        case VALUE_FLOAT:
-            printf("%g", value->value.float_value);
-            break;
-        case VALUE_STRING:
-            printf("%s", value->value.string_value);
-            break;
-        case VALUE_BOOL:
-            printf("%s", i18n_get_value_string(value->value.bool_value ? "true" : "false"));
-            break;
-        case VALUE_NONE:
-            printf("%s", i18n_get_value_string("nil"));
-            break;
-        case VALUE_ARRAY:
-            printf("[");
-            for (size_t i = 0; i < value->array_length; i++) {
-                if (i > 0) printf(", ");
-                value_print(value->array_elements[i]);
-            }
-            printf("]");
-            break;
-    }
-}
-
-int value_as_bool(Value* value) {
-    if (!value || !value->has_value) return 0;
-    switch (value->type) {
-        case VALUE_BOOL:
-            return value->value.bool_value;
-        case VALUE_INT:
-            return value->value.int_value != 0;
-        case VALUE_STRING:
-            return value->value.string_value[0] != '\0';
-        default:
-            return 0;
-    }
-}
-
-int64_t value_as_int(Value* value) {
-    if (!value) return 0;
-    if (value->type == VALUE_INT) {
-        return value->value.int_value;
-    }
-    return 0;
 }
 
 static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {

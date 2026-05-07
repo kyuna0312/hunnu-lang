@@ -73,20 +73,6 @@ int lexer_is_at_end(Lexer* lexer);
 int lexer_match(Lexer* lexer, char expected);
 
 /**
- * @brief Skip whitespace characters
- * @param lexer Pointer to lexer
- * @return Number of whitespace characters skipped
- */
-int lexer_skip_whitespace(Lexer* lexer);
-
-/**
- * @brief Skip single-line comments (// ...)
- * @param lexer Pointer to lexer
- * @return 1 if comment found and skipped, 0 otherwise
- */
-int lexer_skip_comment(Lexer* lexer);
-
-/**
  * @brief Read identifier or keyword
  * @param lexer Pointer to lexer
  * @return Token for identifier or keyword

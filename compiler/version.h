@@ -53,87 +53,12 @@ typedef enum {
 /** Version string for display */
 #define HUNNU_VERSION_STRING "1.0.0"
 
-/** Version names (Mongolian) */
-static const char* version_names[] = {
-    "Алтан",          /**< VERSION_ALTAN - golden */
-    "Алтангэрэл",     /**< VERSION_ALTANGEREL - golden light */
-    "Алтанцэцэг",    /**< VERSION_ALTANTSETSEG - golden flower */
-    "Анар",           /**< VERSION_ANAR - pomegranate */
-    "Батцэцэг",       /**< VERSION_BATTSETSEG - strong flower */
-    "Болормаа",       /**< VERSION_BOLORMAA - crystal woman */
-    "Болорцэцэг",    /**< VERSION_BOLORTSETSEG - crystal flower */
-    "Энх",            /**< VERSION_ENKH - peace, calm */
-    "Энхжаргал",      /**< VERSION_ENKHJARGAL - peace blessing */
-    "Эрдэнэ",          /**< VERSION_ERDENE - jewel, treasure */
-    "Эрдэнэчимэг",    /**< VERSION_ERDENECHIMEG - jewel ornament */
-    "Гэрэл",          /**< VERSION_GEREL - light */
-    "Жаргал",         /**< VERSION_JARGAL - happiness */
-    "Марал",          /**< VERSION_MARAL - deer */
-    "Мөнхцэцэг",      /**< VERSION_MONKHSETSEG - eternal flower */
-    "Мөнхтуяа",       /**< VERSION_MONKHTUYA - eternal ray */
-    "Нарангэрэл",     /**< VERSION_NARANGEREL - sunlight */
-    "Наранцэцэг",     /**< VERSION_NARANTSETSEG - sun flower */
-    "Одончимэг",      /**< VERSION_ODONCHIMEG - star ornament */
-    "Одцэцэг",        /**< VERSION_ODTSETSEG - star flower */
-    "Оюунчимэг",      /**< VERSION_OYUNCHIMEG - wisdom ornament */
-    "Сарангэрэл",     /**< VERSION_SARANGEREL - moonlight */
-    "Сарантуяа",       /**< VERSION_SARANTUYA - moonbeam */
-    "Сарнай",         /**< VERSION_SARNAI - rose */
-    "Солонго",        /**< VERSION_SOLONGO - rainbow */
-    "Цэцэг",          /**< VERSION_TSETSEG - flower */
-    "Уянга",          /**< VERSION_UYANGA - melody */
-    "Заяа"            /**< VERSION_ZAYA - fate */
-};
-
-/** Version descriptions in Mongolian */
-static const char* version_descriptions[] = {
-    "Анхны хувилбар - Алтан",
-    "Үндсэн функцууд - Алтангэрэл",
-    "Сайжруулсан хувилбар - Алтанцэцэг",
-    "Гурван үндсэн функц - Анар",
-    "Тогтмол хувилбар - Батцэцэг",
-    "Өнгөлөг хувилбар - Болормаа",
-    "Ухаалаг хувилбар - Болорцэцэг",
-    "Төгс хувилбар - Энх",
-    "Төгсөг хувилбар - Энхжаргал",
-    "Тогтворол хувилбар - Эрдэнэ",
-    "Тогтвортой хувилбар - Эрдэнэчимэг",
-    "Тогтмол хувилбар - Гэрэл",
-    "Бүрэн хувилбар - Жаргал",
-    "Сайн хувилбар - Марал",
-    "Янз бүрийн хувилбар - Мөнхцэцэг",
-    "Шинээрэл хувилбар - Мөнхтуяа",
-    "Гэрэлт хувилбар - Нарангэрэл",
-    "Улаан цайх - Наранцэцэг",
-    "Оддын хувилбар - Одончимэг",
-    "Оддын цэцэг - Одцэцэг",
-    "Оюуны чимэг - Оюунчимэг",
-    "Сарны гэрэл - Сарангэрэл",
-    "Сарны туяа - Сарантуяа",
-    "Сарнайн хувилбар - Сарнай",
-    "Рашагын хувилбар - Солонго",
-    "Цэцгийн хувилбар - Цэцэг",
-    "Дууны хувилбар - Уянга",
-    "Бүхнийг төгсгөх - Заяа"
-};
-
-/** Major version numbers */
-static const uint32_t version_majors[] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
-/** Minor version numbers */
-static const uint32_t version_minors[] = {
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
-    7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
-};
-
-/** Patch version numbers */
-static const uint32_t version_patches[] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+/** Version data defined in version.c */
+extern const char* version_names[];
+extern const char* version_descriptions[];
+extern const uint32_t version_majors[];
+extern const uint32_t version_minors[];
+extern const uint32_t version_patches[];
 
 /**
  * @brief Gets current version name

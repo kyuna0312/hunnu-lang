@@ -1,10 +1,10 @@
 #include "compiler.h"
+#include "../value.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include "opcodes.h"
-#include "../interpreter/interpreter.h"
 
 #define STACK_MAX 256
 #define MAX_LOCALS 256

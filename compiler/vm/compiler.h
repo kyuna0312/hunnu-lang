@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "opcodes.h"
-#include "../interpreter/interpreter.h"
+#include "../value.h"
 #include "../ast/ast.h"
 
 /** Bytecode chunk */
@@ -51,13 +51,5 @@ void disassemble_chunk(BytecodeChunk* chunk);
  * @param program Compiled program
  */
 void compiled_program_print(CompiledProgram* program);
-
-/**
- * @brief Write compiled program to binary file
- * @param program Compiled program
- * @param filename Output filename
- * @return 0 on success, non-zero on failure
- */
-int compiled_program_write(CompiledProgram* program, const char* filename);
 
 #endif
