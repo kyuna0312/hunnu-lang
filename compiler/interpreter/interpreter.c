@@ -742,16 +742,40 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 return value_create_float(result);
             }
             
+            if (strcmp(name, "error") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                if (arg.type != VALUE_STRING) {
+                    fprintf(stderr, "Error at line %d: ", interp->current_line);
+                    fprintf(stderr, "error() expects a string argument\n");
+                    value_free(&arg);
+                    return value_create_none();
+                }
+                fprintf(stderr, "Error: %s\n", arg.value.string_value);
+                value_free(&arg);
+                return value_create_none();
+            }
+
+            if (strcmp(name, "is_error") == 0 || strcmp(name, "unwrap") == 0) {
+                fprintf(stderr, "Error at line %d: ", interp->current_line);
+                fprintf(stderr, "is_error() and unwrap() are not available. Use error() to print errors.\n");
+                return value_create_none();
+            }
+
             /* Check for extern function */
             for (size_t i = 0; i < interp->extern_fn_count; i++) {
                 if (strcmp(interp->extern_fns[i].name, name) == 0) {
                     ExternFn* ef = &interp->extern_fns[i];
                     
                     if (ef->func_ptr) {
-                        /* Build argument array - support int and string */
-                        int64_t args[8];
+                        /* Build argument array - support int, float, and string */
+                        union {
+                            int64_t i;
+                            double d;
+                        } args[8];
                         Value arg_values[8];
                         size_t arg_count = node->data.call_expr.arg_count;
+                        int has_float = 0;
+                        
                         if (arg_count > 8) {
                             fprintf(stderr, "Error at line %d: ", interp->current_line);
                             i18n_error(ERR_TOO_MANY_ARGS_EXTERN, name);
@@ -762,40 +786,101 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                         for (size_t j = 0; j < arg_count; j++) {
                             arg_values[j] = interpreter_evaluate(interp, node->data.call_expr.args[j]);
                             if (arg_values[j].type == VALUE_STRING) {
-                                args[j] = (int64_t)(uintptr_t)arg_values[j].value.string_value;
+                                args[j].i = (int64_t)(uintptr_t)arg_values[j].value.string_value;
+                            } else if (arg_values[j].type == VALUE_FLOAT) {
+                                args[j].d = arg_values[j].value.float_value;
+                                has_float = 1;
                             } else {
-                                args[j] = (int64_t)arg_values[j].value.int_value;
+                                args[j].i = (int64_t)arg_values[j].value.int_value;
                             }
                         }
                         
-                        /* Call the function based on argument count */
-                        int64_t result = 0;
-                        typedef int64_t (*fn0)(void);
-                        typedef int64_t (*fn1)(int64_t);
-                        typedef int64_t (*fn2)(int64_t, int64_t);
-                        typedef int64_t (*fn3)(int64_t, int64_t, int64_t);
-                        typedef int64_t (*fn4)(int64_t, int64_t, int64_t, int64_t);
-                        
-                        switch (arg_count) {
-                            case 0: result = ((fn0)ef->func_ptr)(); break;
-                            case 1: result = ((fn1)ef->func_ptr)(args[0]); break;
-                            case 2: result = ((fn2)ef->func_ptr)(args[0], args[1]); break;
-                            case 3: result = ((fn3)ef->func_ptr)(args[0], args[1], args[2]); break;
-                            case 4: result = ((fn4)ef->func_ptr)(args[0], args[1], args[2], args[3]); break;
-                        default:
-                            fprintf(stderr, "Error at line %d: ", interp->current_line);
-                            i18n_error(ERR_EXTERN_TOO_MANY_ARGS, name);
-                            fprintf(stderr, "\n");
+                        /* Call the function based on return type and argument types */
+                        if (ef->returns_int == 2) {
+                            /* String return type */
+                            typedef char* (*str_fn_var)(...);
+                            str_fn_var str_func = (str_fn_var)ef->func_ptr;
+                            char* str_result = NULL;
+                            
+                            if (has_float) {
+                                switch (arg_count) {
+                                    case 0: str_result = ((char*(*)(void))str_func)(); break;
+                                    case 1: str_result = ((char*(*)(double))str_func)(args[0].d); break;
+                                    case 2: str_result = ((char*(*)(double,double))str_func)(args[0].d, args[1].d); break;
+                                    case 3: str_result = ((char*(*)(double,double,double))str_func)(args[0].d, args[1].d, args[2].d); break;
+                                    case 4: str_result = ((char*(*)(double,double,double,double))str_func)(args[0].d, args[1].d, args[2].d, args[3].d); break;
+                                }
+                            } else {
+                                switch (arg_count) {
+                                    case 0: str_result = ((char*(*)(void))str_func)(); break;
+                                    case 1: str_result = ((char*(*)(int64_t))str_func)(args[0].i); break;
+                                    case 2: str_result = ((char*(*)(int64_t,int64_t))str_func)(args[0].i, args[1].i); break;
+                                    case 3: str_result = ((char*(*)(int64_t,int64_t,int64_t))str_func)(args[0].i, args[1].i, args[2].i); break;
+                                    case 4: str_result = ((char*(*)(int64_t,int64_t,int64_t,int64_t))str_func)(args[0].i, args[1].i, args[2].i, args[3].i); break;
+                                }
+                            }
+                            
                             for (size_t j = 0; j < arg_count; j++) value_free(&arg_values[j]);
+                            
+                            if (str_result) {
+                                return value_create_string(str_result);
+                            }
                             return value_create_none();
+                        } else if (ef->returns_int == 3) {
+                            /* Float return type */
+                            typedef double (*fn_var)(...);
+                            fn_var func = (fn_var)ef->func_ptr;
+                            double result = 0.0;
+                            
+                            if (has_float) {
+                                switch (arg_count) {
+                                    case 0: result = ((double(*)(void))func)(); break;
+                                    case 1: result = ((double(*)(double))func)(args[0].d); break;
+                                    case 2: result = ((double(*)(double,double))func)(args[0].d, args[1].d); break;
+                                    case 3: result = ((double(*)(double,double,double))func)(args[0].d, args[1].d, args[2].d); break;
+                                    case 4: result = ((double(*)(double,double,double,double))func)(args[0].d, args[1].d, args[2].d, args[3].d); break;
+                                }
+                            } else {
+                                switch (arg_count) {
+                                    case 0: result = ((double(*)(void))func)(); break;
+                                    case 1: result = ((double(*)(int64_t))func)(args[0].i); break;
+                                    case 2: result = ((double(*)(int64_t,int64_t))func)(args[0].i, args[1].i); break;
+                                    case 3: result = ((double(*)(int64_t,int64_t,int64_t))func)(args[0].i, args[1].i, args[2].i); break;
+                                    case 4: result = ((double(*)(int64_t,int64_t,int64_t,int64_t))func)(args[0].i, args[1].i, args[2].i, args[3].i); break;
+                                }
+                            }
+                            
+                            for (size_t j = 0; j < arg_count; j++) value_free(&arg_values[j]);
+                            
+                            return value_create_float(result);
+                        } else {
+                            /* Int/void return type */
+                            typedef int64_t (*fn_var)(...);
+                            fn_var func = (fn_var)ef->func_ptr;
+                            int64_t result = 0;
+                            
+                            if (has_float) {
+                                switch (arg_count) {
+                                    case 0: result = ((int64_t(*)(void))func)(); break;
+                                    case 1: result = ((int64_t(*)(double))func)(args[0].d); break;
+                                    case 2: result = ((int64_t(*)(double,double))func)(args[0].d, args[1].d); break;
+                                    case 3: result = ((int64_t(*)(double,double,double))func)(args[0].d, args[1].d, args[2].d); break;
+                                    case 4: result = ((int64_t(*)(double,double,double,double))func)(args[0].d, args[1].d, args[2].d, args[3].d); break;
+                                }
+                            } else {
+                                switch (arg_count) {
+                                    case 0: result = ((int64_t(*)(void))func)(); break;
+                                    case 1: result = ((int64_t(*)(int64_t))func)(args[0].i); break;
+                                    case 2: result = ((int64_t(*)(int64_t,int64_t))func)(args[0].i, args[1].i); break;
+                                    case 3: result = ((int64_t(*)(int64_t,int64_t,int64_t))func)(args[0].i, args[1].i, args[2].i); break;
+                                    case 4: result = ((int64_t(*)(int64_t,int64_t,int64_t,int64_t))func)(args[0].i, args[1].i, args[2].i, args[3].i); break;
+                                }
+                            }
+                            
+                            for (size_t j = 0; j < arg_count; j++) value_free(&arg_values[j]);
+                            
+                            return value_create_int(result);
                         }
-                        
-                        /* Free argument values */
-                        for (size_t j = 0; j < arg_count; j++) {
-                            value_free(&arg_values[j]);
-                        }
-                        
-                        return value_create_int(result);
                     } else {
                         fprintf(stderr, "Error at line %d: ", interp->current_line);
                         i18n_error(ERR_EXTERN_NOT_LOADED, name);
@@ -1107,6 +1192,26 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
         case AST_MATCH_EXPR: {
             Value result = interpreter_evaluate(interp, node);
             value_free(&result);
+            break;
+        }
+        
+        case AST_TRY_STMT: {
+            /* Execute try block */
+            interpreter_execute_statement(interp, node->data.try_stmt.try_block);
+            
+            /* Check if an error occurred (simplified - just continue for now) */
+            /* TODO: Implement proper error handling with error values */
+            
+            /* If catch block exists and there was an error, execute it */
+            if (node->data.try_stmt.catch_block) {
+                /* For now, just execute catch block if present */
+                /* In a full implementation, we'd check if an error occurred */
+            }
+            
+            /* Execute finally block if present */
+            if (node->data.try_stmt.finally_block) {
+                interpreter_execute_statement(interp, node->data.try_stmt.finally_block);
+            }
             break;
         }
         

@@ -7,7 +7,7 @@ Supports both English and Mongolian (Cyrillic) keywords.
 
 ## Version
 
-**Current: 0.2.0 (Алтангэрэл)** - Үндсэн функцууд
+**Current: 0.2.0 (Алтангэрэл)** - Үндсэн функцүүд
 
 Hunnu uses authentic Mongolian women names for versioning.
 See [`compiler/version.h`](compiler/version.h) for the full version list.
@@ -37,6 +37,9 @@ See [`compiler/version.h`](compiler/version.h) for the full version list.
 | null/nil | `let x = null` | `let x = null` |
 | Input | `input()` | `let name = input()` |
 | Type conversion | `to_int()`, `to_float()`, `to_str()` | `to_str(42)` |
+| **Try/Catch** | `try { } catch { }` | `try { x / 0 } catch { print("error") }` |
+| **FFI (Foreign Function Interface)** | `extern fn puts(s) -> int from "libc.so.6"` | `extern fn pow(x,y) -> float from "libm.so.6"` |
+| **Module imports** | `import std.math` | `import std.math` |
 
 ### Built-in Functions
 
@@ -68,15 +71,132 @@ Hunnu supports both English and Mongolian (Cyrillic) keywords:
 | `break` | `зогсоох` | stop |
 | `continue` | `үргэлжлүүлэх` | continue |
 | `null` | `хоосон` | empty |
+| `import` | `импорт` | import |
+| `try` | `турших` | try |
+| `catch` | `барих` | catch |
+| `finally` | `эцэст` | finally |
 
 ---
 
-## Building
+## Standard Library
+
+Hunnu includes a standard library in `stdlib/` with modules:
+
+| Module | Description |
+|--------|-------------|
+| `std/libc.hn` | C standard library FFI bindings (puts, printf, strlen, etc.) |
+| `std/math.hn` | Math functions (pow, sqrt, sin, cos, tan, fabs) |
+| `std/io.hn` | I/O functions (println, read_line) |
+| `std/array.hn` | Array utilities (map, filter, reduce, length) |
+| `std/string.hn` | String utilities (to_upper, to_lower, contains, trim, split, join) |
+| `std/fs.hn` | Filesystem functions (exists, read_file, write_file) |
+| `std/time.hn` | Time functions (now, timestamp) |
+
+Usage:
+```hunnu
+import std.math
+import std.io
+
+fn main() {
+    let x = 2.0
+    let result = pow(x, 3.0)
+    std.io.println("Result: " + to_str(result))
+}
+```
+
+---
+
+## Building:
 
 ```bash
 mkdir build && cd build
 cmake ..
 make
+```
+
+---
+
+## Running:
+
+```bash
+./hunnu run examples/main.hn          # Run with interpreter
+./hunnu run examples/main.hn --vm     # Run with C VM
+./hunnu run examples/main.hn --vm-rust  # Run with Rust VM
+./hunnu build examples/main.hn           # Compile to bytecode
+./hunnu run examples/main.hn --debug   # Debug mode
+./hunnu tokens examples/main.hn         # Show tokens
+./hunnu ast examples/main.hn            # Show AST
+```
+
+### Try/Catch Example:
+
+```hunnu
+fn main() {
+    try {
+        print("Inside try block")
+        let x = 10 / 0  // This would cause an error
+    } catch {
+        print("Caught an error!")
+    }
+    
+    print("Program continues...")
+}
+```
+
+### FFI Example:
+
+```hunnu
+// Call C library functions
+extern fn pow(base, exp) -> float from "libm.so.6"
+extern fn getenv(name) -> str from "libc.so.6"
+
+fn main() {
+    let result = pow(2.0, 3.0)
+    print(result)  // 8.0
+    
+    let home = getenv("HOME")
+    print(home)
+}
+```
+
+### Module Import Example:
+
+```hunnu
+import std.math
+import std.io
+
+fn main() {
+    let x = 2.0
+    let result = pow(x, 3.0)
+    std.io.println("Result: " + to_str(result))
+}
+```
+
+---
+
+## Examples:
+
+### Hello World
+
+```hunnu
+fn main() {
+    print("Hello, World!")
+}
+```
+
+### Fibonacci
+
+```hunnu
+fn fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+fn main() {
+    print(fib(10))  // 55
+}
 ```
 
 ---

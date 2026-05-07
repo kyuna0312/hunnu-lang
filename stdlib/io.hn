@@ -1,0 +1,22 @@
+// std.io - I/O standard library for Hunnu
+// Provides input/output functions
+
+// Import libc for low-level I/O
+import "libc.hn"
+
+// Print with newline (already built-in, but added for completeness)
+fn println(s) {
+    print(s)
+    print("\n")
+}
+
+// Read a line from stdin
+fn read_line() {
+    return input()
+}
+
+// Print formatted string (simple version)
+fn printfmt(fmt, args) {
+    // Simple implementation - in production this would parse format strings
+    print(fmt)
+}

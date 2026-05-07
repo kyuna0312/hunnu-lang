@@ -4,9 +4,9 @@ This document tracks bugs discovered and fixed during development.
 
 ## Assignment Not Updating Variable Value
 
-**Date**: Session where while/for loops were being implemented
+**Date**: Session where while/for loops were being implemented.
 
-** Symptom **:
+**Symptom**:
 ```hunnu
 let x = 5
 x = 3
@@ -31,7 +31,7 @@ Additionally, there was a duplicate `AST_ASSIGN` case in the wrong function that
 
 ## Parser Required Parentheses for While Loops
 
-** Symptom **:
+**Symptom**:
 ```hunnu
 while x > 0 { ... }  // Error: Expected '(' after 'while'
 ```
@@ -53,3 +53,28 @@ while x > 0 { ... }  // Error: Expected '(' after 'while'
 - **Missing semicolon handling**: Parser required explicit semicolon consumption after var declarations, expressions, and print statements.
 
 - **Missing assignment parsing**: Had to add `parser_parse_assignment()` function for assignment expressions.
+
+---
+
+## Month 1-2 Bugs (Fixed)
+
+- **Array indexing out of bounds**: Fixed in Phase 1 with proper bounds checking.
+
+- **String memory safety**: Fixed in Phase 1 with proper string handling and dangling pointer fixes.
+
+- **FFI string returns**: Fixed in Month 2 - `extern fn` returning `str` now works correctly.
+
+- **FFI float arguments**: Fixed in Month 2 - `extern fn` with float params now handled properly.
+
+- **Module import path resolution**: Fixed in Month 2 - `import std.math` now correctly resolves to `stdlib/math.hn`.
+
+- **Try/catch parsing**: Implemented in Month 2 - `try { } catch { }` syntax now works.
+
+---
+
+## Current Status
+
+✅ All known bugs fixed
+✅ Month 1 (Rust VM Stabilization) - Complete
+✅ Month 2 (FFI Ecosystem + Standard Library) - Complete
+🚧 Month 3 (AOT Compiler Foundation) - In progress

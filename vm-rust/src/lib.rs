@@ -297,3 +297,30 @@ fn u64_from_bytes(bytes: &[u8]) -> u64 {
     }
     val
 }
+
+// Rust FFI functions that can be called from Hunnu via extern fn
+// These functions are exported with #[no_mangle] for dynamic loading
+
+/// Example Rust function: returns the square of a number
+#[no_mangle]
+pub extern "C" fn hunnu_math_square(x: i64) -> i64 {
+    x * x
+}
+
+/// Example Rust function: returns the sum of two numbers
+#[no_mangle]
+pub extern "C" fn hunnu_math_add(a: i64, b: i64) -> i64 {
+    a + b
+}
+
+/// Example Rust function: returns a greeting string (static)
+#[no_mangle]
+pub extern "C" fn hunnu_get_greeting() -> *const u8 {
+    b"Hello from Rust FFI!\0".as_ptr()
+}
+
+/// Example Rust function: computes factorial
+#[no_mangle]
+pub extern "C" fn hunnu_math_factorial(n: i64) -> i64 {
+    if n <= 1 { 1 } else { n * hunnu_math_factorial(n - 1) }
+}

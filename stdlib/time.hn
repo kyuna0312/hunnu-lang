@@ -1,0 +1,19 @@
+// std/time.hn - Time functions for Hunnu
+// Uses FFI to C standard library
+
+// Get current time in seconds since epoch
+extern fn time(t) -> int from "libc.so.6"
+
+// Sleep for n seconds
+extern fn sleep(seconds) -> int from "libc.so.6"
+
+// Get current timestamp
+fn now() {
+    return time(0)
+}
+
+// Simple timestamp string
+fn timestamp() {
+    let t = time(0)
+    return to_str(t)
+}

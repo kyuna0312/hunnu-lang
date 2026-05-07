@@ -1,0 +1,15 @@
+// Test calling Rust functions via FFI
+extern fn hunnu_math_square(x) -> int from "vm-rust/target/release/libhunnu_vm.so"
+extern fn hunnu_math_add(a, b) -> int from "vm-rust/target/release/libhunnu_vm.so"
+extern fn hunnu_get_greeting() -> str from "vm-rust/target/release/libhunnu_vm.so"
+
+fn main() {
+    let sq = hunnu_math_square(5)
+    print(sq)
+    
+    let sum = hunnu_math_add(10, 20)
+    print(sum)
+    
+    let greeting = hunnu_get_greeting()
+    print(greeting)
+}

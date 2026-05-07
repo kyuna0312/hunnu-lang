@@ -1,0 +1,15 @@
+[package]
+name = "hunnu-python"
+version = "0.1.0"
+edition = "2021"
+description = "Python bindings for Hunnu language using PyO3"
+
+[lib]
+name = "hunnu"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["auto-initialize"] }
+
+[build-dependencies]
+pyo3-build-config = "0.20"

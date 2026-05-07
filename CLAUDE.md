@@ -13,6 +13,7 @@ cd build && make
 
 # Run a program
 ./build/hunnu run examples/main.hn
+./build/hunnu run examples/main.hn --vm-rust  # Run with Rust VM
 
 # Clean rebuild
 rm -rf build/* && cd build && cmake .. && make
@@ -22,7 +23,7 @@ No automated test suite — testing is manual via example `.hn` files in `exampl
 
 ## Architecture
 
-Pipeline: `.hn` source → Lexer → tokens → Parser → AST → Interpreter → output
+Pipeline: `.hn` source → Lexer → tokens → Parser → AST → Interpreter/VM → output
 
 All source under `compiler/`:
 - `lexer/token.h` — `TokenType` enum, `Token` struct
@@ -31,7 +32,7 @@ All source under `compiler/`:
 - `ast/ast.h` — `ASTNodeType` enum + tagged union `ASTNode` struct; one factory function per node type
 - `interpreter/interpreter.c` — tree-walk interpreter; `interpreter_evaluate()` returns `Value`, `interpreter_execute_statement()` is void
 
-The `Value` struct (`interpreter.h`) uses a `type` enum (`VALUE_INT`, `VALUE_STRING`, `VALUE_BOOL`, `VALUE_NONE`) plus a `has_value` flag for uninitialized state.
+The `Value` struct (`interpreter.h`) uses a `type` enum (`VALUE_INT`, `VALUE_STRING`, `VALUE_FLOAT`, `VALUE_BOOL`, `VALUE_NONE`) plus a `has_value` flag for uninitialized state.
 
 Environment (variable scope) is managed inside `interpreter.c` via `interpreter_define()`, which updates existing variables instead of shadowing them.
 
@@ -47,6 +48,17 @@ Environment (variable scope) is managed inside `interpreter.c` via `interpreter_
 3. `compiler/parser/parser.c` — build the node
 4. `compiler/interpreter/interpreter.c` — evaluate/execute the node
 
+### Try/Catch (Month 2 feature)
+- Added `TOKEN_TRY`, `TOKEN_CATCH`, `TOKEN_FINALLY` to `compiler/lexer/token.h`
+- Added `AST_TRY_STMT` to `compiler/ast/ast.h`
+- Parser supports `try { } catch { }` syntax
+- Interpreter executes try/catch/finally blocks
+
+### Module System (Month 2 feature)
+- Import path resolution supports both file paths and module paths
+- `import "stdlib/math.hn"` — file import
+- `import std.math` — module import (converts to `stdlib/math.hn`)
+
 ## Code Style
 
 - 4-space indent, 100-char line limit, opening brace on same line
@@ -61,3 +73,4 @@ Environment (variable scope) is managed inside `interpreter.c` via `interpreter_
 - Assignment (`AST_ASSIGN`) must live in `interpreter_evaluate()` (returns `Value`), **not** in `interpreter_execute_statement()` (void) — a previous bug caused by the wrong placement.
 - `while` loops use no parentheses in Hunnu syntax: `while x > 0 { ... }` (not `while(x > 0)`).
 - Newlines are tokens (`TOKEN_NEWLINE`); `parser_skip_newlines()` must be called at statement boundaries to avoid parse failures.
+- Module imports (`import std.math`) are converted to file paths (`stdlib/math.hn`) in `cli/main.c` `resolve_import_path()`.

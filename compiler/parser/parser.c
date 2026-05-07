@@ -47,6 +47,7 @@ static ASTNode* parser_parse_break_statement(Parser* parser);
 static ASTNode* parser_parse_continue_statement(Parser* parser);
 static ASTNode* parser_parse_match_expression(Parser* parser);
 static ASTNode* parser_parse_interpolated_string(Parser* parser, const char* str_val, int32_t line, int32_t column);
+static ASTNode* parser_parse_try_statement(Parser* parser);
 
 /**
  * @brief Reports parse error
@@ -253,8 +254,9 @@ ASTNode* parser_parse_declaration(Parser* parser) {
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after parameters");
         }
         
-        /* Parse return type: -> int | -> str | -> void */
-        int returns_int = 1; /* default: returns int */
+        /* Parse return type: -> int | -> float | -> str | -> void */
+        int returns_int = 1; /* default: returns int (1) */
+        /* returns_int values: 0=void, 1=int, 2=str, 3=float */
         if (parser_match(parser, TOKEN_ARROW)) {
             if (parser_check(parser, TOKEN_IDENT)) {
                 if (strcmp(parser->current->lexeme, "int") == 0) {
@@ -264,10 +266,13 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                     returns_int = 0;
                     parser_advance(parser);
                 } else if (strcmp(parser->current->lexeme, "str") == 0) {
-                    returns_int = 2; /* str return - store as flag */
+                    returns_int = 2; /* str return */
+                    parser_advance(parser);
+                } else if (strcmp(parser->current->lexeme, "float") == 0) {
+                    returns_int = 3; /* float return */
                     parser_advance(parser);
                 } else {
-                    parser_error(parser, "Expected 'int', 'str', or 'void' after '->'");
+                    parser_error(parser, "Expected 'int', 'float', 'str', or 'void' after '->'");
                     return NULL;
                 }
             }
@@ -323,6 +328,10 @@ ASTNode* parser_parse_statement(Parser* parser) {
     
     if (parser_match(parser, TOKEN_MATCH)) {
         return parser_parse_match_expression(parser);
+    }
+    
+    if (parser_match(parser, TOKEN_TRY)) {
+        return parser_parse_try_statement(parser);
     }
     
     if (parser_match(parser, TOKEN_PRINT)) {
@@ -897,7 +906,7 @@ static ASTNode* parser_parse_match_expression(Parser* parser) {
  * @return AST node representing the concatenated string
  */
 static ASTNode* parser_parse_interpolated_string(Parser* parser, const char* str_val,
-                                                int32_t line, int32_t column) {
+                                                 int32_t line, int32_t column) {
     ASTNode* result = NULL;
     const char* p = str_val;
     int32_t current_line = line;
@@ -942,7 +951,7 @@ static ASTNode* parser_parse_interpolated_string(Parser* parser, const char* str
             ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
             args[0] = expr;
             ASTNode* to_str_call = ast_call_expr_create("to_str", args, 1,
-                                                        current_line, current_column);
+                                                         current_line, current_column);
             
             if (result) {
                 result = ast_string_concat_create(result, to_str_call, current_line, current_column);
@@ -982,4 +991,50 @@ static ASTNode* parser_parse_interpolated_string(Parser* parser, const char* str
     }
     
     return result ? result : ast_literal_create_string("", line, column);
+}
+
+/**
+ * @brief Parses a try-catch statement
+ * @param parser Parser instance
+ * @return AST node for try statement
+ */
+static ASTNode* parser_parse_try_statement(Parser* parser) {
+    int32_t line = parser->previous->line;
+    int32_t column = parser->previous->column;
+    
+    /* Parse try block */
+    ASTNode* try_block = parser_parse_statement(parser);
+    if (!try_block) {
+        return NULL;
+    }
+    
+    /* Optional catch block */
+    ASTNode* catch_block = NULL;
+    char* catch_var = NULL;
+    
+    if (parser_match(parser, TOKEN_CATCH)) {
+        /* Optional catch variable: catch(e) or catch e */
+        if (parser_check(parser, TOKEN_LPAREN)) {
+            parser_advance(parser);
+            if (parser_check(parser, TOKEN_IDENT)) {
+                catch_var = strdup(parser->current->lexeme);
+                parser_advance(parser);
+            }
+            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after catch variable");
+        } else if (parser_check(parser, TOKEN_IDENT)) {
+            catch_var = strdup(parser->current->lexeme);
+            parser_advance(parser);
+        }
+        
+        catch_block = parser_parse_statement(parser);
+    }
+    
+    /* Optional finally block */
+    ASTNode* finally_block = NULL;
+    if (parser_match(parser, TOKEN_FINALLY)) {
+        finally_block = parser_parse_statement(parser);
+    }
+    
+    return ast_try_stmt_create(try_block, catch_var, catch_block, finally_block,
+                               line, column);
 }

@@ -32,7 +32,9 @@ static const char* ast_type_names[] = {
     "INDEX_EXPR",
     "INDEX_ASSIGN",
     "STRING_CONCAT",
-    "EXTERN_FN"
+    "MATCH_EXPR",
+    "EXTERN_FN",
+    "TRY_STMT"
 };
 
 /**
@@ -354,6 +356,20 @@ ASTNode* ast_extern_fn_create(const char* name, const char* lib_name, const char
     node->data.extern_fn.param_names = param_names;
     node->data.extern_fn.param_count = param_count;
     node->data.extern_fn.returns_int = returns_int;
+    return node;
+}
+
+ASTNode* ast_try_stmt_create(ASTNode* try_block, const char* catch_var,
+                             ASTNode* catch_block, ASTNode* finally_block,
+                             int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_TRY_STMT;
+    node->line = line;
+    node->column = column;
+    node->data.try_stmt.try_block = try_block;
+    node->data.try_stmt.catch_var = catch_var ? strdup(catch_var) : NULL;
+    node->data.try_stmt.catch_block = catch_block;
+    node->data.try_stmt.finally_block = finally_block;
     return node;
 }
 
@@ -686,7 +702,32 @@ static void ast_print_node(ASTNode* node, int indent) {
         case AST_EXTERN_FN:
             /* No child nodes to recurse into */
             break;
-            
+
+        case AST_TRY_STMT:
+            indent_print(indent);
+            printf("TRY_STMT:\n");
+            indent_print(indent + 1);
+            printf("try_block:\n");
+            ast_print_node(node->data.try_stmt.try_block, indent + 2);
+            printf("\n");
+            if (node->data.try_stmt.catch_var) {
+                indent_print(indent + 1);
+                printf("catch_var: %s\n", node->data.try_stmt.catch_var);
+            }
+            if (node->data.try_stmt.catch_block) {
+                indent_print(indent + 1);
+                printf("catch_block:\n");
+                ast_print_node(node->data.try_stmt.catch_block, indent + 2);
+                printf("\n");
+            }
+            if (node->data.try_stmt.finally_block) {
+                indent_print(indent + 1);
+                printf("finally_block:\n");
+                ast_print_node(node->data.try_stmt.finally_block, indent + 2);
+                printf("\n");
+            }
+            break;
+
         default:
             break;
     }

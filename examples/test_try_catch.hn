@@ -1,0 +1,11 @@
+// Test try-catch statement
+fn main() {
+    try {
+        print("Inside try block")
+        let x = 10 / 0  // This would cause an error
+    } catch {
+        print("Caught an error!")
+    }
+    
+    print("Program continues...")
+}

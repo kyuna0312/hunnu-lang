@@ -36,6 +36,7 @@ typedef enum {
     AST_STRING_CONCAT,
     AST_MATCH_EXPR,
     AST_EXTERN_FN,
+    AST_TRY_STMT,
 } ASTNodeType;
 
 /** AST node structure */
@@ -191,6 +192,14 @@ typedef struct ASTNode {
             size_t param_count;
             int returns_int;      /* 1 if returns int, 0 if void */
         } extern_fn;
+
+        /** Try-catch statement */
+        struct {
+            struct ASTNode* try_block;      /* Try block */
+            char* catch_var;               /* Catch variable name (or NULL) */
+            struct ASTNode* catch_block;     /* Catch block */
+            struct ASTNode* finally_block;   /* Finally block (or NULL) */
+        } try_stmt;
     } data;
 } ASTNode;
 
@@ -225,6 +234,9 @@ ASTNode* ast_match_expr_create(ASTNode* value, ASTNode** patterns, ASTNode** bod
 ASTNode* ast_extern_fn_create(const char* name, const char* lib_name, const char* symbol_name,
                                char** param_names, size_t param_count, int returns_int,
                                int32_t line, int32_t column);
+ASTNode* ast_try_stmt_create(ASTNode* try_block, const char* catch_var,
+                              ASTNode* catch_block, ASTNode* finally_block,
+                              int32_t line, int32_t column);
 
 void ast_free(ASTNode* node);
 void ast_print(ASTNode* node, int indent);

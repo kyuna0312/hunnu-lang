@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "cli.h"
 #include "compiler/lexer/lexer.h"
 #include "compiler/version.h"
@@ -21,7 +22,81 @@ static char* resolve_import_path(const char* import_path, const char* base_dir) 
     if (import_path[0] == '/') {
         return strdup(import_path);
     }
-    
+
+    /* Check if it's a module path (no slashes, contains dot - like "std.math") */
+    int has_slash = (strchr(import_path, '/') != NULL);
+    const char* first_dot = strchr(import_path, '.');
+
+    char* path_to_use = NULL;
+
+    if (!has_slash && first_dot != NULL) {
+        /* Module path: std.math -> stdlib/math.hn */
+        const char* rest = first_dot + 1;
+
+        /* Build module_path: "stdlib/" + rest + ".hn" */
+        size_t rest_len = strlen(rest);
+        size_t len = 7 + rest_len + 3 + 1; /* "stdlib/" + rest + ".hn" + null */
+        char* module_path = (char*)malloc(len);
+        char* out = module_path;
+
+        /* Add "stdlib/" prefix */
+        memcpy(out, "stdlib/", 7);
+        out += 7;
+
+        /* Copy the rest after the first dot, replacing remaining dots with slashes */
+        const char* p = rest;
+        while (*p) {
+            if (*p == '.') {
+                *out++ = '/';
+            } else {
+                *out++ = *p;
+            }
+            p++;
+        }
+
+        /* Add ".hn" extension */
+        memcpy(out, ".hn", 3);
+        out += 3;
+        *out = '\0';
+
+        path_to_use = module_path;
+    } else {
+        path_to_use = strdup(import_path);
+    }
+
+    /* Try multiple locations */
+    /* 1. Relative to current working directory */
+    char* cwd = getcwd(NULL, 0);
+    if (cwd) {
+        size_t full_len = strlen(cwd) + 1 + strlen(path_to_use) + 1;
+        char* full = (char*)malloc(full_len);
+        snprintf(full, full_len, "%s/%s", cwd, path_to_use);
+        free(cwd);
+        FILE* test = fopen(full, "r");
+        if (test) {
+            fclose(test);
+            free(path_to_use);
+            return full;
+        }
+        free(full);
+    }
+
+    /* 2. Relative to base_dir */
+    if (base_dir && base_dir[0]) {
+        size_t full_len = strlen(base_dir) + 1 + strlen(path_to_use) + 1;
+        char* full = (char*)malloc(full_len);
+        snprintf(full, full_len, "%s/%s", base_dir, path_to_use);
+        FILE* test = fopen(full, "r");
+        if (test) {
+            fclose(test);
+            free(path_to_use);
+            return full;
+        }
+        free(full);
+    }
+
+    /* Fallback: just return the path */
+    free(path_to_use);
     size_t len = strlen(base_dir) + 1 + strlen(import_path) + 1;
     char* full = (char*)malloc(len);
     snprintf(full, len, "%s/%s", base_dir, import_path);
@@ -54,58 +129,96 @@ static char* expand_imports_recursive(const char* source, long source_size,
  * Expands import statements in source code by recursively loading imported files.
  */
 static char* expand_imports_recursive(const char* source, long source_size,
-                                       const char* base_dir, int depth, int* out_size) {
-        if (depth >= MAX_IMPORT_DEPTH) {
-            i18n_error(ERR_IMPORT_DEPTH_EXCEEDED, MAX_IMPORT_DEPTH);
-            fprintf(stderr, "\n");
-            *out_size = (int)source_size;
-            return strdup(source);
-        }
-    
+                                        const char* base_dir, int depth, int* out_size) {
+    if (depth >= MAX_IMPORT_DEPTH) {
+        i18n_error(ERR_IMPORT_DEPTH_EXCEEDED, MAX_IMPORT_DEPTH);
+        fprintf(stderr, "\n");
+        *out_size = (int)source_size;
+        return strdup(source);
+    }
+
     char* output = (char*)malloc(MAX_SOURCE_SIZE);
     size_t out_pos = 0;
     size_t pos = 0;
     size_t file_size = (size_t)source_size;
-    
+
     while (pos < file_size) {
-        int is_import = 0;
-        size_t kw_len = 0;
-        
-        if (strncmp(source + pos, "import ", 7) == 0) {
-            is_import = 1;
-            kw_len = 7;
-        } else if (strncmp(source + pos, "импорт ", 13) == 0) {
-            is_import = 1;
-            kw_len = 13;
-        }
-        
-        if (is_import) {
-            size_t start = pos + kw_len;
-            
-            while (start < file_size && (source[start] == ' ' || source[start] == '\t')) {
-                start++;
-            }
-            
-            if (start < file_size && source[start] == '"') {
-                start++;
-                size_t end = start;
-                while (end < file_size && source[end] != '"') {
-                    end++;
+        /* Skip string literals to avoid false import detection */
+        if (source[pos] == '"') {
+            size_t end = pos + 1;
+            while (end < file_size && source[end] != '"') {
+                if (source[end] == '\\' && end + 1 < file_size) {
+                    end++; /* skip escaped quote */
                 }
-                
-                if (end < file_size) {
-                    size_t path_len = end - start;
+                end++;
+            }
+            if (end < file_size) {
+                end++; /* include closing quote */
+            }
+            size_t len = end - pos;
+            if (out_pos + len < MAX_SOURCE_SIZE) {
+                memcpy(output + out_pos, source + pos, len);
+                out_pos += len;
+            }
+            pos = end;
+            continue;
+        }
+
+        /* Check for import keyword at start of line */
+        int is_import = 0;
+        size_t import_start = pos;
+
+        /* Skip leading whitespace */
+        while (import_start < file_size && (source[import_start] == ' ' || source[import_start] == '\t')) {
+            import_start++;
+        }
+
+        /* Check if "import " starts at import_start */
+        if (import_start + 7 <= file_size && strncmp(source + import_start, "import ", 7) == 0) {
+            /* Make sure this is at the start of a line (pos is at newline or start of file) */
+            if (pos == 0 || source[pos-1] == '\n' || source[pos-1] == '\r') {
+                is_import = 1;
+            }
+        } else if (import_start + 13 <= file_size && strncmp(source + import_start, "импорт ", 13) == 0) {
+            if (pos == 0 || source[pos-1] == '\n' || source[pos-1] == '\r') {
+                is_import = 1;
+            }
+        }
+
+        if (is_import) {
+            /* Find the import path - it should be after "import " or "импорт " */
+            size_t path_start = import_start;
+            if (strncmp(source + import_start, "import ", 7) == 0) {
+                path_start += 7;
+            } else {
+                path_start += 13;
+            }
+
+            /* Skip whitespace */
+            while (path_start < file_size && (source[path_start] == ' ' || source[path_start] == '\t')) {
+                path_start++;
+            }
+
+            if (path_start < file_size && source[path_start] == '"') {
+                /* Quoted path */
+                path_start++; /* skip opening quote */
+                size_t path_end = path_start;
+                while (path_end < file_size && source[path_end] != '"') {
+                    path_end++;
+                }
+
+                if (path_end < file_size) {
+                    size_t path_len = path_end - path_start;
                     char* import_path = (char*)malloc(path_len + 1);
-                    strncpy(import_path, source + start, path_len);
+                    memcpy(import_path, source + path_start, path_len);
                     import_path[path_len] = '\0';
-                    
+
                     char* full_path = resolve_import_path(import_path, base_dir);
-                    
+
                     long imp_file_size = 0;
                     char* imp_raw = read_raw_file(full_path, &imp_file_size);
-                    
+
                     if (imp_raw) {
-                        /* Get directory of imported file for nested imports */
                         char* imp_dir_copy = strdup(full_path);
                         char* imp_last_slash = strrchr(imp_dir_copy, '/');
                         char* imp_base_dir = "";
@@ -113,32 +226,30 @@ static char* expand_imports_recursive(const char* source, long source_size,
                             *imp_last_slash = '\0';
                             imp_base_dir = imp_dir_copy;
                         }
-                        
-                        /* Recursively expand imports in the imported file */
+
                         int expanded_size = 0;
                         char* expanded = expand_imports_recursive(imp_raw, imp_file_size,
                                                                    imp_base_dir, depth + 1,
                                                                    &expanded_size);
-                        
+
                         if (out_pos + expanded_size + 1 < MAX_SOURCE_SIZE) {
                             memcpy(output + out_pos, expanded, expanded_size);
                             out_pos += expanded_size;
                             output[out_pos++] = '\n';
                         }
-                        
+
                         free(expanded);
                         free(imp_dir_copy);
                         free(imp_raw);
                     } else {
-                        i18n_error(ERR_CANNOT_OPEN_IMPORT, full_path);
-                        fprintf(stderr, "\n");
+                        fprintf(stderr, "Cannot open imported file '%s'\n", full_path);
                     }
-                    
+
                     free(full_path);
                     free(import_path);
-                    
-                    /* Skip past the import statement */
-                    pos = end + 1;
+
+                    pos = path_end + 1;
+                    /* Skip to end of line */
                     while (pos < file_size && source[pos] != '\n' && source[pos] != ';') {
                         pos++;
                     }
@@ -147,15 +258,70 @@ static char* expand_imports_recursive(const char* source, long source_size,
                     }
                     continue;
                 }
+            } else {
+                /* Module path (no quotes): import std.math */
+                size_t path_end = path_start;
+                while (path_end < file_size && source[path_end] != '\n' && source[path_end] != ';' && source[path_end] != ' ') {
+                    path_end++;
+                }
+
+                size_t path_len = path_end - path_start;
+                char* import_path = (char*)malloc(path_len + 1);
+                memcpy(import_path, source + path_start, path_len);
+                import_path[path_len] = '\0';
+
+                char* full_path = resolve_import_path(import_path, base_dir);
+
+                long imp_file_size = 0;
+                char* imp_raw = read_raw_file(full_path, &imp_file_size);
+
+                if (imp_raw) {
+                    char* imp_dir_copy = strdup(full_path);
+                    char* imp_last_slash = strrchr(imp_dir_copy, '/');
+                    char* imp_base_dir = "";
+                    if (imp_last_slash) {
+                        *imp_last_slash = '\0';
+                        imp_base_dir = imp_dir_copy;
+                    }
+
+                    int expanded_size = 0;
+                    char* expanded = expand_imports_recursive(imp_raw, imp_file_size,
+                                                               imp_base_dir, depth + 1,
+                                                               &expanded_size);
+
+                    if (out_pos + expanded_size + 1 < MAX_SOURCE_SIZE) {
+                        memcpy(output + out_pos, expanded, expanded_size);
+                        out_pos += expanded_size;
+                        output[out_pos++] = '\n';
+                    }
+
+                    free(expanded);
+                    free(imp_dir_copy);
+                    free(imp_raw);
+                } else {
+                    fprintf(stderr, "Cannot open imported file '%s'\n", full_path);
+                }
+
+                free(full_path);
+                free(import_path);
+
+                pos = path_end;
+                while (pos < file_size && source[pos] != '\n' && source[pos] != ';') {
+                    pos++;
+                }
+                if (pos < file_size && source[pos] == ';') {
+                    pos++;
+                }
+                continue;
             }
         }
-        
+
         if (out_pos < MAX_SOURCE_SIZE - 1) {
             output[out_pos++] = source[pos];
         }
         pos++;
     }
-    
+
     output[out_pos] = '\0';
     *out_size = (int)out_pos;
     return output;

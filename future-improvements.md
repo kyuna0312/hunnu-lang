@@ -8,8 +8,8 @@
 
 ### High Priority
 - **Bytecode compiler + VM** ✅ (DONE)
-- **Modules / import system** — split code across files
-- **Standard library** — built-in functions for common tasks
+- **Modules / import system** ✅ (DONE - supports `import std.math` syntax)
+- **Standard library** ✅ (DONE - stdlib/ with math, io, array, string, fs, time)
 
 ### Medium Priority
 - **Structs / records** — grouping related data
@@ -48,7 +48,7 @@ type List[T] = Cons(T, List[T]) | Nil
 
 ### High Priority
 - **Optimization** — performance improvements
-- **Error messages** — better diagnostics with line numbers
+- **Error handling** ✅ (DONE - try/catch/finally syntax)
 - **Debugger** — stepping through code
 
 ### Medium Priority
@@ -59,7 +59,7 @@ type List[T] = Cons(T, List[T]) | Nil
 ### Lower Priority
 - **Self-hosting** — implement compiler in Hunnu
 - **JIT compilation** — just-in-time code generation
-- **AOT compilation** — ahead-of-time binary output
+- **AOT compilation** ✅ (IN PROGRESS - Month 3 goal)
 
 ---
 
@@ -72,7 +72,7 @@ type List[T] = Cons(T, List[T]) | Nil
 - Fuzzing for edge cases
 
 ### Documentation
-- Language specification
+- Language specification ✅ (Partially done - README.md, plan.md)
 - API documentation
 - Tutorial for beginners
 - Cookbook with recipes

@@ -38,6 +38,9 @@ static const char* keyword_names[] = {
     "null",       "хоосон",  // null
     "import",     "импорт",  // import
     "extern",     "гаднах",  // extern
+    "try",        "турших",   // try
+    "catch",      "барих",    // catch
+    "finally",    "эцэст",    // finally
     NULL
 };
 
@@ -58,6 +61,9 @@ static TokenType keyword_types[] = {
     TOKEN_NULL,   TOKEN_NULL,
     TOKEN_IMPORT, TOKEN_IMPORT,
     TOKEN_EXTERN, TOKEN_EXTERN,
+    TOKEN_TRY,    TOKEN_TRY,
+    TOKEN_CATCH,  TOKEN_CATCH,
+    TOKEN_FINALLY, TOKEN_FINALLY,
     TOKEN_UNKNOWN
 };
 
