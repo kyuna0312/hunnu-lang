@@ -1,0 +1,11 @@
+// Test module import
+import std.math
+import std.io
+
+fn main() {
+    let x = 2.0
+    let result = pow(x, 3.0)
+    print(result)
+    
+    std.io.println("Module import works!")
+}

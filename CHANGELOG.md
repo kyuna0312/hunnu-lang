@@ -6,6 +6,44 @@ All notable changes to the Hunnu language project.
 
 ## [Unreleased]
 
+### Month 2: FFI Ecosystem + Standard Library ✅
+*May-June 2026*
+
+#### FFI Improvements
+- ✅ FFI string returns (`extern fn` returning `str`)
+- ✅ FFI float arguments (float params in extern calls)
+- ✅ Rust FFI boundary (call Rust functions from Hunnu)
+- Added `extern fn` examples: `test_str_return.hn`, `test_float_ffi.hn`, `test_rust_ffi.hn`
+
+#### Error Handling
+- Added `try`/`catch`/`finally` syntax
+- New token types: `TOKEN_TRY`, `TOKEN_CATCH`, `TOKEN_FINALLY`
+- New AST node: `AST_TRY_STMT`
+- Parser supports `try { } catch { }` blocks
+- Interpreter executes try/catch/finally blocks
+
+#### Module System
+- Fixed import path resolution for both:
+  - File imports: `import "stdlib/math.hn"`
+  - Module imports: `import std.math` (converts to `stdlib/math.hn`)
+- Improved `resolve_import_path()` function
+
+#### Standard Library Expansion
+- `stdlib/libc.hn` - C standard library bindings (puts, printf, strlen, etc.)
+- `stdlib/math.hn` - Math functions (pow, sqrt, sin, cos, tan, fabs)
+- `stdlib/io.hn` - I/O functions (println, read_line)
+- `stdlib/array.hn` - Array utilities (map, filter, reduce, length)
+- `stdlib/string.hn` - String utilities (to_upper, to_lower, contains, trim, split, join)
+- `stdlib/fs.hn` - Filesystem functions (exists, read_file, write_file)
+- `stdlib/time.hn` - Time functions (now, timestamp)
+
+#### Python Bindings (PyO3)
+- Created `bindings/python/` directory structure
+- Added `Cargo.toml` with PyO3 dependency
+- Added `src/lib.rs` with Python module skeleton
+
+---
+
 ### Phase 4: Bytecode Compiler + VM ✅
 *April 2025*
 

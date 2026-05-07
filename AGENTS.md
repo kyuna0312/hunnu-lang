@@ -122,6 +122,17 @@ hunnu-lang/
 │   ├── lexer/       # Tokenization (lexer.c, token.h)
 │   └── parser/       # Syntax analysis
 ├── cli/              # Command-line interface
+├── stdlib/            # Standard library modules
+│   ├── libc.hn       # C library FFI bindings
+│   ├── math.hn       # Math functions
+│   ├── io.hn         # I/O functions
+│   ├── array.hn      # Array utilities
+│   ├── string.hn     # String utilities
+│   ├── fs.hn         # Filesystem functions
+│   └── time.hn       # Time functions
+├── vm-rust/           # Rust VM implementation
+├── bindings/          # Language bindings
+│   └── python/       # Python bindings (PyO3)
 ├── examples/          # Sample .hn programs
 ├── build/            # Build output (gitignored)
 └── CMakeLists.txt   # Build configuration

@@ -1,0 +1,27 @@
+// libc.hn - Standard C library FFI bindings for Hunnu
+// This module provides pre-built FFI bindings to common libc functions
+
+// Output functions
+extern fn puts(s) -> int from "libc.so.6"
+extern fn printf(fmt) -> int from "libc.so.6"
+
+// String functions
+extern fn strlen(s) -> int from "libc.so.6"
+extern fn strcpy(dest, src) -> str from "libc.so.6"
+extern fn strcat(dest, src) -> str from "libc.so.6"
+extern fn strcmp(s1, s2) -> int from "libc.so.6"
+extern fn getenv(name) -> str from "libc.so.6"
+
+// Memory functions
+extern fn malloc(size) -> int from "libc.so.6"
+extern fn free(ptr) -> void from "libc.so.6"
+extern fn memset(ptr, value, num) -> int from "libc.so.6"
+extern fn memcpy(dest, src, n) -> int from "libc.so.6"
+
+// I/O functions
+extern fn getchar() -> int from "libc.so.6"
+extern fn putchar(c) -> int from "libc.so.6"
+
+// Math functions (from libm)
+extern fn abs(x) -> int from "libc.so.6"
+extern fn pow(base, exp) -> int from "libm.so.6"

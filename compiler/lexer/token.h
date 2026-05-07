@@ -34,6 +34,9 @@ typedef enum {
     TOKEN_NIL_KEYWORD,
     TOKEN_IMPORT,
     TOKEN_EXTERN,
+    TOKEN_TRY,
+    TOKEN_CATCH,
+    TOKEN_FINALLY,
     
     TOKEN_LPAREN,
     TOKEN_RPAREN,

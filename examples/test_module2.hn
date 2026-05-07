@@ -1,0 +1,8 @@
+// Test module import with simple syntax
+import std.math
+
+fn main() {
+    let x = 2.0
+    let result = pow(x, 3.0)
+    print(result)
+}

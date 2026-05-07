@@ -1,0 +1,7 @@
+// Test FFI with float arguments and return
+extern fn pow(base, exp) -> float from "libm.so.6"
+
+fn main() {
+    let result = pow(2.0, 3.0)
+    print(result)
+}
