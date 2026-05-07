@@ -1,0 +1,9 @@
+// Test simple math functions
+fn max(a, b) {
+    if a > b { return a }
+    return b
+}
+
+fn main() {
+    print(max(10, 20))
+}

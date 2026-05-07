@@ -1,0 +1,11 @@
+// Test error handling
+fn main() {
+    let err = error("Something went wrong!")
+    print(is_error(err))
+    
+    let val = 42
+    print(is_error(val))
+    
+    // Unwrap will print error and return none
+    unwrap(err)
+}

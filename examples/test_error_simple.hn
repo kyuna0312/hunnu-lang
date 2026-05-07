@@ -1,0 +1,5 @@
+// Simple error test
+fn main() {
+    error("test error")
+    print("After error")
+}

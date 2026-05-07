@@ -1,0 +1,7 @@
+// Test libc FFI bindings
+import "../stdlib/libc.hn"
+
+fn main() {
+    puts("Hello from libc FFI!")
+    print(strlen("Hello"))
+}
