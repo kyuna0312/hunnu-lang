@@ -1,0 +1,19 @@
+[package]
+name = "hunnu-compiler"
+version = "0.1.0"
+edition = "2021"
+description = "Hunnu Language Rust Compiler - Month 3 AOT Compiler Foundation"
+
+[dependencies]
+llvm-sys = "140"
+libc = "0.2"
+
+[features]
+default = []
+llvm-14 = ["llvm-sys/llvm-14"]
+llvm-15 = ["llvm-sys/llvm-15"]
+llvm-16 = ["llvm-sys/llvm-16"]
+llvm-17 = ["llvm-sys/llvm-17"]
+llvm-18 = ["llvm-sys/llvm-18"]
+llvm-19 = ["llvm-sys/llvm-19"]
+llvm-20 = ["llvm-sys/llvm-20"]

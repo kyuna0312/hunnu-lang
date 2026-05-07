@@ -7,7 +7,7 @@ Supports both English and Mongolian (Cyrillic) keywords.
 
 ## Version
 
-**Current: 0.2.0 (Алтангэрэл)** - Үндсэн функцүүд
+**Current: 0.3.0 (Солонго)** - AOT Compiler Foundation
 
 Hunnu uses authentic Mongolian women names for versioning.
 See [`compiler/version.h`](compiler/version.h) for the full version list.
@@ -40,6 +40,10 @@ See [`compiler/version.h`](compiler/version.h) for the full version list.
 | **Try/Catch** | `try { } catch { }` | `try { x / 0 } catch { print("error") }` |
 | **FFI (Foreign Function Interface)** | `extern fn puts(s) -> int from "libc.so.6"` | `extern fn pow(x,y) -> float from "libm.so.6"` |
 | **Module imports** | `import std.math` | `import std.math` |
+| **Structs/Records** | `type Point = { x: int, y: int }` | `type Point = { x, y }` |
+| **Field access** | `point.x` | `let p = Point{10, 20}; print(p.x)` |
+| **Pointers** | `&x`, `*p` | `let p = &x; print(*p)` |
+| **AOT Compilation** | `hunnu compile file.hn -o output` | `hunnu compile main.hn -o main` |
 
 ### Built-in Functions
 
@@ -123,6 +127,7 @@ make
 ./hunnu run examples/main.hn --vm     # Run with C VM
 ./hunnu run examples/main.hn --vm-rust  # Run with Rust VM
 ./hunnu build examples/main.hn           # Compile to bytecode
+./hunnu compile examples/main.hn -o main  # AOT compile to native binary
 ./hunnu run examples/main.hn --debug   # Debug mode
 ./hunnu tokens examples/main.hn         # Show tokens
 ./hunnu ast examples/main.hn            # Show AST
@@ -314,11 +319,14 @@ See [`plan.md`](plan.md) for the full development roadmap.
 - ✅ Phase 2: Core Language Features (compound assignment, else if, floats, null/nil, string escapes)
 - ✅ Phase 3: Standard Library & Dev Experience (input, to_str/to_int/to_float, --debug)
 - ✅ Phase 4: Bytecode Compiler + VM (build command, --vm flag)
+- ✅ Month 2: FFI Ecosystem + Standard Library (libc.hn, FFI strings/floats, try/catch, std modules, Python bindings)
+- ✅ Month 3: AOT Compiler Foundation (structs, field access, pointers, Rust compiler frontend, LLVM codegen skeleton, `compile` command)
 
 ### Next Steps (High Priority)
-- Array memory fix (deep copy, proper free)
-- Import statement for external files
-- Error line numbers in source
+- Complete LLVM codegen in compiler-rust/
+- Implement struct field access in interpreter
+- Add type checking pass
+- Self-hosting: Write Hunnu lexer in Hunnu
 
 ---
 

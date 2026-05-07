@@ -4,8 +4,10 @@ This file provides guidance for agentic coding agents working on hunnu-lang.
 
 ## Project Overview
 
-hunnu-lang is a lightweight, expression-oriented programming language written in C.
+hunnu-lang is a lightweight, expression-oriented programming language written in C (interpreter) and Rust (AOT compiler).
 The project uses CMake for building and has a compiler/interpreter architecture.
+
+**Current Phase:** Month 3 - AOT Compiler Foundation (LLVM, Rust frontend, structs)
 
 ---
 
@@ -260,6 +262,35 @@ cd build && cmake .. && make
 - Verify NULL checks before dereferencing
 
 ---
+
+## Project Structure
+
+### Current (Month 3 - AOT Compiler Foundation)
+
+```
+hunnu-lang/
+├── compiler/
+│   ├── ast/          # Abstract syntax tree definitions
+│   ├── interpreter/  # Runtime execution (C tree-walk)
+│   ├── lexer/       # Tokenization (lexer.c, token.h)
+│   └── parser/       # Syntax analysis
+├── compiler-rust/     # Rust compiler frontend (Month 3)
+│   ├── src/
+│   │   ├── lib.rs     # Main entry point
+│   │   ├── lexer.rs   # Rust lexer
+│   │   ├── parser.rs  # Rust parser
+│   │   ├── ast.rs     # Rust AST definitions
+│   │   └── codegen.rs # LLVM IR codegen (skeleton)
+│   └── Cargo.toml
+├── vm-rust/           # Rust VM (Month 1)
+├── cli/              # Command-line interface
+├── stdlib/            # Standard library modules
+├── bindings/
+│   └── python/       # Python bindings (PyO3)
+├── examples/         # Sample .hn programs
+├── build/            # Build output (gitignored)
+└── CMakeLists.txt   # Build configuration
+```
 
 ## Notes for Agents
 

@@ -296,6 +296,60 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                                     parser->previous->column);
     }
     
+    if (parser_match(parser, TOKEN_TYPE)) {
+        /* Parse: type Point = { x: int, y: int } */
+        if (!parser_check(parser, TOKEN_IDENT)) {
+            parser_error(parser, "Expected type name after 'type'");
+            return NULL;
+        }
+        
+        char* name = strdup(parser->current->lexeme);
+        parser_advance(parser);
+        
+        parser_consume(parser, TOKEN_ASSIGN, "Expected '=' after type name");
+        parser_consume(parser, TOKEN_LBRACE, "Expected '{' after '='");
+        
+        char** fields = NULL;
+        size_t field_count = 0;
+        size_t field_capacity = 4;
+        fields = (char**)malloc(sizeof(char*) * field_capacity);
+        
+        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+            if (field_count > 0) {
+                if (parser_check(parser, TOKEN_COMMA)) {
+                    parser_advance(parser);
+                }
+            }
+            
+            if (!parser_check(parser, TOKEN_IDENT)) {
+                parser_error(parser, "Expected field name");
+                break;
+            }
+            
+            fields[field_count++] = strdup(parser->current->lexeme);
+            parser_advance(parser);
+            
+            /* Optional type annotation: x: int */
+            if (parser_match(parser, TOKEN_COLON)) {
+                /* Skip type annotation for now */
+                if (parser_check(parser, TOKEN_IDENT)) {
+                    parser_advance(parser);
+                }
+            }
+            
+            if (field_count >= field_capacity) {
+                field_capacity *= 2;
+                fields = (char**)realloc(fields, sizeof(char*) * field_capacity);
+            }
+        }
+        
+        parser_consume(parser, TOKEN_RBRACE, "Expected '}' after type fields");
+        
+        return ast_type_decl_create(name, fields, field_count,
+                                    parser->previous->line,
+                                    parser->previous->column);
+    }
+    
     return parser_parse_statement(parser);
 }
 
@@ -490,6 +544,10 @@ ASTNode* parser_parse_expression(Parser* parser) {
     return parser_parse_assignment(parser);
 }
 
+/* Forward declarations */
+static ASTNode* parser_parse_postfix(Parser* parser);
+ASTNode* parser_parse_primary(Parser* parser);
+
 ASTNode* parser_parse_assignment(Parser* parser) {
     ASTNode* left = parser_parse_equality(parser);
     
@@ -633,7 +691,44 @@ ASTNode* parser_parse_unary(Parser* parser) {
                                parser->previous->column);
     }
     
-    return parser_parse_primary(parser);
+    if (parser_match(parser, TOKEN_AMPERSAND)) {
+        /* Address-of: &expr */
+        ASTNode* operand = parser_parse_unary(parser);
+        return ast_address_of_create(operand,
+                                    parser->previous->line,
+                                    parser->previous->column);
+    }
+    
+    if (parser_match(parser, TOKEN_STAR)) {
+        /* Dereference: *expr (only if not part of multiplication) */
+        /* We need to determine if this is prefix (dereference) or infix (multiply) */
+        /* For simplicity, assume prefix if previous token was not an expression */
+        ASTNode* operand = parser_parse_unary(parser);
+        return ast_dereference_create(operand,
+                                      parser->previous->line,
+                                      parser->previous->column);
+    }
+    
+    return parser_parse_postfix(parser);
+}
+
+ASTNode* parser_parse_postfix(Parser* parser) {
+    ASTNode* expr = parser_parse_primary(parser);
+    
+    /* Handle field access: expr.field */
+    while (parser_match(parser, TOKEN_DOT)) {
+        if (!parser_check(parser, TOKEN_IDENT)) {
+            parser_error(parser, "Expected field name after '.'");
+            return expr;
+        }
+        char* field = strdup(parser->current->lexeme);
+        parser_advance(parser);
+        expr = ast_field_access_create(expr, field,
+                                        parser->previous->line,
+                                        parser->previous->column);
+    }
+    
+    return expr;
 }
 
 ASTNode* parser_parse_primary(Parser* parser) {

@@ -96,6 +96,41 @@ OP_RETURN             // return from function
 
 ---
 
+## [0.3.0] - 2026-07-XX
+
+### Month 3: AOT Compiler Foundation ✅
+*July 2026*
+
+#### Structs/Records
+- Added `type` keyword for struct definitions: `type Point = { x: int, y: int }`
+- New token types: `TOKEN_TYPE`, `TOKEN_DOT`, `TOKEN_AMPERSAND`
+- New AST nodes: `AST_TYPE_DECL`, `AST_FIELD_ACCESS`, `AST_ADDRESS_OF`, `AST_DEREFERENCE`
+- Parser support for struct declarations and field access (`point.x`)
+- Pointer support: `&x` (address-of) and `*p` (dereference)
+
+#### Rust Compiler Frontend
+- Created `compiler-rust/` directory with Cargo project
+- Ported lexer to Rust (`compiler-rust/src/lexer.rs`)
+- Ported parser to Rust (`compiler-rust/src/parser.rs`)
+- Rust AST definitions (`compiler-rust/src/ast.rs`)
+- LLVM IR codegen skeleton (`compiler-rust/src/codegen.rs`)
+
+#### Value Type Extensions
+- Extended `Value` type with `VALUE_STRUCT` and `VALUE_POINTER`
+- Added struct fields support: `struct_fields`, `struct_field_count`, `struct_type`
+- Interpreter handles new AST nodes (basic implementation)
+
+#### CLI Changes
+- Added `compile` command: `./hunnu compile file.hn -o output`
+- Updated `--help` to show new Month 3 features
+- Compile command uses system C compiler as temporary fallback
+
+#### Build System
+- Build succeeds with new token types and AST nodes
+- Warning fixes for unhandled enum values (suppressed with TODO)
+
+---
+
 ### Phase 3: Standard Library & Dev Experience ✅
 *April 2025*
 

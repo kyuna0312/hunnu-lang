@@ -34,7 +34,11 @@ static const char* ast_type_names[] = {
     "STRING_CONCAT",
     "MATCH_EXPR",
     "EXTERN_FN",
-    "TRY_STMT"
+    "TRY_STMT",
+    "TYPE_DECL",
+    "FIELD_ACCESS",
+    "ADDRESS_OF",
+    "DEREFERENCE"
 };
 
 /**
@@ -360,8 +364,8 @@ ASTNode* ast_extern_fn_create(const char* name, const char* lib_name, const char
 }
 
 ASTNode* ast_try_stmt_create(ASTNode* try_block, const char* catch_var,
-                             ASTNode* catch_block, ASTNode* finally_block,
-                             int32_t line, int32_t column) {
+                              ASTNode* catch_block, ASTNode* finally_block,
+                              int32_t line, int32_t column) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = AST_TRY_STMT;
     node->line = line;
@@ -370,6 +374,47 @@ ASTNode* ast_try_stmt_create(ASTNode* try_block, const char* catch_var,
     node->data.try_stmt.catch_var = catch_var ? strdup(catch_var) : NULL;
     node->data.try_stmt.catch_block = catch_block;
     node->data.try_stmt.finally_block = finally_block;
+    return node;
+}
+
+ASTNode* ast_type_decl_create(const char* name, char** fields, size_t field_count,
+                               int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_TYPE_DECL;
+    node->line = line;
+    node->column = column;
+    node->data.type_decl.name = strdup(name);
+    node->data.type_decl.fields = fields;
+    node->data.type_decl.field_count = field_count;
+    return node;
+}
+
+ASTNode* ast_field_access_create(ASTNode* object, const char* field,
+                                  int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_FIELD_ACCESS;
+    node->line = line;
+    node->column = column;
+    node->data.field_access.object = object;
+    node->data.field_access.field = strdup(field);
+    return node;
+}
+
+ASTNode* ast_address_of_create(ASTNode* operand, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_ADDRESS_OF;
+    node->line = line;
+    node->column = column;
+    node->data.address_of.operand = operand;
+    return node;
+}
+
+ASTNode* ast_dereference_create(ASTNode* operand, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_DEREFERENCE;
+    node->line = line;
+    node->column = column;
+    node->data.dereference.operand = operand;
     return node;
 }
 
@@ -494,6 +539,29 @@ static void ast_free_node(ASTNode* node) {
             if (node->data.extern_fn.param_count > 0) {
                 free(node->data.extern_fn.param_names);
             }
+            break;
+
+        case AST_TYPE_DECL:
+            free(node->data.type_decl.name);
+            for (size_t i = 0; i < node->data.type_decl.field_count; i++) {
+                free(node->data.type_decl.fields[i]);
+            }
+            if (node->data.type_decl.field_count > 0) {
+                free(node->data.type_decl.fields);
+            }
+            break;
+
+        case AST_FIELD_ACCESS:
+            ast_free_node(node->data.field_access.object);
+            free(node->data.field_access.field);
+            break;
+
+        case AST_ADDRESS_OF:
+            ast_free_node(node->data.address_of.operand);
+            break;
+
+        case AST_DEREFERENCE:
+            ast_free_node(node->data.dereference.operand);
             break;
 
         case AST_WHILE_STMT:
@@ -726,6 +794,33 @@ static void ast_print_node(ASTNode* node, int indent) {
                 ast_print_node(node->data.try_stmt.finally_block, indent + 2);
                 printf("\n");
             }
+            break;
+
+        case AST_TYPE_DECL:
+            indent_print(indent);
+            printf("TYPE_DECL (%s) with %zu fields\n", node->data.type_decl.name, node->data.type_decl.field_count);
+            for (size_t i = 0; i < node->data.type_decl.field_count; i++) {
+                indent_print(indent + 1);
+                printf("field: %s\n", node->data.type_decl.fields[i]);
+            }
+            break;
+
+        case AST_FIELD_ACCESS:
+            indent_print(indent);
+            printf("FIELD_ACCESS (.%s)\n", node->data.field_access.field);
+            ast_print_node(node->data.field_access.object, indent + 1);
+            break;
+
+        case AST_ADDRESS_OF:
+            indent_print(indent);
+            printf("ADDRESS_OF (&)\n");
+            ast_print_node(node->data.address_of.operand, indent + 1);
+            break;
+
+        case AST_DEREFERENCE:
+            indent_print(indent);
+            printf("DEREFERENCE (*)\n");
+            ast_print_node(node->data.dereference.operand, indent + 1);
             break;
 
         default:

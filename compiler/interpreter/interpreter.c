@@ -409,6 +409,55 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             }
             return value_create_none();
         }
+
+        case AST_TYPE_DECL: {
+            /* Type declarations are handled at parse time or stored for later use */
+            /* For now, just return none - type info is in the AST */
+            return value_create_none();
+        }
+
+        case AST_FIELD_ACCESS: {
+            /* Evaluate the object */
+            Value obj = interpreter_evaluate(interp, node->data.field_access.object);
+            const char* field = node->data.field_access.field;
+
+            /* Check if it's a struct */
+            if (obj.type == VALUE_STRUCT) {
+                /* Find the field by name - simplified for now */
+                /* In a full implementation, we'd look up field names from type decl */
+                value_free(&obj);
+                return value_create_none();
+            }
+
+            value_free(&obj);
+            fprintf(stderr, "Error at line %d: ", interp->current_line);
+            i18n_error(ERR_UNDEFINED_VARIABLE, "field access on non-struct");
+            fprintf(stderr, "\n");
+            return value_create_none();
+        }
+
+        case AST_ADDRESS_OF: {
+            /* For now, return a pointer value */
+            Value operand = interpreter_evaluate(interp, node->data.address_of.operand);
+            Value result = value_create_none();
+            result.type = VALUE_POINTER;
+            result.value.pointer_value = malloc(sizeof(Value));
+            *(Value*)result.value.pointer_value = operand;
+            result.has_value = 1;
+            return result;
+        }
+
+        case AST_DEREFERENCE: {
+            /* Dereference a pointer */
+            Value ptr = interpreter_evaluate(interp, node->data.dereference.operand);
+            if (ptr.type == VALUE_POINTER && ptr.value.pointer_value) {
+                Value result = value_copy((Value*)ptr.value.pointer_value);
+                value_free(&ptr);
+                return result;
+            }
+            value_free(&ptr);
+            return value_create_none();
+        }
         
         case AST_IDENTIFIER: {
             char* name = node->data.identifier.name;

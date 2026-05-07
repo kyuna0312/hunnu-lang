@@ -39,17 +39,24 @@ typedef struct Value {
         VALUE_STRING,   /**< String */
         VALUE_BOOL,     /**< Boolean */
         VALUE_NONE,     /**< None/null */
-        VALUE_ARRAY    /**< Array */
+        VALUE_ARRAY,    /**< Array */
+        VALUE_STRUCT,   /**< Struct/record */
+        VALUE_POINTER   /**< Pointer */
     } type;
     union {
         int64_t int_value;
         double float_value;
         char* string_value;
         int bool_value;
+        void* pointer_value;  /**< For struct pointer or raw pointer */
     } value;
     int has_value;
     size_t array_length;
     struct Value** array_elements;
+    /* For struct types */
+    char* struct_type;           /**< Struct type name */
+    struct Value** struct_fields;  /**< Struct field values */
+    size_t struct_field_count;    /**< Number of fields */
 } Value;
 
 /* Return value management */

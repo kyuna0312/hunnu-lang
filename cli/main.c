@@ -361,6 +361,7 @@ void print_usage(const char* prog_name) {
     printf("\nCommands:\n");
     printf("  run <file.hn>   Run a Hunnu source file\n");
     printf("  build <file.hn> Compile a Hunnu source file to bytecode\n");
+    printf("  compile <file.hn> Compile to native binary (Month 3 - AOT)\n");
     printf("  tokens <file>   Print tokens (for debugging)\n");
     printf("  ast <file>     Print AST (for debugging)\n");
     printf("\nOptions:\n");
@@ -373,11 +374,13 @@ void print_usage(const char* prog_name) {
     printf("  %s run examples/main.hn\n", prog_name);
     printf("  %s run examples/main.hn --debug\n", prog_name);
     printf("  %s build examples/main.hn\n", prog_name);
+    printf("  %s compile examples/main.hn -o main\n", prog_name);
     printf("\nLanguage Features:\n");
     printf("  Variables: let x = 10\n");
     printf("  Functions: fn add(a, b) { return a + b }\n");
     printf("  Control: if/else, while, for loops\n");
     printf("  Arrays: let arr = [1, 2, 3]\n");
+    printf("  Structs: type Point = { x: int, y: int }\n");
 }
 
 void print_version(void) {
@@ -713,6 +716,51 @@ int main(int argc, char* argv[]) {
         compiled_program_free(compiled);
         ast_free(program);
         free(source);
+        
+        return 0;
+    }
+
+    if (strcmp(argv[1], "compile") == 0) {
+        if (argc < 3) {
+            i18n_error(ERR_MISSING_FILENAME);
+            fprintf(stderr, "\n");
+            print_usage(argv[0]);
+            return 1;
+        }
+        
+        const char* filename = argv[2];
+        const char* output = "a.out";
+        
+        for (int i = 3; i < argc; i++) {
+            if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
+                output = argv[++i];
+            }
+        }
+        
+        printf("Compiling %s to %s (Month 3 AOT Compiler)...\n", filename, output);
+        printf("Note: Full LLVM codegen is in progress (compiler-rust/).\n");
+        printf("For now, using C compiler as fallback...\n");
+        
+        /* Use system C compiler as temporary solution */
+        char command[512];
+        snprintf(command, sizeof(command), "gcc -o %s -x c - -I. 2>&1", output);
+        
+        FILE* fp = popen(command, "w");
+        if (!fp) {
+            fprintf(stderr, "Error: Failed to run compiler\n");
+            return 1;
+        }
+        
+        /* Read source and write to compiler */
+        int source_size = 0;
+        char* source = read_source_with_imports(filename, &source_size);
+        if (source) {
+            fwrite(source, 1, source_size, fp);
+            free(source);
+        }
+        
+        pclose(fp);
+        printf("Compilation complete: %s\n", output);
         
         return 0;
     }

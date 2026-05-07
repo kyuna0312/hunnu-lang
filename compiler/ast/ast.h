@@ -37,6 +37,10 @@ typedef enum {
     AST_MATCH_EXPR,
     AST_EXTERN_FN,
     AST_TRY_STMT,
+    AST_TYPE_DECL,
+    AST_FIELD_ACCESS,
+    AST_ADDRESS_OF,
+    AST_DEREFERENCE,
 } ASTNodeType;
 
 /** AST node structure */
@@ -200,6 +204,29 @@ typedef struct ASTNode {
             struct ASTNode* catch_block;     /* Catch block */
             struct ASTNode* finally_block;   /* Finally block (or NULL) */
         } try_stmt;
+
+        /** Type/struct declaration */
+        struct {
+            char* name;                    /* Struct name */
+            char** fields;                 /* Field names */
+            size_t field_count;            /* Number of fields */
+        } type_decl;
+
+        /** Field access: obj.field */
+        struct {
+            struct ASTNode* object;         /* Object expression */
+            char* field;                   /* Field name */
+        } field_access;
+
+        /** Address-of: &expr */
+        struct {
+            struct ASTNode* operand;
+        } address_of;
+
+        /** Dereference: *expr */
+        struct {
+            struct ASTNode* operand;
+        } dereference;
     } data;
 } ASTNode;
 
@@ -235,8 +262,14 @@ ASTNode* ast_extern_fn_create(const char* name, const char* lib_name, const char
                                char** param_names, size_t param_count, int returns_int,
                                int32_t line, int32_t column);
 ASTNode* ast_try_stmt_create(ASTNode* try_block, const char* catch_var,
-                              ASTNode* catch_block, ASTNode* finally_block,
+                               ASTNode* catch_block, ASTNode* finally_block,
+                               int32_t line, int32_t column);
+ASTNode* ast_type_decl_create(const char* name, char** fields, size_t field_count,
                               int32_t line, int32_t column);
+ASTNode* ast_field_access_create(ASTNode* object, const char* field,
+                                  int32_t line, int32_t column);
+ASTNode* ast_address_of_create(ASTNode* operand, int32_t line, int32_t column);
+ASTNode* ast_dereference_create(ASTNode* operand, int32_t line, int32_t column);
 
 void ast_free(ASTNode* node);
 void ast_print(ASTNode* node, int indent);

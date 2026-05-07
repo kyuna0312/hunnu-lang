@@ -41,6 +41,7 @@ static const char* keyword_names[] = {
     "try",        "турших",   // try
     "catch",      "барих",    // catch
     "finally",    "эцэст",    // finally
+    "type",       "төрөл",    // type (struct)
     NULL
 };
 
@@ -64,6 +65,7 @@ static TokenType keyword_types[] = {
     TOKEN_TRY,    TOKEN_TRY,
     TOKEN_CATCH,  TOKEN_CATCH,
     TOKEN_FINALLY, TOKEN_FINALLY,
+    TOKEN_TYPE,   TOKEN_TYPE,
     TOKEN_UNKNOWN
 };
 
@@ -411,6 +413,8 @@ Token* lexer_next_token(Lexer* lexer) {
             if (lexer_match(lexer, '=')) {
                 return token_new(TOKEN_STAR_ASSIGN, "*=", lexer->line, lexer->column);
             }
+            /* Check if this is a dereference (prefix) or multiplication (infix) */
+            /* For now, always return TOKEN_STAR and let parser decide */
             return token_new(TOKEN_STAR, "*", lexer->line, lexer->column);
         case '/':
             lexer_advance(lexer);
@@ -428,6 +432,14 @@ Token* lexer_next_token(Lexer* lexer) {
                 return token_new(TOKEN_FAT_ARROW, "=>", lexer->line, lexer->column);
             }
             return token_new(TOKEN_ASSIGN, "=", lexer->line, lexer->column);
+
+        case '.':
+            lexer_advance(lexer);
+            return token_new(TOKEN_DOT, ".", lexer->line, lexer->column);
+
+        case '&':
+            lexer_advance(lexer);
+            return token_new(TOKEN_AMPERSAND, "&", lexer->line, lexer->column);
         case '!': 
             lexer_advance(lexer);
             if (lexer_match(lexer, '=')) {

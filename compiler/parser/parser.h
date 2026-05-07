@@ -46,6 +46,5 @@ ASTNode* parser_parse_comparison(Parser* parser);
 ASTNode* parser_parse_addition(Parser* parser);
 ASTNode* parser_parse_multiplication(Parser* parser);
 ASTNode* parser_parse_unary(Parser* parser);
-ASTNode* parser_parse_primary(Parser* parser);
 
 #endif
