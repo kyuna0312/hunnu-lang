@@ -878,8 +878,10 @@ impl Parser {
         }
         
         if self.match_token(TokenType::Ident) {
-            let token = self.previous().unwrap();
+            let token = self.previous().cloned().unwrap();
             let name = token.lexeme.clone();
+            let line = token.line;
+            let column = token.column;
             
             if self.match_token(TokenType::LParen) {
                 let mut args = Vec::new();
@@ -895,8 +897,8 @@ impl Parser {
                 
                 return Ok(ASTNode {
                     node_type: ASTNodeType::CallExpr,
-                    line: token.line,
-                    column: token.column,
+                    line,
+                    column,
                     data: NodeData::CallExpr { name, args },
                 });
             }
@@ -907,13 +909,13 @@ impl Parser {
                 
                 return Ok(ASTNode {
                     node_type: ASTNodeType::IndexExpr,
-                    line: token.line,
-                    column: token.column,
+                    line,
+                    column,
                     data: NodeData::IndexExpr {
                         array: Box::new(ASTNode {
                             node_type: ASTNodeType::Identifier,
-                            line: token.line,
-                            column: token.column,
+                            line,
+                            column,
                             data: NodeData::Identifier { name: name.clone() },
                         }),
                         index: Box::new(index),
@@ -923,8 +925,8 @@ impl Parser {
             
             return Ok(ASTNode {
                 node_type: ASTNodeType::Identifier,
-                line: token.line,
-                column: token.column,
+                line,
+                column,
                 data: NodeData::Identifier { name },
             });
         }

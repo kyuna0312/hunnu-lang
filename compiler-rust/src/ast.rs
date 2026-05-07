@@ -95,6 +95,8 @@ pub enum NodeData {
         update: Option<Box<ASTNode>>,
         body: Box<ASTNode>,
     },
+    BreakStmt,
+    ContinueStmt,
     ReturnStmt {
         value: Option<Box<ASTNode>>,
     },

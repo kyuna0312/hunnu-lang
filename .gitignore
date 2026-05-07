@@ -1,6 +1,7 @@
 # Build artifacts
 build/
 vm-rust/target/
+compiler-rust/target/
 
 # Editor files
 *.swp

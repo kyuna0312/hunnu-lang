@@ -6,10 +6,12 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(BUILD_RUST_VM "Build Rust VM component" ON)
+option(BUILD_RUST_COMPILER "Build Rust compiler frontend" ON)
 
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/compiler)
 include_directories(${CMAKE_SOURCE_DIR}/vm-rust/include)
+include_directories(${CMAKE_SOURCE_DIR}/compiler-rust/include)
 
 # C sources for the main hunnu binary
 set(HUNNU_SOURCES
@@ -96,6 +98,14 @@ if(BUILD_RUST_VM AND CARGO_EXECUTABLE)
     )
 endif()
 
+if(BUILD_RUST_COMPILER AND CARGO_EXECUTABLE)
+    add_test(
+        NAME rust_compiler_tests
+        COMMAND ${CARGO_EXECUTABLE} test
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-rust
+    )
+endif()
+
 message(STATUS "Build configuration:")
 message(STATUS "  C compiler: ${CMAKE_C_COMPILER}")
 message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
@@ -104,4 +114,37 @@ if(BUILD_RUST_VM AND CARGO_EXECUTABLE)
     message(STATUS "  Rust VM: enabled")
 else()
     message(STATUS "  Rust VM: disabled")
+endif()
+
+# Rust compiler frontend integration
+if(BUILD_RUST_COMPILER)
+    if(CARGO_EXECUTABLE)
+        set(RUST_COMPILER_LIB ${CMAKE_SOURCE_DIR}/compiler-rust/target/release/libhunnu_compiler.a)
+        set(RUST_COMPILER_HEADER ${CMAKE_SOURCE_DIR}/compiler-rust/include/hunnu_compiler.h)
+
+        add_custom_command(
+            OUTPUT ${RUST_COMPILER_LIB}
+            COMMAND ${CARGO_EXECUTABLE} build --release
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-rust
+            COMMENT "Building Rust compiler library"
+        )
+
+        add_custom_target(hunnu_compiler_rust DEPENDS ${RUST_COMPILER_LIB})
+
+        if(TARGET hunnu)
+            target_link_libraries(hunnu ${RUST_COMPILER_LIB})
+            add_dependencies(hunnu hunnu_compiler_rust)
+        endif()
+
+        install(PROGRAMS ${CMAKE_SOURCE_DIR}/compiler-rust/target/release/hunnu-compiler
+                DESTINATION bin
+                OPTIONAL)
+
+        if(TARGET hunnu)
+            target_compile_definitions(hunnu PRIVATE HUNNU_HAVE_RUST_COMPILER=1)
+        endif()
+        message(STATUS "  Rust compiler: enabled")
+    else()
+        message(STATUS "  Rust compiler: disabled (cargo not found)")
+    endif()
 endif()
