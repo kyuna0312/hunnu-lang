@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Hunnu Discussion
+    url: https://github.com/hunnu-labs/hunnu-lang/discussions
+    about: Please ask questions and discuss ideas here.
+  - name: Hunnu Website
+    url: https://hunnu-lang.dev
+    about: Visit the official website for documentation and guides.
