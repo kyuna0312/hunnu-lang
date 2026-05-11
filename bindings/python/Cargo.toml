@@ -9,7 +9,7 @@ name = "hunnu"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.20", features = ["auto-initialize"] }
+pyo3 = { version = "0.24", features = ["auto-initialize"] }
 
 [build-dependencies]
-pyo3-build-config = "0.20"
+pyo3-build-config = "0.24"

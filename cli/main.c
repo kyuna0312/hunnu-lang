@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include "cli.h"
 #include "compiler/import.h"
 #include "compiler/lexer/lexer.h"
@@ -501,14 +502,30 @@ int main(int argc, char* argv[]) {
         fprintf(tmp, "%s", c_code);
         fclose(tmp);
         
-        char command[1024];
-        snprintf(command, sizeof(command), "gcc -o %s %s -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast 2>&1", output, tmpfile);
-        
-        int status = system(command);
+        int compile_status = 0;
+        pid_t pid = fork();
+        if (pid == 0) {
+            execlp("gcc", "gcc", "-o", output, tmpfile,
+                   "-Wno-int-to-pointer-cast",
+                   "-Wno-pointer-to-int-cast", (char*)NULL);
+            _exit(127);
+        } else if (pid > 0) {
+            int wstatus;
+            waitpid(pid, &wstatus, 0);
+            if (WIFEXITED(wstatus)) {
+                compile_status = WEXITSTATUS(wstatus);
+            } else {
+                compile_status = -1;
+            }
+        } else {
+            fprintf(stderr, "Error: fork failed\n");
+            free(c_code);
+            return 1;
+        }
         remove(tmpfile);
         
-        if (status != 0) {
-            fprintf(stderr, "Error: Compilation failed (gcc exit code %d)\n", status);
+        if (compile_status != 0) {
+            fprintf(stderr, "Error: Compilation failed (gcc exit code %d)\n", compile_status);
             free(c_code);
             return 1;
         }
