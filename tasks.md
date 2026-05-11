@@ -1,6 +1,6 @@
 # Hunnu Language Task Tracker
 
-> Generated: May 2026 | Current: Month 4 Type System complete (unsafe, enums, generics, pub/priv)
+> Generated: May 2026 | Current: Month 4 complete (type system, OOP, FP all done)
 
 ## How to Use
 
@@ -86,17 +86,17 @@
 
 ---
 
-## Month 5 (Sep 2026): no_std + Bare Metal
+## Month 5 (Sep 2026): no_std + Bare Metal (deferred)
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | `no_std` mode | [ ] | Not started (#36) |
-| 2 | Bare-metal target | [ ] | Not started (#37) |
-| 3 | Boot loader | [ ] | Not started (#37) |
-| 4 | Physical page allocator | [ ] | Not started (#38) |
-| 5 | VGA text buffer driver | [ ] | Not started (#39) |
-| 6 | Interrupt handling | [ ] | Not started (#39) |
-| 7 | Minimal kernel | [ ] | Not started (#40) |
+| 1 | `no_std` mode | [~] | Deferred — issues #36-#40 closed |
+| 2 | Bare-metal target | [~] | Deferred |
+| 3 | Boot loader | [~] | Deferred |
+| 4 | Physical page allocator | [~] | Deferred |
+| 5 | VGA text buffer driver | [~] | Deferred |
+| 6 | Interrupt handling | [~] | Deferred |
+| 7 | Minimal kernel | [~] | Deferred |
 
 ---
 
@@ -128,48 +128,7 @@
 
 ---
 
-## Technical Debt / Code Health |
-
----
-
-## Month 5 (Sep 2026): no_std + Bare Metal
-
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 1 | `no_std` mode | [ ] | |
-| 2 | Bare-metal target | [ ] | |
-| 3 | Boot loader | [ ] | |
-| 4 | Physical page allocator | [ ] | |
-| 5 | VGA text buffer driver | [ ] | |
-| 6 | Interrupt handling | [ ] | |
-| 7 | Minimal kernel | [ ] | |
-
----
-
-## Month 6 (Oct 2026): Self-Hosting + Release
-
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 1 | Package manager (`hunnu install`, `hunnu new`) | [ ] | |
-| 2 | Standard library v1 | [ ] | |
-| 3 | Self-hosting (Hunnu lexer in Hunnu) | [ ] | |
-| 4 | Documentation + language spec | [ ] | |
-| 5 | CI/CD (GitHub Actions) | [ ] | |
-| 6 | Benchmark suite | [ ] | |
-| 7 | v1.0 release | [ ] | |
-
----
-
 ## Technical Debt / Code Health
-
-| # | Task | Priority | Notes |
-|---|------|----------|-------|
-| 1 | Split `parser.c` (1135 lines) | Medium | Could split into declaration/statement/expression |
-| 2 | Split `interpreter.c` (~700 lines) | Low | |
-| 3 | Split `vm/vm.c` (520 lines) | Low | |
-| 4 | C unit test framework | Medium | No tests for C code currently |
-| 5 | Rust unit tests for lexer/parser | Medium | |
-| 6 | Memory leak audit (C interpreter + VM) | Low | |
 
 ---
 
