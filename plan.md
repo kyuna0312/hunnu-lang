@@ -31,9 +31,9 @@ Month 1 (May 2026)    Month 2 (Jun 2026)    Month 3 (Jul 2026)
 
 Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ Generics     │     │ no_std / Bare │     │ Self-Hosting │
-│ Traits       │  →  │ Metal Target  │  →  │ Package Mgr  │
-│ FP / OOP     │     │ Boot Example  │     │ v1.0 Release │
+│ OOP (done)   │     │ no_std / Bare │     │ Self-Hosting │
+│ Traits (done)│  →  │ Metal Target  │  →  │ Package Mgr  │
+│ FP (pending) │     │ Boot Example  │     │ v1.0 Release │
 │ ──────────── │     │ ────────────  │     │ ──────────── │
 │ Type System  │     │ Kernel Proto  │     │ Usable Lang  │
 └──────────────┘     └──────────────┘     └──────────────┘
@@ -92,39 +92,39 @@ Build with LLVM: `cd compiler-rust && cargo build --features llvm-codegen`.
 
 **Type system:**
 
-| # | Feature | Difficulty |
-|---|---------|------------|
-| 1 | Enums / ADTs | Hard |
-| 2 | Pattern matching | Hard |
-| 3 | Generics | Very Hard |
-| 4 | Traits / Interfaces | Very Hard |
-| 5 | `unsafe` blocks | Medium |
-| 6 | Module system (pub/priv) | Medium |
+| # | Feature | Difficulty | Status |
+|---|---------|------------|--------|
+| 1 | Enums / ADTs | Hard | Not started (#27) |
+| 2 | Pattern matching | Hard | ✅ **Done** |
+| 3 | Generics | Very Hard | Not started (#28) |
+| 4 | Traits / Interfaces | Very Hard | ✅ **Done** |
+| 5 | `unsafe` blocks | Medium | Not started (#29) |
+| 6 | Module system (pub/priv) | Medium | Not started (#30) |
 
 **Functional programming:**
 
-| # | Feature | Difficulty |
-|---|---------|------------|
-| 1 | Immutable by default, `mut` keyword | Medium |
-| 2 | First-class functions, closures | Hard |
-| 3 | Higher-order functions (map, filter, reduce) | Medium |
-| 4 | Lambda expressions (`\|x\| x + 1`) | Hard |
-| 5 | Pattern matching with destructuring | Hard |
-| 6 | Tail call optimization | Very Hard |
+| # | Feature | Difficulty | Status |
+|---|---------|------------|--------|
+| 1 | Immutable by default, `mut` keyword | Medium | Not started (#31) |
+| 2 | First-class functions, closures | Hard | Not started (#32) |
+| 3 | Higher-order functions (map, filter, reduce) | Medium | Not started (#34) |
+| 4 | Lambda expressions (`\|x\| x + 1`) | Hard | Not started (#33) |
+| 5 | Pattern matching with destructuring | Hard | ✅ **Done** |
+| 6 | Tail call optimization | Very Hard | Not started (#35) |
 
 **Object-oriented programming:**
 
-| # | Feature | Difficulty |
-|---|---------|------------|
-| 1 | Structs with methods | Medium |
-| 2 | Classes with `new` | Very Hard |
-| 3 | Inheritance | Very Hard |
-| 4 | Polymorphism (vtable) | Very Hard |
-| 5 | Encapsulation (public/private) | Medium |
-| 6 | Interfaces/Traits | Very Hard |
-| 7 | `this`/`self` reference | Medium |
+| # | Feature | Difficulty | Status |
+|---|---------|------------|--------|
+| 1 | Structs with methods | Medium | ✅ **Done** |
+| 2 | Classes with `new` | Very Hard | ✅ **Done** |
+| 3 | Inheritance | Very Hard | ✅ **Done** |
+| 4 | Polymorphism (vtable) | Very Hard | ✅ **Done** |
+| 5 | Encapsulation (public/private) | Medium | ✅ **Done** |
+| 6 | Interfaces/Traits | Very Hard | ✅ **Done** |
+| 7 | `this`/`self` reference | Medium | ✅ **Done** |
 
-**Milestone:** Generic functions, FP (map/filter/reduce), OOP classes.
+**Milestone:** OOP classes (done), generic functions (pending), FP (pending).
 
 ## Month 5 (September 2026): no_std + Bare Metal
 
@@ -153,6 +153,31 @@ Build with LLVM: `cd compiler-rust && cargo build --features llvm-codegen`.
 | 7 | v1.0 release | Medium |
 
 **Milestone:** `hunnu new my-project && hunnu run` produces a working app.
+
+## Post-v1.0: Vision alignment (from hunnu-opencode-prompt.md)
+
+Features defined in the language vision document (`hunnu-opencode-prompt.md`) that are not yet implemented:
+
+| # | Feature | Difficulty | Sub-issue |
+|---|---------|------------|-----------|
+| 1 | `def`/`end` block syntax (Ruby-style) | Hard | #54 |
+| 2 | String interpolation (`#{}`) | Medium | #55 |
+| 3 | Range patterns and array destructuring in match | Medium | #56 |
+| 4 | Option/Result types (no null) | Very Hard | #57 |
+| 5 | `and`/`or`/`not` keyword operators | Easy | #58 |
+| 6 | Stdlib API parity (`upcase`, `include?`, `first`, etc.) | Medium | #59 |
+| 7 | Symbol type (`:ok`, `:err`) | Medium | #60 |
+
+**Design principles from prompt:**
+- Both keywords always work (EN + MN for every keyword)
+- Ruby feel, compiled performance
+- No null — use `Option[T]`
+- Errors are values — `Result[T, E]`
+- Mongolian is not an afterthought
+- SOV-friendly syntax (trailing `if`/`unless`, method chaining)
+- No semicolons, implicit return
+- Clean bilingual compiler errors
+- One binary output with no runtime dependency
 
 ## Architecture Evolution
 
@@ -254,14 +279,16 @@ hunnu-lang/
 
 ## Success Metrics
 
-| Month | Metric | Target |
-|-------|--------|--------|
-| 1 | Rust VM passes .hn tests | 100% |
-| 2 | Stdlib modules available | 4+ modules |
-| 3 | `hunnu compile` produces native binary | "Hello World" |
-| 4 | Generic function compiles | `fn id[T](x: T) -> T` |
-| 5 | QEMU boots Hunnu kernel | VGA text output |
-| 6 | `hunnu new` creates runnable project | Full cycle + release |
+| Month | Metric | Target | Status |
+|-------|--------|--------|--------|
+| 1 | Rust VM passes .hn tests | 100% | ✅ |
+| 2 | Stdlib modules available | 4+ modules | ✅ |
+| 3 | `hunnu compile` produces native binary | "Hello World" | ✅ |
+| 4 | OOP classes, inheritance, traits working | 26/26 tests pass | ✅ |
+| 4 | Generic function compiles | `fn id[T](x: T) -> T` | Pending (#28) |
+| 4 | FP: first-class functions + lambdas | map/filter/reduce work | Pending (#32, #33) |
+| 5 | QEMU boots Hunnu kernel | VGA text output | Pending |
+| 6 | `hunnu new` creates runnable project | Full cycle + release | Pending |
 
 ## Technical Debt
 

@@ -6,6 +6,53 @@ All notable changes to the Hunnu language project.
 
 ## [Unreleased]
 
+### Month 4: Object-Oriented Programming ✅
+*August 2026*
+
+#### Classes
+- Added `class` keyword for class declarations: `class Point { pub x, pub y, fn new(self, x, y) { ... } }`
+- Added `new` keyword for instantiation: `let p = new Point(3, 4)`
+- New token types: `TOKEN_CLASS`, `TOKEN_NEW`
+- New AST nodes: `AST_CLASS_DECL`, `AST_NEW_EXPR`
+- Constructor (fn new) auto-called on instantiation
+- Self-reference via `self` keyword (TOKEN_SELF)
+- Public fields via `pub` keyword (TOKEN_PUB)
+
+#### Inheritance
+- Class inheritance: `class Child : Parent { ... }`
+- Parent fields inherited by child classes
+- Parent methods inherited; child overrides take priority
+- Inheritance chain walk for method dispatch at runtime
+
+#### Polymorphism
+- Method dispatch walks up the inheritance chain
+- Child methods checked before parent methods
+- Static method dispatch also traverses parent chain
+
+#### Encapsulation
+- `pub` keyword enforcement for field access
+- Private field access/construction emits warnings at runtime
+
+#### Traits and Impl
+- `trait Name { fn method(self); }` declarations
+- `impl Trait for Type { fn method(self) { ... } }` blocks
+- Methods registered under `TypeName.methodName` for dispatch
+- New token types: `TOKEN_TRAIT`, `TOKEN_IMPL`
+
+#### AOT Compilation
+- Instance method calls (`obj.method()`) supported in AOT mode
+- `new` expressions transpiled with runtime dispatch
+- Field assignment transpiled via `hunnu_field_set`
+- Top-level classes only for AOT (C constraint)
+
+#### New Examples
+- `examples/test_class.hn`, `examples/test_class_top.hn` — class basics
+- `examples/test_inheritance.hn` — inheritance + override
+- `examples/test_polymorphism.hn` — polymorphic dispatch
+- `examples/test_trait.hn` — trait + impl blocks
+- `examples/test_oop.hn` — combined OOP demo
+
+---
 ### Month 2: FFI Ecosystem + Standard Library ✅
 *May-June 2026*
 

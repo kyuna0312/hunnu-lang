@@ -37,10 +37,16 @@ export PATH="$PATH:/usr/local/bin"
 | Arrays | `let arr = [1, 2, 3]` | `arr[0]` |
 | Structs | `type Point = { x: int, y: int }` | `let p = Point{10, 20}; print(p.x)` |
 | Pointers | `&x`, `*p` | `let p = &x; print(*p)` |
+| Match | `match val { 0 -> "zero", _ -> "other" }` | `match x { 1 -> "one", _ -> "many" }` |
+| Classes | `class Point { pub x, pub y, fn new(self, x, y) { ... } }` | `let p = new Point(3, 4)` |
+| Inheritance | `class Dog : Animal { ... }` | `class Dog : Animal { fn speak(self) { print("Woof!") } }` |
+| Traits | `trait Area { fn area(self) }` | `impl Area for Circle { fn area(self) { ... } }` |
+| Encapsulation | `pub` keyword | `pub x: int` (visible), `x` (private) |
 | FFI | `extern fn puts(s) -> int from "libc.so.6"` | `extern fn pow(x,y) -> float from "libm.so.6"` |
 | Try/Catch | `try { } catch { }` | `try { x / 0 } catch { print("error") }` |
 | Module imports | `import std.math` | `import std.math` |
 | AOT compilation | `hunnu compile file.hn -o output` | `hunnu compile main.hn -o main` |
+| i18n | `--lang mn`, `HUNNU_LANG=mn` | Mongolian keywords + error messages |
 
 ### Built-in Functions
 
@@ -60,6 +66,11 @@ export PATH="$PATH:/usr/local/bin"
 | `print` | `хэвлэх` | print |
 | `import` | `импорт` | import |
 | `try` / `catch` | `турших` / `барих` | try / catch |
+| `match` | `тохирох` | match |
+| `type` | `төрөл` | type / struct |
+| `class` / `new` | `класс` / `шинэ` | class / new |
+| `pub` / `self` | `нийт` / `өөрөө` | public / self |
+| `trait` / `impl` | `ers` / `хэрэгжүүлэх` | trait / implement |
 
 ## Usage
 
@@ -131,6 +142,32 @@ fn main() {
     print(pow(2.0, 3.0))  // 8.0
 }
 
+// Classes
+class Point {
+    pub x: int
+    pub y: int
+    fn new(self, x, y) {
+        self.x = x
+        self.y = y
+    }
+    fn length(self) {
+        return self.x * self.x + self.y * self.y
+    }
+}
+fn main() {
+    let p = new Point(3, 4)
+    print(p.length())  // 25
+}
+
+// Inheritance
+class Dog : Animal {
+    fn speak(self) { print("Woof!") }
+}
+
+// Traits
+trait Area { fn area(self) }
+impl Area for Circle { fn area(self) { return self.radius * self.radius * 3 } }
+
 // Mongolian keywords
 функц main() {
     хувьсагч тоо = 10
@@ -184,11 +221,17 @@ See [`plan.md`](plan.md) for the full roadmap.
 - Bytecode compiler + VM (build command, --vm flag)
 - FFI ecosystem (libc.hn, try/catch, std modules, Python bindings)
 - AOT compiler foundation (structs, pointers, Rust frontend, LLVM skeleton)
+- **OOP features** — classes, inheritance, polymorphism, encapsulation, traits/impl, `self` reference
+- **Pattern matching** — match expressions with literal, wildcard, and identifier patterns
+- **i18n** — Mongolian keywords, `--lang mn` flag, localized error messages
 
 ### Next Steps
 - Complete LLVM codegen in compiler-rust
-- Add type checking pass
+- Enums / ADTs, generics, unsafe blocks
+- Functional programming: immutability, first-class functions, closures, lambdas
+- Package manager (`hunnu install`, `hunnu new`)
 - Self-hosting: write Hunnu lexer in Hunnu
+- CI/CD pipeline, benchmark suite, v1.0 release
 
 ## License
 

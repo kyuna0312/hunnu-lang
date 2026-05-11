@@ -1,6 +1,6 @@
 # Hunnu Language Task Tracker
 
-> Generated: May 2026 | Current branch: `refactor/extract-value-scope-import`
+> Generated: May 2026 | Current: Month 4 OOP completed
 
 ## How to Use
 
@@ -13,7 +13,7 @@
 
 ---
 
-## Month 3 (Jul 2026): AOT Compiler Foundation
+## Month 3 (Jul 2026): AOT Compiler Foundation (done)
 
 **Goal:** `hunnu compile main.hn -o main && ./main` prints "Hello".
 
@@ -56,33 +56,79 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Enums / ADTs | [ ] | |
+| 1 | Enums / ADTs | [ ] | Not started (#27) |
 | 2 | Pattern matching | [X] | In C interpreter |
-| 3 | Generics | [ ] | Monomorphization |
-| 4 | Traits / Interfaces | [ ] | |
-| 5 | `unsafe` blocks | [ ] | |
-| 6 | Module system (pub/priv) | [ ] | |
+| 3 | Generics | [ ] | Not started (#28) |
+| 4 | Traits / Interfaces | [X] | trait/impl syntax works in C interpreter |
+| 5 | `unsafe` blocks | [ ] | Not started (#29) |
+| 6 | Module system (pub/priv) | [ ] | Not started (#30) |
 
 ### FP
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Immutable by default, `mut` keyword | [ ] | |
-| 2 | First-class functions, closures | [ ] | |
-| 3 | Higher-order functions (map, filter, reduce) | [ ] | |
-| 4 | Lambda expressions (`\|x\| x + 1`) | [ ] | |
-| 5 | Tail call optimization | [ ] | |
+| 1 | Immutable by default, `mut` keyword | [ ] | Not started (#31) |
+| 2 | First-class functions, closures | [ ] | Not started (#32) |
+| 3 | Higher-order functions (map, filter, reduce) | [ ] | Stubs exist but non-functional (#34) |
+| 4 | Lambda expressions (`\|x\| x + 1`) | [ ] | Not started (#33) |
+| 5 | Tail call optimization | [ ] | Not started (#35) |
 
-### OOP
+### OOP (all done)
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Structs with methods | [ ] | |
-| 2 | Classes with `new` | [ ] | |
-| 3 | Inheritance | [ ] | |
-| 4 | Polymorphism (vtable) | [ ] | |
-| 5 | Encapsulation (public/private) | [ ] | |
-| 6 | `this`/`self` reference | [ ] | |
+| 1 | Structs with methods | [X] | Type.method syntax |
+| 2 | Classes with `new` | [X] | class/fn new syntax |
+| 3 | Inheritance | [X] | class Child : Parent |
+| 4 | Polymorphism (vtable) | [X] | Inheritance chain dispatch |
+| 5 | Encapsulation (public/private) | [X] | pub keyword enforcement |
+| 6 | `this`/`self` reference | [X] | self keyword |
+
+---
+
+## Month 5 (Sep 2026): no_std + Bare Metal
+
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| 1 | `no_std` mode | [ ] | Not started (#36) |
+| 2 | Bare-metal target | [ ] | Not started (#37) |
+| 3 | Boot loader | [ ] | Not started (#37) |
+| 4 | Physical page allocator | [ ] | Not started (#38) |
+| 5 | VGA text buffer driver | [ ] | Not started (#39) |
+| 6 | Interrupt handling | [ ] | Not started (#39) |
+| 7 | Minimal kernel | [ ] | Not started (#40) |
+
+---
+
+## Month 6 (Oct 2026): Self-Hosting + Release
+
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| 1 | Package manager (`hunnu install`, `hunnu new`) | [ ] | Not started (#41) |
+| 2 | Standard library v1 | [/] | Partial (4/7 modules, #42) |
+| 3 | Self-hosting (Hunnu lexer in Hunnu) | [ ] | Not started (#43) |
+| 4 | Documentation + language spec | [/] | Partial (outdated, #47-#52) |
+| 5 | CI/CD (GitHub Actions) | [ ] | Not started (#44) |
+| 6 | Benchmark suite | [ ] | Not started (#45) |
+| 7 | v1.0 release | [ ] | Not started (#46) |
+
+---
+
+## Post-v1.0: Vision alignment (from hunnu-opencode-prompt.md)
+
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| 1 | `def`/`end` block syntax | [ ] | Ruby-style blocks (#54) |
+| 2 | String interpolation (`#{}`) | [ ] | (#55) |
+| 3 | Range patterns + array destructuring in match | [ ] | (#56) |
+| 4 | Option/Result types | [ ] | No null (#57) |
+| 5 | `and`/`or`/`not` keyword operators | [ ] | (#58) |
+| 6 | Stdlib API parity | [ ] | upcase, include?, first, etc. (#59) |
+| 7 | Symbol type (`:ok`, `:err`) | [ ] | (#60) |
+
+---
+
+## Technical Debt / Code Health |
 
 ---
 

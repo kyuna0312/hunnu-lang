@@ -82,7 +82,10 @@ examples/         # Sample programs
 ## Testing
 
 ```bash
-# Build and run examples
+# Run the full test suite
+./run_tests.sh
+
+# Build and run a single example
 cd build && make
 ./hunnu examples/main.hn
 

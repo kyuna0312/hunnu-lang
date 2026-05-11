@@ -1,5 +1,12 @@
 # Hunnu Language Documentation
 
+> **DEPRECATION NOTICE:** This document is severely outdated (covers only basic features from Phase 1-2).
+> It does NOT include: arrays, structs, pointers, FFI, try/catch, imports/modules, match expressions,
+> classes, inheritance, traits/impl, OOP, bytecode VM, AOT compilation, i18n/Mongolian keywords,
+> or any Month 2-4 features. See the [README](../README.md) and [examples](../examples/) for current usage,
+> and [plan.md](../plan.md) for the development roadmap.
+> A full rewrite is tracked in issue #48.
+
 ## Overview
 
 Hunnu is a lightweight, expression-oriented programming language written in C. It features a clean syntax inspired by C-family languages with a focus on simplicity and readability.
