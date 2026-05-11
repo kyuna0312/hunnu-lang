@@ -27,6 +27,9 @@ Interpreter* interpreter_new(void) {
 }
 
 void interpreter_set_return(Interpreter* interp, Value value) {
+    if (interp->has_return) {
+        value_free(&interp->return_value);
+    }
     interp->return_value = value;
     interp->has_return = 1;
 }
@@ -68,6 +71,7 @@ void interpreter_free(Interpreter* interp) {
             free(interp->types[i].fields[j]);
         }
         free(interp->types[i].fields);
+        free(interp->types[i].is_pub);
     }
     free(interp->types);
     for (size_t i = 0; i < interp->user_fn_count; i++) {
@@ -472,6 +476,13 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             interpreter_register_type(interp, node->data.class_decl.name,
                                        parent_name,
                                        all_fields, all_is_pub, all_field_count);
+
+            /* Free merged field arrays (interpreter_register_type strdup'd them) */
+            for (size_t i = 0; i < all_field_count; i++) {
+                free(all_fields[i]);
+            }
+            free(all_fields);
+            free(all_is_pub);
 
             /* Register child's own constructor and methods FIRST so they take priority */
             if (node->data.class_decl.constructor) {
@@ -1026,7 +1037,6 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                     snprintf(buffer, sizeof(buffer), "%s",
                             i18n_get_value_string(arg.value.bool_value ? "true" : "false"));
                 } else if (arg.type == VALUE_STRING) {
-                    value_free(&arg);
                     return arg;
                 } else {
                     snprintf(buffer, sizeof(buffer), "%s", i18n_get_value_string("nil"));
@@ -1448,6 +1458,7 @@ void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
             
             Value value = interpreter_evaluate(interp, init);
             scope_define(interp->current_scope, name, value, node->data.var_decl.is_mut);
+            value_free(&value);
             break;
         }
         
@@ -1480,38 +1491,37 @@ void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
                 break;
             }
             
-            ExternFn* ef = &interp->extern_fns[interp->extern_fn_count];
-            ef->name = strdup(node->data.extern_fn.name);
-            ef->symbol_name = strdup(node->data.extern_fn.symbol_name);
-            ef->returns_int = node->data.extern_fn.returns_int;
-            ef->param_count = (int)node->data.extern_fn.param_count;
-            ef->handle = NULL;
-            ef->func_ptr = NULL;
-            
-            /* Load library */
+            /* Load library first to avoid leaking name/symbol_name on error */
+            void* handle = NULL;
             if (node->data.extern_fn.lib_name) {
-                ef->handle = dlopen(node->data.extern_fn.lib_name, RTLD_LAZY);
+                handle = dlopen(node->data.extern_fn.lib_name, RTLD_LAZY);
             } else {
-                ef->handle = dlopen(NULL, RTLD_LAZY);
+                handle = dlopen(NULL, RTLD_LAZY);
             }
-            
-            if (!ef->handle) {
+
+            if (!handle) {
                 fprintf(stderr, "Error at line %d: ", node->line);
                 i18n_error(ERR_CANNOT_LOAD_LIBRARY, dlerror());
                 fprintf(stderr, "\n");
                 break;
             }
-            
-            /* Resolve symbol */
-            ef->func_ptr = dlsym(ef->handle, ef->symbol_name);
-            if (!ef->func_ptr) {
+
+            void* func_ptr = dlsym(handle, node->data.extern_fn.symbol_name);
+            if (!func_ptr) {
                 fprintf(stderr, "Error at line %d: ", node->line);
-                i18n_error(ERR_CANNOT_FIND_SYMBOL, ef->symbol_name, dlerror());
+                i18n_error(ERR_CANNOT_FIND_SYMBOL, node->data.extern_fn.symbol_name, dlerror());
                 fprintf(stderr, "\n");
-                dlclose(ef->handle);
-                ef->handle = NULL;
+                dlclose(handle);
                 break;
             }
+
+            ExternFn* ef = &interp->extern_fns[interp->extern_fn_count];
+            ef->name = strdup(node->data.extern_fn.name);
+            ef->symbol_name = strdup(node->data.extern_fn.symbol_name);
+            ef->returns_int = node->data.extern_fn.returns_int;
+            ef->param_count = (int)node->data.extern_fn.param_count;
+            ef->handle = handle;
+            ef->func_ptr = func_ptr;
             
             interp->extern_fn_count++;
             break;
@@ -1657,6 +1667,7 @@ void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
             }
             Value value = interpreter_evaluate(interp, node->data.assign.value);
             scope_define(interp->current_scope, node->data.assign.name, value, 1);
+            value_free(&value);
             break;
         }
         
@@ -1781,7 +1792,8 @@ int interpreter_run(Interpreter* interp, ASTNode* program) {
 
     for (size_t i = 0; i < interp->user_fn_count; i++) {
         if (strcmp(interp->user_fns[i].name, "main") == 0) {
-            interpreter_call_user_fn(interp, &interp->user_fns[i], NULL, 0);
+            Value main_result = interpreter_call_user_fn(interp, &interp->user_fns[i], NULL, 0);
+            value_free(&main_result);
             break;
         }
     }

@@ -149,6 +149,12 @@ void value_free(Value* value) {
     } else if (value->type == VALUE_FUNCTION) {
         value->fn_decl = NULL;
         value->captured_scope = NULL;
+    } else if (value->type == VALUE_POINTER) {
+        if (value->value.pointer_value) {
+            Value* ptr_val = (Value*)value->value.pointer_value;
+            value_free(ptr_val);
+            free(ptr_val);
+        }
     }
     value->type = VALUE_NONE;
 }

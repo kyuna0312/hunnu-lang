@@ -13,6 +13,7 @@ Parser* parser_new(Lexer* lexer) {
 }
 
 void parser_free(Parser* parser) {
+    if (parser->previous) token_free(parser->previous);
     if (parser->current) token_free(parser->current);
     free(parser);
 }
@@ -58,6 +59,7 @@ static void parser_error(Parser* parser, const char* message) {
 }
 
 void parser_advance(Parser* parser) {
+    if (parser->previous) token_free(parser->previous);
     parser->previous = parser->current;
     parser->current = lexer_next_token(parser->lexer);
 }
@@ -135,7 +137,11 @@ ASTNode* parser_parse_program(Parser* parser) {
             }
             statements[count++] = decl;
         }
-        if (parser->had_error) return NULL;
+        if (parser->had_error) {
+            for (size_t i = 0; i < count; i++) ast_free(statements[i]);
+            free(statements);
+            return NULL;
+        }
     }
 
     return ast_program_create(statements, count);
@@ -220,7 +226,16 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                 
                 if (!parser_check(parser, TOKEN_IDENT) && !parser_check(parser, TOKEN_SELF)) {
                     parser_error(parser, "Expected parameter name");
-                    if (type_name) free(type_name);
+                    free(name);
+                    free(type_name);
+                    if (type_params) {
+                        for (size_t ti = 0; ti < type_param_count; ti++) free(type_params[ti]);
+                        free(type_params);
+                    }
+                    if (params) {
+                        for (size_t pi = 0; pi < param_count; pi++) free(params[pi]);
+                        free(params);
+                    }
                     return NULL;
                 }
                 
@@ -233,6 +248,16 @@ ASTNode* parser_parse_declaration(Parser* parser) {
         
         if (!parser_check(parser, TOKEN_LBRACE)) {
             parser_error(parser, "Expected function body");
+            free(name);
+            free(type_name);
+            if (type_params) {
+                for (size_t ti = 0; ti < type_param_count; ti++) free(type_params[ti]);
+                free(type_params);
+            }
+            if (params) {
+                for (size_t pi = 0; pi < param_count; pi++) free(params[pi]);
+                free(params);
+            }
             return NULL;
         }
         
@@ -284,6 +309,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                 
                 if (!parser_check(parser, TOKEN_IDENT)) {
                     parser_error(parser, "Expected parameter name");
+                    free(name);
+                    if (params) {
+                        for (size_t pi = 0; pi < param_count; pi++) free(params[pi]);
+                        free(params);
+                    }
                     return NULL;
                 }
                 
@@ -313,6 +343,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                     parser_advance(parser);
                 } else {
                     parser_error(parser, "Expected 'int', 'float', 'str', or 'void' after '->'");
+                    free(name);
+                    if (params) {
+                        for (size_t pi = 0; pi < param_count; pi++) free(params[pi]);
+                        free(params);
+                    }
                     return NULL;
                 }
             }
@@ -327,6 +362,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                 parser_advance(parser);
             } else {
                 parser_error(parser, "Expected string literal after 'from'");
+                free(name);
+                if (params) {
+                    for (size_t pi = 0; pi < param_count; pi++) free(params[pi]);
+                    free(params);
+                }
                 return NULL;
             }
         }
@@ -933,18 +973,33 @@ ASTNode* parser_parse_assignment(Parser* parser) {
     if (parser_match(parser, TOKEN_ASSIGN)) {
         if (left->type == AST_IDENTIFIER) {
             char* name = strdup(left->data.identifier.name);
+            int32_t line = left->line;
+            int32_t column = left->column;
+            ast_free(left);
             ASTNode* value = parser_parse_assignment(parser);
-            return ast_assign_create(name, value, left->line, left->column);
+            return ast_assign_create(name, value, line, column);
         } else if (left->type == AST_INDEX_EXPR) {
+            ASTNode* arr = left->data.index_expr.array;
+            ASTNode* idx = left->data.index_expr.index;
+            int32_t line = left->line;
+            int32_t column = left->column;
+            left->data.index_expr.array = NULL;
+            left->data.index_expr.index = NULL;
+            ast_free(left);
             ASTNode* value = parser_parse_assignment(parser);
-            return ast_index_assign_create(left->data.index_expr.array,
-                                           left->data.index_expr.index,
-                                           value, left->line, left->column);
+            return ast_index_assign_create(arr, idx, value, line, column);
         } else if (left->type == AST_FIELD_ACCESS) {
+            ASTNode* obj = left->data.field_access.object;
+            char* field = left->data.field_access.field;
+            int32_t line = left->line;
+            int32_t column = left->column;
+            left->data.field_access.object = NULL;
+            left->data.field_access.field = NULL;
+            free(left);
             ASTNode* value = parser_parse_assignment(parser);
-            return ast_field_assign_create(left->data.field_access.object,
-                                           left->data.field_access.field,
-                                           value, left->line, left->column);
+            ASTNode* result = ast_field_assign_create(obj, field, value, line, column);
+            free(field);
+            return result;
         }
     }
     
@@ -965,22 +1020,27 @@ ASTNode* parser_parse_assignment(Parser* parser) {
         
         if (left->type == AST_IDENTIFIER) {
             char* name = strdup(left->data.identifier.name);
-            ASTNode* current = ast_identifier_create(strdup(name), left->line, left->column);
-            ASTNode* bin_expr = ast_binary_expr_create(binop, current, right, left->line, left->column);
-            return ast_assign_create(name, bin_expr, left->line, left->column);
+            int32_t line = left->line;
+            int32_t column = left->column;
+            ASTNode* current = ast_identifier_create(strdup(name), line, column);
+            ASTNode* bin_expr = ast_binary_expr_create(binop, current, right, line, column);
+            ast_free(left);
+            return ast_assign_create(name, bin_expr, line, column);
         } else if (left->type == AST_INDEX_EXPR) {
             ASTNode* arr_node = left->data.index_expr.array;
             ASTNode* idx_node = left->data.index_expr.index;
+            int32_t line = left->line;
+            int32_t column = left->column;
             ASTNode* current;
             if (arr_node->type == AST_IDENTIFIER) {
                 current = ast_index_expr_create(
                     ast_identifier_create(arr_node->data.identifier.name, arr_node->line, arr_node->column),
                     ast_literal_create_int(idx_node->data.literal.value.int_value, idx_node->line, idx_node->column),
-                    left->line, left->column);
+                    line, column);
             } else {
-                current = ast_index_expr_create(arr_node, idx_node, left->line, left->column);
+                current = ast_index_expr_create(arr_node, idx_node, line, column);
             }
-            ASTNode* bin_expr = ast_binary_expr_create(binop, current, right, left->line, left->column);
+            ASTNode* bin_expr = ast_binary_expr_create(binop, current, right, line, column);
             ASTNode* assign_arr;
             if (arr_node->type == AST_IDENTIFIER) {
                 assign_arr = ast_identifier_create(arr_node->data.identifier.name, arr_node->line, arr_node->column);
@@ -993,7 +1053,10 @@ ASTNode* parser_parse_assignment(Parser* parser) {
             } else {
                 assign_idx = idx_node;
             }
-            return ast_index_assign_create(assign_arr, assign_idx, bin_expr, left->line, left->column);
+            left->data.index_expr.array = NULL;
+            left->data.index_expr.index = NULL;
+            ast_free(left);
+            return ast_index_assign_create(assign_arr, assign_idx, bin_expr, line, column);
         }
     }
     
@@ -1304,16 +1367,18 @@ ASTNode* parser_parse_primary(Parser* parser) {
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after len argument");
             ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
             args[0] = arg_expr;
+            free(name);
             return ast_call_expr_create("len", args, 1,
-                                   parser->previous->line,
-                                   parser->previous->column);
+                                    parser->previous->line,
+                                    parser->previous->column);
         }
         
         if (strcmp(name, "input") == 0 && parser_match(parser, TOKEN_LPAREN)) {
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after input");
+            free(name);
             return ast_call_expr_create("input", NULL, 0,
-                                   parser->previous->line,
-                                   parser->previous->column);
+                                    parser->previous->line,
+                                    parser->previous->column);
         }
         
         if (strcmp(name, "to_str") == 0 && parser_match(parser, TOKEN_LPAREN)) {
@@ -1321,9 +1386,10 @@ ASTNode* parser_parse_primary(Parser* parser) {
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after to_str argument");
             ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
             args[0] = arg_expr;
+            free(name);
             return ast_call_expr_create("to_str", args, 1,
-                                   parser->previous->line,
-                                   parser->previous->column);
+                                    parser->previous->line,
+                                    parser->previous->column);
         }
         
         if (strcmp(name, "to_int") == 0 && parser_match(parser, TOKEN_LPAREN)) {
@@ -1331,9 +1397,10 @@ ASTNode* parser_parse_primary(Parser* parser) {
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after to_int argument");
             ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
             args[0] = arg_expr;
+            free(name);
             return ast_call_expr_create("to_int", args, 1,
-                                   parser->previous->line,
-                                   parser->previous->column);
+                                    parser->previous->line,
+                                    parser->previous->column);
         }
         
         if (strcmp(name, "to_float") == 0 && parser_match(parser, TOKEN_LPAREN)) {
@@ -1341,9 +1408,10 @@ ASTNode* parser_parse_primary(Parser* parser) {
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after to_float argument");
             ASTNode** args = (ASTNode**)malloc(sizeof(ASTNode*) * 1);
             args[0] = arg_expr;
+            free(name);
             return ast_call_expr_create("to_float", args, 1,
-                                   parser->previous->line,
-                                   parser->previous->column);
+                                    parser->previous->line,
+                                    parser->previous->column);
         }
         
         /* Handle ( - either function call or struct literal */
