@@ -1,0 +1,7 @@
+fn main() {
+    let x = 10
+    unsafe {
+        let y = x + 5
+        print(y)
+    }
+}

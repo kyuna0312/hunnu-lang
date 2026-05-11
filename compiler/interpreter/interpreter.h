@@ -44,6 +44,11 @@ typedef struct Interpreter {
     size_t type_capacity;
     UserFn user_fns[MAX_USER_FNS];
     size_t user_fn_count;
+    /* Tail Call Optimization */
+    char* current_fn_name;
+    int tco_pending;
+    Value* tco_args;
+    size_t tco_arg_count;
 } Interpreter;
 
 /* Lifecycle */

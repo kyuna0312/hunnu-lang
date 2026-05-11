@@ -1,0 +1,15 @@
+fn main() {
+    let mut y = 10
+    y = 20
+    print(y)
+
+    let add_one = |x| x + 1
+    print(add_one(5))
+
+    fn double(a) { return a * 2 }
+    let f = double
+    print(f(7))
+
+    let add = |a, b| { let r = a + b; return r }
+    print(add(3, 4))
+}

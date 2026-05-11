@@ -1,0 +1,71 @@
+// Feature 1: Unsafe blocks (#29)
+fn test_unsafe() {
+    let x = 42
+    unsafe {
+        let y = x + 8
+        print(y)
+    }
+}
+
+// Feature 2: Module visibility with pub (#30)
+pub fn public_helper() {
+    print("public")
+}
+
+fn private_helper() {
+    print("private")
+}
+
+// Feature 3: Enums/ADTs (#27)
+enum Option {
+    Some(val),
+    None
+}
+
+enum Color {
+    Red,
+    Green,
+    Blue(r, g, b)
+}
+
+fn test_enums() {
+    let c = Color::Red
+    print(c)
+
+    let rgb = Color::Blue(255, 128, 0)
+    print(rgb)
+
+    match rgb {
+        Color::Red => { print("matched red") }
+        Color::Green => { print("matched green") }
+        Color::Blue(r_val, g_val, b_val) => {
+            print(r_val)
+            print(g_val)
+            print(b_val)
+        }
+        _ => { print("unknown") }
+    }
+}
+
+// Feature 4: Generics (#28)
+fn identity<T>(x) {
+    return x
+}
+
+fn main() {
+    print("--- unsafe ---")
+    test_unsafe()
+
+    print("--- pub/priv ---")
+    public_helper()
+    private_helper()
+
+    print("--- enums ---")
+    test_enums()
+
+    print("--- generics ---")
+    let v = identity(42)
+    print(v)
+    let s = identity("hello")
+    print(s)
+}

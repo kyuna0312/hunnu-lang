@@ -20,7 +20,6 @@ ASTNode* parse(Lexer* lexer);
 ASTNode* parser_parse_program(Parser* parser);
 
 /* Helper functions */
-void parser_error(Parser* parser, const char* message);
 void parser_advance(Parser* parser);
 int parser_check(Parser* parser, TokenType type);
 void parser_skip_newlines(Parser* parser);
@@ -35,25 +34,15 @@ ASTNode* parser_parse_statement(Parser* parser);
 ASTNode* parser_parse_block(Parser* parser);
 ASTNode* parser_parse_if_statement(Parser* parser);
 ASTNode* parser_parse_print_statement(Parser* parser);
-ASTNode* parser_parse_while_statement(Parser* parser);
-ASTNode* parser_parse_for_statement(Parser* parser);
-ASTNode* parser_parse_return_statement(Parser* parser);
-ASTNode* parser_parse_break_statement(Parser* parser);
-ASTNode* parser_parse_continue_statement(Parser* parser);
 ASTNode* parser_parse_expression_statement(Parser* parser);
-ASTNode* parser_parse_try_statement(Parser* parser);
 
 /* Expression parsing */
 ASTNode* parser_parse_expression(Parser* parser);
-ASTNode* parser_parse_assignment(Parser* parser);
 ASTNode* parser_parse_equality(Parser* parser);
 ASTNode* parser_parse_comparison(Parser* parser);
 ASTNode* parser_parse_addition(Parser* parser);
 ASTNode* parser_parse_multiplication(Parser* parser);
 ASTNode* parser_parse_unary(Parser* parser);
-ASTNode* parser_parse_postfix(Parser* parser);
 ASTNode* parser_parse_primary(Parser* parser);
-ASTNode* parser_parse_match_expression(Parser* parser);
-ASTNode* parser_parse_interpolated_string(Parser* parser, const char* str_val, int32_t line, int32_t column);
 
 #endif

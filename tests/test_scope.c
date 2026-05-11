@@ -5,7 +5,7 @@
 static int test_scope_define_lookup(void) {
     Scope* s = scope_create(16, NULL);
     Value v = value_create_int(42);
-    scope_define(s, "x", v);
+    scope_define(s, "x", v, 1);
     Value* found = scope_lookup(s, "x");
     mu_assert(found != NULL, "should find 'x'");
     mu_assert_eq(found->type, VALUE_INT, "type should be VALUE_INT");
@@ -25,10 +25,10 @@ static int test_scope_lookup_undefined(void) {
 
 static int test_scope_nested(void) {
     Scope* outer = scope_create(16, NULL);
-    scope_define(outer, "a", value_create_int(1));
+    scope_define(outer, "a", value_create_int(1), 1);
 
     Scope* inner = scope_create(16, outer);
-    scope_define(inner, "b", value_create_int(2));
+    scope_define(inner, "b", value_create_int(2), 1);
 
     Value* a = scope_lookup(inner, "a");
     mu_assert(a != NULL, "should find 'a' in outer scope");
@@ -48,10 +48,10 @@ static int test_scope_nested(void) {
 
 static int test_scope_shadowing(void) {
     Scope* outer = scope_create(16, NULL);
-    scope_define(outer, "x", value_create_int(1));
+    scope_define(outer, "x", value_create_int(1), 1);
 
     Scope* inner = scope_create(16, outer);
-    scope_define(inner, "x", value_create_int(2));
+    scope_define(inner, "x", value_create_int(2), 1);
 
     Value* v = scope_lookup(inner, "x");
     mu_assert_eq(v->value.int_value, 2, "should find shadowed value (2)");
@@ -66,10 +66,10 @@ static int test_scope_shadowing(void) {
 
 static int test_scope_lookup_local(void) {
     Scope* outer = scope_create(16, NULL);
-    scope_define(outer, "x", value_create_int(10));
+    scope_define(outer, "x", value_create_int(10), 1);
 
     Scope* inner = scope_create(16, outer);
-    scope_define(inner, "y", value_create_int(20));
+    scope_define(inner, "y", value_create_int(20), 1);
 
     Value* y = scope_lookup_local(inner, "y");
     mu_assert(y != NULL, "should find local 'y'");
@@ -84,8 +84,8 @@ static int test_scope_lookup_local(void) {
 
 static int test_scope_redefine(void) {
     Scope* s = scope_create(16, NULL);
-    scope_define(s, "x", value_create_int(1));
-    scope_define(s, "x", value_create_int(2));
+    scope_define(s, "x", value_create_int(1), 1);
+    scope_define(s, "x", value_create_int(2), 1);
 
     Value* v = scope_lookup(s, "x");
     mu_assert_eq(v->value.int_value, 2, "redefined value should be 2");

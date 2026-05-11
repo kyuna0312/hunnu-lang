@@ -1,0 +1,14 @@
+import "stdlib/array.hn" as arr
+
+fn main() {
+    let nums = [1, 2, 3, 4, 5]
+
+    let doubled = map(nums, |x| x * 2)
+    print(doubled)
+
+    let evens = filter(nums, |x| x % 2 == 0)
+    print(evens)
+
+    let sum = reduce(nums, |a, b| a + b, 0)
+    print(sum)
+}

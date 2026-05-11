@@ -48,6 +48,10 @@ typedef enum {
     AST_FIELD_ASSIGN,
     AST_TRAIT_DECL,
     AST_IMPL_DECL,
+    AST_UNSAFE_BLOCK,
+    AST_ENUM_DECL,
+    AST_ENUM_VARIANT,
+    AST_LAMBDA,
 } ASTNodeType;
 
 /** AST node structure */
@@ -67,6 +71,7 @@ typedef struct ASTNode {
         struct {
             char* name;
             struct ASTNode* initializer;
+            int is_mut;
         } var_decl;
         
         /** Function declaration */
@@ -75,6 +80,8 @@ typedef struct ASTNode {
             char** params;
             size_t param_count;
             struct ASTNode* body;
+            char** type_params;
+            size_t type_param_count;
         } fn_decl;
         
         /** Block statement */
@@ -218,6 +225,8 @@ typedef struct ASTNode {
             char** fields;                 /* Field names */
             int* is_pub;                   /* 1 if field is public, 0 if private */
             size_t field_count;            /* Number of fields */
+            char** type_params;            /* Generic type parameters */
+            size_t type_param_count;
         } type_decl;
 
         /** Field access: obj.field */
@@ -262,6 +271,8 @@ typedef struct ASTNode {
             struct ASTNode* constructor;      /* fn_decl for new() or NULL */
             struct ASTNode** methods;         /* Other method fn_decls */
             size_t method_count;              /* Number of methods */
+            char** type_params;              /* Generic type parameters */
+            size_t type_param_count;
         } class_decl;
 
         /** New expression: new ClassName(args) */
@@ -293,12 +304,43 @@ typedef struct ASTNode {
             struct ASTNode** methods;         /* Method implementations */
             size_t method_count;             /* Number of methods */
         } impl_decl;
+
+        /** Unsafe block: unsafe { ... } */
+        struct {
+            struct ASTNode* body;            /* Block body */
+        } unsafe_block;
+
+        /** Enum declaration: enum Name { Variant1, Variant2(...) } */
+        struct {
+            char* name;                      /* Enum name */
+            char** variant_names;            /* Variant names */
+            size_t* variant_field_counts;    /* Field count per variant */
+            char*** variant_field_names;     /* Field names per variant */
+            size_t variant_count;            /* Number of variants */
+            char** type_params;              /* Generic type parameters */
+            size_t type_param_count;
+        } enum_decl;
+
+        /** Enum variant reference: EnumName::Variant or EnumName::Variant(args) */
+        struct {
+            char* enum_name;                 /* Enum type name */
+            char* variant_name;              /* Variant name */
+            struct ASTNode** args;           /* Variant arguments */
+            size_t arg_count;                /* Number of arguments */
+        } enum_variant;
+
+        /** Lambda expression: |params| body */
+        struct {
+            char** params;
+            size_t param_count;
+            struct ASTNode* body;
+        } lambda;
     } data;
 } ASTNode;
 
 /* AST creation functions */
 ASTNode* ast_program_create(ASTNode** statements, size_t count);
-ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column);
+ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column, int is_mut);
 ASTNode* ast_fn_decl_create(const char* name, char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column);
 ASTNode* ast_block_create(ASTNode** statements, size_t count, int32_t line, int32_t column);
 ASTNode* ast_if_stmt_create(ASTNode* condition, ASTNode* then_branch, ASTNode* else_branch, int32_t line, int32_t column);
@@ -352,6 +394,10 @@ ASTNode* ast_field_assign_create(ASTNode* object, const char* field,
                                    ASTNode* value, int32_t line, int32_t column);
 ASTNode* ast_trait_decl_create(const char* name, char** method_names, size_t* method_param_counts, size_t method_count, int32_t line, int32_t column);
 ASTNode* ast_impl_decl_create(const char* trait_name, const char* type_name, ASTNode** methods, size_t method_count, int32_t line, int32_t column);
+ASTNode* ast_unsafe_block_create(ASTNode* body, int32_t line, int32_t column);
+ASTNode* ast_enum_decl_create(const char* name, char** variant_names, size_t* variant_field_counts, char*** variant_field_names, size_t variant_count, int32_t line, int32_t column);
+ASTNode* ast_enum_variant_create(const char* enum_name, const char* variant_name, ASTNode** args, size_t arg_count, int32_t line, int32_t column);
+ASTNode* ast_lambda_create(char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column);
 
 void ast_free(ASTNode* node);
 void ast_print(ASTNode* node, int indent);

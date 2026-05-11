@@ -19,16 +19,10 @@ set(HUNNU_SOURCES
     compiler/lexer/lexer.c
     compiler/lexer/token.c
     compiler/parser/parser.c
-    compiler/parser/parse_decl.c
-    compiler/parser/parse_stmt.c
-    compiler/parser/parse_expr.c
     compiler/ast/ast.c
     compiler/ast/ast_free.c
     compiler/ast/ast_print.c
     compiler/interpreter/interpreter.c
-    compiler/interpreter/eval.c
-    compiler/interpreter/exec.c
-    compiler/interpreter/call.c
     compiler/value.c
     compiler/scope.c
     compiler/import.c

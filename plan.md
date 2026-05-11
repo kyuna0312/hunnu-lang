@@ -2,7 +2,7 @@
 
 > May 2026 – October 2026
 
-**Current: v1.0.0 (Эрдэнэ — Jewel)**
+**Current: v1.0.0 (Эрдэнэ — Jewel) — Month 4 done, FP+OOP+Type System complete**
 
 ## CLI
 
@@ -29,13 +29,13 @@ Month 1 (May 2026)    Month 2 (Jun 2026)    Month 3 (Jul 2026)
 │ Stable Rust  │     │ Usable Lang   │     │ Native Bins  │
 └──────────────┘     └──────────────┘     └──────────────┘
 
-Month 4 (Aug 2026)    Month 5 (Sep 2026)    Month 6 (Oct 2026)
+Month 4 (Aug 2026)    Month 6 (Oct 2026)    Post-v1.0
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ OOP (done)   │     │ no_std / Bare │     │ Self-Hosting │
-│ Traits (done)│  →  │ Metal Target  │  →  │ Package Mgr  │
-│ FP (pending) │     │ Boot Example  │     │ v1.0 Release │
-│ ──────────── │     │ ────────────  │     │ ──────────── │
-│ Type System  │     │ Kernel Proto  │     │ Usable Lang  │
+│ Type System  │     │ Self-Hosting │     │ Vision Feats │
+│ OOP (done)   │  →  │ Package Mgr  │  →  │ String Interp │
+│ FP (done)    │     │ v1.0 Release │     │ Keyword Ops  │
+│ ──────────── │     │ ──────────── │     │ ──────────── │
+│ All Complete │     │ Usable Lang  │     │ Stdlib Parity│
 └──────────────┘     └──────────────┘     └──────────────┘
 ```
 
@@ -94,23 +94,23 @@ Build with LLVM: `cd compiler-rust && cargo build --features llvm-codegen`.
 
 | # | Feature | Difficulty | Status |
 |---|---------|------------|--------|
-| 1 | Enums / ADTs | Hard | Not started (#27) |
+| 1 | Enums / ADTs | Hard | ✅ **Done** |
 | 2 | Pattern matching | Hard | ✅ **Done** |
-| 3 | Generics | Very Hard | Not started (#28) |
+| 3 | Generics | Very Hard | ✅ **Done** |
 | 4 | Traits / Interfaces | Very Hard | ✅ **Done** |
-| 5 | `unsafe` blocks | Medium | Not started (#29) |
-| 6 | Module system (pub/priv) | Medium | Not started (#30) |
+| 5 | `unsafe` blocks | Medium | ✅ **Done** |
+| 6 | Module system (pub/priv) | Medium | ✅ **Done** |
 
 **Functional programming:**
 
 | # | Feature | Difficulty | Status |
 |---|---------|------------|--------|
-| 1 | Immutable by default, `mut` keyword | Medium | Not started (#31) |
-| 2 | First-class functions, closures | Hard | Not started (#32) |
-| 3 | Higher-order functions (map, filter, reduce) | Medium | Not started (#34) |
-| 4 | Lambda expressions (`\|x\| x + 1`) | Hard | Not started (#33) |
+| 1 | Immutable by default, `mut` keyword | Medium | ✅ **Done** |
+| 2 | First-class functions, closures | Hard | ✅ **Done** |
+| 3 | Higher-order functions (map, filter, reduce) | Medium | ✅ **Done** |
+| 4 | Lambda expressions (`\|x\| x + 1`) | Hard | ✅ **Done** |
 | 5 | Pattern matching with destructuring | Hard | ✅ **Done** |
-| 6 | Tail call optimization | Very Hard | Not started (#35) |
+| 6 | Tail call optimization | Very Hard | ✅ **Done** |
 
 **Object-oriented programming:**
 
@@ -124,21 +124,7 @@ Build with LLVM: `cd compiler-rust && cargo build --features llvm-codegen`.
 | 6 | Interfaces/Traits | Very Hard | ✅ **Done** |
 | 7 | `this`/`self` reference | Medium | ✅ **Done** |
 
-**Milestone:** OOP classes (done), generic functions (pending), FP (pending).
-
-## Month 5 (September 2026): no_std + Bare Metal
-
-| # | Feature | Difficulty |
-|---|---------|------------|
-| 1 | `no_std` mode (compile without libc) | Hard |
-| 2 | Bare-metal target (x86_64-unknown-none) | Hard |
-| 3 | Boot loader (Multiboot2 / UEFI) | Very Hard |
-| 4 | Physical page allocator | Very Hard |
-| 5 | VGA text buffer driver | Medium |
-| 6 | Interrupt handling (IDT, PIC, keyboard) | Very Hard |
-| 7 | Minimal kernel (boot → print → halt) | Very Hard |
-
-**Milestone:** QEMU boots Hunnu kernel, prints "Hello from Hunnu!".
+**Milestone:** Type system, OOP, and FP all complete.
 
 ## Month 6 (October 2026): Self-Hosting + Release
 
@@ -182,7 +168,7 @@ Features defined in the language vision document (`hunnu-opencode-prompt.md`) th
 ## Architecture Evolution
 
 ```
-Month 1-2               Month 3-4               Month 5-6
+Month 1-2               Month 3-4               Month 6+
 ┌──────────────┐        ┌──────────────┐        ┌──────────────┐
 │ .hn source   │        │ .hn source   │        │ .hn source   │
 └──────┬───────┘        └──────┬───────┘        └──────┬───────┘
@@ -191,11 +177,9 @@ Month 1-2               Month 3-4               Month 5-6
 │ Rust Lexer   │        │ Rust Lexer   │        │ Rust Lexer   │
 │ Rust Parser  │        │ Rust Parser  │        │ Rust Parser  │
 │ Rust VM      │   →    │ LLVM Codegen │   →    │ LLVM Codegen │
-│ FFI/dlopen   │        │ Structs      │        │ no_std       │
-│ Python/PyO3  │        │ Generics     │        │ ┌────────┐  │
-│              │        │ Traits       │        │ │Kernel  │  │
-│              │        │ FP / OOP     │        │ │Pkg Mgr │  │
-│              │        │ .elf binary  │        │ │v1.0   │  │
+│ FFI/dlopen   │        │ Type System  │        │ Vision Feats │
+│ Python/PyO3  │        │ FP / OOP     │        │ Self-Hosting │
+│              │        │ .elf binary  │        │ Pkg Mgr/v1.0 │
 └──────────────┘        └──────────────┘        └──────────────┘
 ```
 
@@ -262,7 +246,7 @@ hunnu-lang/
 | Interpreter | C (tree-walk) | Deprecated | VM is faster | `default` |
 | VM | C + Rust (FFI) | Rust | Ownership eliminates leaks | `default` |
 | Compiler | C (bytecode) | LLVM + Rust | Native binary output | `--features llvm-codegen` |
-| Kernel | — | Rust | no_std, safe systems code | future |
+
 | Python Bindings | — | PyO3 | Easy embedding | future |
 | Package Manager | — | Rust + Git | Cargo-style deps | future |
 
@@ -272,7 +256,6 @@ hunnu-lang/
 |------|--------|------------|
 | LLVM codegen complexity | Very High | Start simple: int/float/strings only |
 | Generics implementation | High | Monomorphize at compile time (like Rust) |
-| Bare-metal boot | Very High | Use `bootloader` crate, VGA text first |
 | Self-hosting timeline | High | Defer to post-v1.0 if not ready |
 | Scope creep | Medium | Strict monthly milestones |
 | FP/OOP complexity | High | Incremental: structs → classes → traits |
@@ -285,9 +268,8 @@ hunnu-lang/
 | 2 | Stdlib modules available | 4+ modules | ✅ |
 | 3 | `hunnu compile` produces native binary | "Hello World" | ✅ |
 | 4 | OOP classes, inheritance, traits working | 26/26 tests pass | ✅ |
-| 4 | Generic function compiles | `fn id[T](x: T) -> T` | Pending (#28) |
-| 4 | FP: first-class functions + lambdas | map/filter/reduce work | Pending (#32, #33) |
-| 5 | QEMU boots Hunnu kernel | VGA text output | Pending |
+| 4 | Type system: enums, generics, unsafe, pub/priv | Complete | ✅ |
+| 4 | FP: mut, lambdas, first-class fns, HOFs, TCO | map/filter/reduce work | ✅ |
 | 6 | `hunnu new` creates runnable project | Full cycle + release | Pending |
 
 ## Technical Debt

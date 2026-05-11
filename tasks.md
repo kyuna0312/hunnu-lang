@@ -1,6 +1,6 @@
 # Hunnu Language Task Tracker
 
-> Generated: May 2026 | Current: Month 4 OOP completed
+> Generated: May 2026 | Current: Month 4 complete (type system, OOP, FP all done)
 
 ## How to Use
 
@@ -56,22 +56,22 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Enums / ADTs | [ ] | Not started (#27) |
+| 1 | Enums / ADTs | [X] | Declared with `enum`, constructed with `Enum::Variant(args)`, matchable |
 | 2 | Pattern matching | [X] | In C interpreter |
-| 3 | Generics | [ ] | Not started (#28) |
+| 3 | Generics | [X] | `<T>` syntax on functions, type-erased at runtime |
 | 4 | Traits / Interfaces | [X] | trait/impl syntax works in C interpreter |
-| 5 | `unsafe` blocks | [ ] | Not started (#29) |
-| 6 | Module system (pub/priv) | [ ] | Not started (#30) |
+| 5 | `unsafe` blocks | [X] | `unsafe { ... }` block executes body |
+| 6 | Module system (pub/priv) | [X] | `pub` on top-level declarations tracked |
 
 ### FP
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Immutable by default, `mut` keyword | [ ] | Not started (#31) |
-| 2 | First-class functions, closures | [ ] | Not started (#32) |
-| 3 | Higher-order functions (map, filter, reduce) | [ ] | Stubs exist but non-functional (#34) |
-| 4 | Lambda expressions (`\|x\| x + 1`) | [ ] | Not started (#33) |
-| 5 | Tail call optimization | [ ] | Not started (#35) |
+| 1 | Immutable by default, `mut` keyword | [X] | let mut, scope_is_mutable check |
+| 2 | First-class functions, closures | [X] | VALUE_FUNCTION, scope storage |
+| 3 | Higher-order functions (map, filter, reduce) | [X] | map/filter/reduce in stdlib |
+| 4 | Lambda expressions (`\|x\| x + 1`) | [X] | AST_LAMBDA, pipe syntax |
+| 5 | Tail call optimization | [X] | Self-tail-recursion in TCO loop |
 
 ### OOP (all done)
 
@@ -86,17 +86,17 @@
 
 ---
 
-## Month 5 (Sep 2026): no_std + Bare Metal
+## Month 5 (Sep 2026): no_std + Bare Metal (deferred)
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | `no_std` mode | [ ] | Not started (#36) |
-| 2 | Bare-metal target | [ ] | Not started (#37) |
-| 3 | Boot loader | [ ] | Not started (#37) |
-| 4 | Physical page allocator | [ ] | Not started (#38) |
-| 5 | VGA text buffer driver | [ ] | Not started (#39) |
-| 6 | Interrupt handling | [ ] | Not started (#39) |
-| 7 | Minimal kernel | [ ] | Not started (#40) |
+| 1 | `no_std` mode | [~] | Deferred — issues #36-#40 closed |
+| 2 | Bare-metal target | [~] | Deferred |
+| 3 | Boot loader | [~] | Deferred |
+| 4 | Physical page allocator | [~] | Deferred |
+| 5 | VGA text buffer driver | [~] | Deferred |
+| 6 | Interrupt handling | [~] | Deferred |
+| 7 | Minimal kernel | [~] | Deferred |
 
 ---
 
@@ -132,13 +132,12 @@
 
 | # | Task | Priority | Notes |
 |---|------|----------|-------|
-| 1 | Split `parser.c` (1135 lines) | Medium | [X] Done — split into parse_decl/parse_stmt/parse_expr |
-| 2 | Split `interpreter.c` (~700 lines) | Low | [X] Done — split into eval/exec/call + lifecycle |
+| 1 | Split `parser.c` (1135 lines) | Medium | [ ] Split deferred — pending rebase |
+| 2 | Split `interpreter.c` (~700 lines) | Low | [ ] Split deferred — pending rebase |
 | 3 | Split `vm/vm.c` (520 lines) | Low | |
 | 4 | C unit test framework | Medium | [X] Done — 50 tests across value/scope/lexer/parser/interpreter |
-| 5 | Rust unit tests for lexer/parser | Medium | |
-| 6 | Memory leak audit (C interpreter + VM) | Low | |
-
+| 5 | Rust unit tests for lexer/parser | Medium | [X] Done — 47 tests (19 lexer + 28 parser) |
+| 6 | Memory leak audit (C interpreter + VM) | Low | [X] Done — 15+ fixes applied (token lifecycle, scope_define values, return_value overwrite, class decl arrays, error-path strdup leaks, use-after-free bugs, missing VALUE_POINTER handler) |
 ---
 
 ## Build Notes

@@ -55,7 +55,7 @@ static int test_interpreter_if_else(void) {
 static int test_interpreter_while_loop(void) {
     ASTNode* prog = parse_source(
         "fn main() {\n"
-        "  let x = 0\n"
+        "  let mut x = 0\n"
         "  while x < 3 { x = x + 1 }\n"
         "}"
     );
@@ -155,8 +155,8 @@ static int test_interpreter_array_index(void) {
 static int test_interpreter_for_loop(void) {
     ASTNode* prog = parse_source(
         "fn main() {\n"
-        "  let s = 0\n"
-        "  for let i = 0; i < 5; i = i + 1 { s = s + i }\n"
+        "  let mut s = 0\n"
+        "  for let mut i = 0; i < 5; i = i + 1 { s = s + i }\n"
         "  print(s)\n"
         "}"
     );
@@ -172,7 +172,7 @@ static int test_interpreter_for_loop(void) {
 static int test_interpreter_break_continue(void) {
     ASTNode* prog = parse_source(
         "fn main() {\n"
-        "  let i = 0\n"
+        "  let mut i = 0\n"
         "  while i < 10 {\n"
         "    i = i + 1\n"
         "    if i == 5 { break }\n"

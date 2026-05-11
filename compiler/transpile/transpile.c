@@ -555,6 +555,9 @@ static void transpile_node(ASTNode* node, FILE* out, int indent, int is_expr) {
         case AST_INDEX_ASSIGN:
         case AST_TRAIT_DECL:
         case AST_IMPL_DECL:
+        case AST_UNSAFE_BLOCK:
+        case AST_ENUM_DECL:
+        case AST_ENUM_VARIANT:
             write_indent(out, indent);
             fprintf(out, "// Unsupported: %s\n", ast_node_type_to_string(node->type));
             break;

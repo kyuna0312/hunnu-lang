@@ -9,16 +9,10 @@ add_executable(hunnu_tests
     ${CMAKE_SOURCE_DIR}/compiler/lexer/lexer.c
     ${CMAKE_SOURCE_DIR}/compiler/lexer/token.c
     ${CMAKE_SOURCE_DIR}/compiler/parser/parser.c
-    ${CMAKE_SOURCE_DIR}/compiler/parser/parse_decl.c
-    ${CMAKE_SOURCE_DIR}/compiler/parser/parse_stmt.c
-    ${CMAKE_SOURCE_DIR}/compiler/parser/parse_expr.c
     ${CMAKE_SOURCE_DIR}/compiler/ast/ast.c
     ${CMAKE_SOURCE_DIR}/compiler/ast/ast_free.c
     ${CMAKE_SOURCE_DIR}/compiler/ast/ast_print.c
     ${CMAKE_SOURCE_DIR}/compiler/interpreter/interpreter.c
-    ${CMAKE_SOURCE_DIR}/compiler/interpreter/eval.c
-    ${CMAKE_SOURCE_DIR}/compiler/interpreter/exec.c
-    ${CMAKE_SOURCE_DIR}/compiler/interpreter/call.c
     ${CMAKE_SOURCE_DIR}/compiler/value.c
     ${CMAKE_SOURCE_DIR}/compiler/scope.c
     ${CMAKE_SOURCE_DIR}/compiler/i18n/i18n.c
