@@ -45,7 +45,10 @@ static const char* ast_type_names[] = {
     "NEW_EXPR",
     "FIELD_ASSIGN",
     "TRAIT_DECL",
-    "IMPL_DECL"
+    "IMPL_DECL",
+    "UNSAFE_BLOCK",
+    "ENUM_DECL",
+    "ENUM_VARIANT"
 };
 
 /**
@@ -113,6 +116,8 @@ ASTNode* ast_fn_decl_create(const char* name, char** params, size_t param_count,
     node->data.fn_decl.params = params;
     node->data.fn_decl.param_count = param_count;
     node->data.fn_decl.body = body;
+    node->data.fn_decl.type_params = NULL;
+    node->data.fn_decl.type_param_count = 0;
     return node;
 }
 
@@ -387,6 +392,8 @@ ASTNode* ast_type_decl_create(const char* name, char** fields, int* is_pub, size
     node->data.type_decl.fields = fields;
     node->data.type_decl.is_pub = is_pub;
     node->data.type_decl.field_count = field_count;
+    node->data.type_decl.type_params = NULL;
+    node->data.type_decl.type_param_count = 0;
     return node;
 }
 
@@ -463,6 +470,8 @@ ASTNode* ast_class_decl_create(const char* name, const char* parent_name, char**
     node->data.class_decl.constructor = constructor;
     node->data.class_decl.methods = methods;
     node->data.class_decl.method_count = method_count;
+    node->data.class_decl.type_params = NULL;
+    node->data.class_decl.type_param_count = 0;
     return node;
 }
 
@@ -511,6 +520,42 @@ ASTNode* ast_impl_decl_create(const char* trait_name, const char* type_name, AST
     node->data.impl_decl.type_name = strdup(type_name);
     node->data.impl_decl.methods = methods;
     node->data.impl_decl.method_count = method_count;
+    return node;
+}
+
+ASTNode* ast_unsafe_block_create(ASTNode* body, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_UNSAFE_BLOCK;
+    node->line = line;
+    node->column = column;
+    node->data.unsafe_block.body = body;
+    return node;
+}
+
+ASTNode* ast_enum_decl_create(const char* name, char** variant_names, size_t* variant_field_counts, char*** variant_field_names, size_t variant_count, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_ENUM_DECL;
+    node->line = line;
+    node->column = column;
+    node->data.enum_decl.name = strdup(name);
+    node->data.enum_decl.variant_names = variant_names;
+    node->data.enum_decl.variant_field_counts = variant_field_counts;
+    node->data.enum_decl.variant_field_names = variant_field_names;
+    node->data.enum_decl.variant_count = variant_count;
+    node->data.enum_decl.type_params = NULL;
+    node->data.enum_decl.type_param_count = 0;
+    return node;
+}
+
+ASTNode* ast_enum_variant_create(const char* enum_name, const char* variant_name, ASTNode** args, size_t arg_count, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_ENUM_VARIANT;
+    node->line = line;
+    node->column = column;
+    node->data.enum_variant.enum_name = strdup(enum_name);
+    node->data.enum_variant.variant_name = strdup(variant_name);
+    node->data.enum_variant.args = args;
+    node->data.enum_variant.arg_count = arg_count;
     return node;
 }
 

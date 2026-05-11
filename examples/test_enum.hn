@@ -1,0 +1,20 @@
+enum Color {
+    Red,
+    Green,
+    Blue(u8, u8, u8)
+}
+
+fn main() {
+    let c = Color::Red
+    print(c)
+
+    let rgb = Color::Blue(128, 200, 255)
+    print(rgb)
+
+    match rgb {
+        Color::Red => { print("red") }
+        Color::Green => { print("green") }
+        Color::Blue(r, g, b) => { print(r) }
+        _ => { print("unknown") }
+    }
+}

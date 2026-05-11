@@ -46,6 +46,8 @@ typedef enum {
     TOKEN_AMPERSAND,
     TOKEN_TRAIT,
     TOKEN_IMPL,
+    TOKEN_UNSAFE,
+    TOKEN_ENUM,
     
     TOKEN_LPAREN,
     TOKEN_RPAREN,

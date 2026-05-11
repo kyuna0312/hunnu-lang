@@ -48,6 +48,8 @@ static const char* keyword_names[] = {
     "self",       "өөрөө",    // self reference
     "trait",      "ers",     // trait declaration
     "impl",       "хэрэгжүүлэх", // implementation
+    "unsafe",     "аюулгүйбус", // unsafe block
+    "enum",       "тоолол",  // enum declaration
     NULL
 };
 
@@ -78,6 +80,8 @@ static TokenType keyword_types[] = {
     TOKEN_SELF,   TOKEN_SELF,
     TOKEN_TRAIT,  TOKEN_TRAIT,
     TOKEN_IMPL,   TOKEN_IMPL,
+    TOKEN_UNSAFE, TOKEN_UNSAFE,
+    TOKEN_ENUM,   TOKEN_ENUM,
     TOKEN_UNKNOWN
 };
 

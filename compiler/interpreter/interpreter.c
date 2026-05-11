@@ -1153,9 +1153,42 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 else if (pattern->type == AST_IDENTIFIER) {
                     matched = 1;
                 }
+                /* Enum variant pattern: EnumName::Variant(args) */
+                else if (pattern->type == AST_ENUM_VARIANT) {
+                    if (match_value.type == VALUE_ENUM &&
+                        strcmp(match_value.enum_name, pattern->data.enum_variant.enum_name) == 0 &&
+                        strcmp(match_value.variant_name, pattern->data.enum_variant.variant_name) == 0) {
+                        /* Bind fields to identifiers if the pattern has capture variables */
+                        if (pattern->data.enum_variant.arg_count > 0 &&
+                            match_value.enum_field_count >= pattern->data.enum_variant.arg_count) {
+                            for (size_t vi = 0; vi < pattern->data.enum_variant.arg_count; vi++) {
+                                ASTNode* arg = pattern->data.enum_variant.args[vi];
+                                if (arg && arg->type == AST_IDENTIFIER) {
+                                    scope_define(interp->current_scope,
+                                                 arg->data.identifier.name,
+                                                 value_copy(match_value.enum_fields[vi]));
+                                }
+                            }
+                        }
+                        matched = 1;
+                    }
+                }
                 
                 if (matched) {
-                    Value result = interpreter_evaluate(interp, body);
+                    Value result;
+                    if (body->type == AST_BLOCK) {
+                        for (size_t bi = 0; bi < body->data.block.count; bi++) {
+                            interpreter_execute_statement(interp, body->data.block.statements[bi]);
+                            if (interp->has_return) break;
+                        }
+                        result = value_create_none();
+                        if (interp->has_return) {
+                            result = interpreter_get_return(interp);
+                            interpreter_clear_return(interp);
+                        }
+                    } else {
+                        result = interpreter_evaluate(interp, body);
+                    }
                     value_free(&match_value);
                     return result;
                 }
@@ -1179,6 +1212,34 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
         }
 
         case AST_TRAIT_DECL:
+            return value_create_none();
+
+        case AST_ENUM_VARIANT: {
+            /* Create an enum value */
+            ASTNode** args = node->data.enum_variant.args;
+            size_t arg_count = node->data.enum_variant.arg_count;
+            Value** fields = NULL;
+            if (arg_count > 0) {
+                fields = (Value**)malloc(sizeof(Value*) * arg_count);
+                for (size_t i = 0; i < arg_count; i++) {
+                    fields[i] = (Value*)malloc(sizeof(Value));
+                    *fields[i] = interpreter_evaluate(interp, args[i]);
+                }
+            }
+            return value_create_enum(node->data.enum_variant.enum_name,
+                                     node->data.enum_variant.variant_name,
+                                     fields, arg_count);
+        }
+
+        case AST_ENUM_DECL:
+            /* Register enum - for now, just treat as declarative info */
+            return value_create_none();
+
+        case AST_UNSAFE_BLOCK:
+            /* Execute body directly (no extra checks needed in tree-walk) */
+            if (node->data.unsafe_block.body) {
+                return interpreter_evaluate(interp, node->data.unsafe_block.body);
+            }
             return value_create_none();
 
         default:
@@ -1467,7 +1528,8 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
         case AST_TYPE_DECL:
         case AST_CLASS_DECL:
         case AST_IMPL_DECL:
-        case AST_TRAIT_DECL: {
+        case AST_TRAIT_DECL:
+        case AST_ENUM_DECL: {
             Value result = interpreter_evaluate(interp, node);
             value_free(&result);
             break;
@@ -1479,9 +1541,21 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
         case AST_FIELD_ASSIGN:
         case AST_ADDRESS_OF:
         case AST_DEREFERENCE:
-        case AST_NEW_EXPR: {
+        case AST_NEW_EXPR:
+        case AST_ENUM_VARIANT: {
             Value result = interpreter_evaluate(interp, node);
             value_free(&result);
+            break;
+        }
+
+        case AST_UNSAFE_BLOCK: {
+            ASTNode* body = node->data.unsafe_block.body;
+            if (body && body->type == AST_BLOCK) {
+                for (size_t bi = 0; bi < body->data.block.count; bi++) {
+                    interpreter_execute_statement(interp, body->data.block.statements[bi]);
+                    if (interp->has_return || interp->has_break) break;
+                }
+            }
             break;
         }
 

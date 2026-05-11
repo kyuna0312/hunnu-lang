@@ -23,7 +23,16 @@ static void ast_print_node(ASTNode* node, int indent) {
             break;
 
         case AST_FN_DECL:
-            printf(" (%s)", node->data.fn_decl.name);
+            printf(" (%s", node->data.fn_decl.name);
+            if (node->data.fn_decl.type_param_count > 0) {
+                printf("<");
+                for (size_t i = 0; i < node->data.fn_decl.type_param_count; i++) {
+                    if (i > 0) printf(", ");
+                    printf("%s", node->data.fn_decl.type_params[i]);
+                }
+                printf(">");
+            }
+            printf(")");
             break;
 
         case AST_IDENTIFIER:
@@ -66,6 +75,9 @@ static void ast_print_node(ASTNode* node, int indent) {
 
         case AST_TRAIT_DECL:
         case AST_IMPL_DECL:
+        case AST_UNSAFE_BLOCK:
+        case AST_ENUM_DECL:
+        case AST_ENUM_VARIANT:
             break;
 
         default:
@@ -304,6 +316,44 @@ static void ast_print_node(ASTNode* node, int indent) {
                 indent_print(indent + 1);
                 printf("method %zu:\n", i);
                 ast_print_node(node->data.impl_decl.methods[i], indent + 2);
+            }
+            break;
+
+        case AST_UNSAFE_BLOCK:
+            indent_print(indent);
+            printf("UNSAFE_BLOCK\n");
+            ast_print_node(node->data.unsafe_block.body, indent + 1);
+            break;
+
+        case AST_ENUM_DECL:
+            indent_print(indent);
+            printf("ENUM_DECL (%s) with %zu variants\n",
+                   node->data.enum_decl.name,
+                   node->data.enum_decl.variant_count);
+            for (size_t i = 0; i < node->data.enum_decl.variant_count; i++) {
+                indent_print(indent + 1);
+                printf("variant: %s", node->data.enum_decl.variant_names[i]);
+                if (node->data.enum_decl.variant_field_counts &&
+                    node->data.enum_decl.variant_field_counts[i] > 0) {
+                    printf(" (fields: ");
+                    for (size_t j = 0; j < node->data.enum_decl.variant_field_counts[i]; j++) {
+                        if (j > 0) printf(", ");
+                        printf("%s", node->data.enum_decl.variant_field_names[i][j]);
+                    }
+                    printf(")");
+                }
+                printf("\n");
+            }
+            break;
+
+        case AST_ENUM_VARIANT:
+            indent_print(indent);
+            printf("ENUM_VARIANT (%s::%s, %zu args)\n",
+                   node->data.enum_variant.enum_name,
+                   node->data.enum_variant.variant_name,
+                   node->data.enum_variant.arg_count);
+            for (size_t i = 0; i < node->data.enum_variant.arg_count; i++) {
+                ast_print_node(node->data.enum_variant.args[i], indent + 1);
             }
             break;
 

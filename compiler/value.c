@@ -6,17 +6,12 @@
 
 Value value_copy(const Value* val) {
     Value copy;
+    memset(&copy, 0, sizeof(copy));
     copy.type = val->type;
     copy.has_value = val->has_value;
-    copy.array_length = 0;
-    copy.array_elements = NULL;
-    copy.struct_type = NULL;
-    copy.struct_fields = NULL;
-    copy.struct_field_count = 0;
 
     if (val->type == VALUE_STRING) {
         copy.value.string_value = strdup(val->value.string_value);
-        copy.array_elements = val->array_elements;
     } else if (val->type == VALUE_ARRAY) {
         copy.array_length = val->array_length;
         copy.array_elements = (Value**)malloc(sizeof(Value*) * val->array_length);
@@ -32,10 +27,17 @@ Value value_copy(const Value* val) {
             copy.struct_fields[i] = (Value*)malloc(sizeof(Value));
             *copy.struct_fields[i] = value_copy(val->struct_fields[i]);
         }
-        copy.array_elements = val->array_elements;
+    } else if (val->type == VALUE_ENUM) {
+        copy.enum_name = strdup(val->enum_name);
+        copy.variant_name = strdup(val->variant_name);
+        copy.enum_field_count = val->enum_field_count;
+        copy.enum_fields = (Value**)malloc(sizeof(Value*) * val->enum_field_count);
+        for (size_t i = 0; i < val->enum_field_count; i++) {
+            copy.enum_fields[i] = (Value*)malloc(sizeof(Value));
+            *copy.enum_fields[i] = value_copy(val->enum_fields[i]);
+        }
     } else {
         copy.value = val->value;
-        copy.array_elements = val->array_elements;
     }
     return copy;
 }
@@ -130,6 +132,16 @@ void value_free(Value* value) {
         free(value->struct_fields);
         value->struct_field_count = 0;
         value->struct_fields = NULL;
+    } else if (value->type == VALUE_ENUM) {
+        free(value->enum_name);
+        free(value->variant_name);
+        for (size_t i = 0; i < value->enum_field_count; i++) {
+            value_free(value->enum_fields[i]);
+            free(value->enum_fields[i]);
+        }
+        free(value->enum_fields);
+        value->enum_field_count = 0;
+        value->enum_fields = NULL;
     }
     value->type = VALUE_NONE;
 }
@@ -201,6 +213,18 @@ void value_print(Value* value) {
         case VALUE_POINTER:
             printf("ptr");
             break;
+
+        case VALUE_ENUM:
+            printf("%s::%s", value->enum_name, value->variant_name);
+            if (value->enum_field_count > 0) {
+                printf("(");
+                for (size_t i = 0; i < value->enum_field_count; i++) {
+                    if (i > 0) printf(", ");
+                    value_print(value->enum_fields[i]);
+                }
+                printf(")");
+            }
+            break;
     }
 }
 
@@ -228,13 +252,23 @@ int64_t value_as_int(Value* value) {
 
 Value value_create_struct_value(const char* type_name, Value** fields, size_t field_count) {
     Value v;
+    memset(&v, 0, sizeof(v));
     v.type = VALUE_STRUCT;
-    v.value.int_value = 0;
     v.has_value = 1;
-    v.array_length = 0;
-    v.array_elements = NULL;
     v.struct_type = strdup(type_name);
     v.struct_fields = fields;
     v.struct_field_count = field_count;
+    return v;
+}
+
+Value value_create_enum(const char* enum_name, const char* variant_name, Value** fields, size_t field_count) {
+    Value v;
+    memset(&v, 0, sizeof(v));
+    v.type = VALUE_ENUM;
+    v.has_value = 1;
+    v.enum_name = strdup(enum_name);
+    v.variant_name = strdup(variant_name);
+    v.enum_fields = fields;
+    v.enum_field_count = field_count;
     return v;
 }

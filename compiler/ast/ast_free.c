@@ -24,6 +24,10 @@ static void ast_free_node(ASTNode* node) {
                 free(node->data.fn_decl.params[i]);
             }
             free(node->data.fn_decl.params);
+            for (size_t i = 0; i < node->data.fn_decl.type_param_count; i++) {
+                free(node->data.fn_decl.type_params[i]);
+            }
+            free(node->data.fn_decl.type_params);
             ast_free_node(node->data.fn_decl.body);
             break;
 
@@ -134,6 +138,10 @@ static void ast_free_node(ASTNode* node) {
                 free(node->data.type_decl.fields);
                 free(node->data.type_decl.is_pub);
             }
+            for (size_t i = 0; i < node->data.type_decl.type_param_count; i++) {
+                free(node->data.type_decl.type_params[i]);
+            }
+            free(node->data.type_decl.type_params);
             break;
 
         case AST_FIELD_ACCESS:
@@ -182,6 +190,10 @@ static void ast_free_node(ASTNode* node) {
                 free(node->data.class_decl.fields);
                 free(node->data.class_decl.is_pub);
             }
+            for (size_t i = 0; i < node->data.class_decl.type_param_count; i++) {
+                free(node->data.class_decl.type_params[i]);
+            }
+            free(node->data.class_decl.type_params);
             ast_free_node(node->data.class_decl.constructor);
             for (size_t i = 0; i < node->data.class_decl.method_count; i++) {
                 ast_free_node(node->data.class_decl.methods[i]);
@@ -221,6 +233,39 @@ static void ast_free_node(ASTNode* node) {
                 ast_free_node(node->data.impl_decl.methods[i]);
             }
             free(node->data.impl_decl.methods);
+            break;
+
+        case AST_UNSAFE_BLOCK:
+            ast_free_node(node->data.unsafe_block.body);
+            break;
+
+        case AST_ENUM_DECL:
+            free(node->data.enum_decl.name);
+            for (size_t i = 0; i < node->data.enum_decl.type_param_count; i++) {
+                free(node->data.enum_decl.type_params[i]);
+            }
+            free(node->data.enum_decl.type_params);
+            for (size_t i = 0; i < node->data.enum_decl.variant_count; i++) {
+                free(node->data.enum_decl.variant_names[i]);
+                if (node->data.enum_decl.variant_field_names && node->data.enum_decl.variant_field_names[i]) {
+                    for (size_t j = 0; j < node->data.enum_decl.variant_field_counts[i]; j++) {
+                        free(node->data.enum_decl.variant_field_names[i][j]);
+                    }
+                    free(node->data.enum_decl.variant_field_names[i]);
+                }
+            }
+            free(node->data.enum_decl.variant_names);
+            free(node->data.enum_decl.variant_field_counts);
+            free(node->data.enum_decl.variant_field_names);
+            break;
+
+        case AST_ENUM_VARIANT:
+            free(node->data.enum_variant.enum_name);
+            free(node->data.enum_variant.variant_name);
+            for (size_t i = 0; i < node->data.enum_variant.arg_count; i++) {
+                ast_free_node(node->data.enum_variant.args[i]);
+            }
+            free(node->data.enum_variant.args);
             break;
 
         case AST_WHILE_STMT:

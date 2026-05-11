@@ -1,6 +1,6 @@
 # Hunnu Language Task Tracker
 
-> Generated: May 2026 | Current: Month 4 OOP completed
+> Generated: May 2026 | Current: Month 4 Type System complete (unsafe, enums, generics, pub/priv)
 
 ## How to Use
 
@@ -56,12 +56,12 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Enums / ADTs | [ ] | Not started (#27) |
+| 1 | Enums / ADTs | [X] | Declared with `enum`, constructed with `Enum::Variant(args)`, matchable |
 | 2 | Pattern matching | [X] | In C interpreter |
-| 3 | Generics | [ ] | Not started (#28) |
+| 3 | Generics | [X] | `<T>` syntax on functions, type-erased at runtime |
 | 4 | Traits / Interfaces | [X] | trait/impl syntax works in C interpreter |
-| 5 | `unsafe` blocks | [ ] | Not started (#29) |
-| 6 | Module system (pub/priv) | [ ] | Not started (#30) |
+| 5 | `unsafe` blocks | [X] | `unsafe { ... }` block executes body |
+| 6 | Module system (pub/priv) | [X] | `pub` on top-level declarations tracked |
 
 ### FP
 

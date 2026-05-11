@@ -48,6 +48,8 @@ static ASTNode* parser_parse_continue_statement(Parser* parser);
 static ASTNode* parser_parse_match_expression(Parser* parser);
 static ASTNode* parser_parse_interpolated_string(Parser* parser, const char* str_val, int32_t line, int32_t column);
 static ASTNode* parser_parse_try_statement(Parser* parser);
+static ASTNode* parser_parse_unsafe_block(Parser* parser);
+static ASTNode* parser_parse_enum_declaration(Parser* parser);
 
 /**
  * @brief Reports parse error
@@ -127,6 +129,34 @@ static void parser_consume(Parser* parser, TokenType type, const char* message) 
 
 static ASTNode* parser_parse_assignment(Parser* parser);
 
+static char** parser_parse_type_params(Parser* parser, size_t* out_count) {
+    *out_count = 0;
+    if (!parser_check(parser, TOKEN_LT)) return NULL;
+    parser_advance(parser);
+    size_t count = 0;
+    size_t cap = 4;
+    char** params = (char**)malloc(sizeof(char*) * cap);
+    while (!parser_check(parser, TOKEN_GT) && !parser_check(parser, TOKEN_EOF)) {
+        if (count > 0) {
+            parser_consume(parser, TOKEN_COMMA, "Expected ',' between type parameters");
+        }
+        if (!parser_check(parser, TOKEN_IDENT)) {
+            parser_error(parser, "Expected type parameter name");
+            break;
+        }
+        params[count] = strdup(parser->current->lexeme);
+        count++;
+        parser_advance(parser);
+        if (count >= cap) {
+            cap *= 2;
+            params = (char**)realloc(params, sizeof(char*) * cap);
+        }
+    }
+    parser_consume(parser, TOKEN_GT, "Expected '>' after type parameters");
+    *out_count = count;
+    return params;
+}
+
 ASTNode* parse(Lexer* lexer) {
     Parser* parser = parser_new(lexer);
     parser_advance(parser);
@@ -157,6 +187,12 @@ ASTNode* parser_parse_program(Parser* parser) {
 
 ASTNode* parser_parse_declaration(Parser* parser) {
     parser_skip_newlines(parser);
+    
+    /* Track pub/priv visibility on top-level declarations (module visibility) */
+    int has_pub = 0;
+    if (parser_match(parser, TOKEN_PUB)) {
+        has_pub = 1;
+    }
     
     if (parser_match(parser, TOKEN_LET)) {
         if (!parser_check(parser, TOKEN_IDENT)) {
@@ -205,6 +241,12 @@ ASTNode* parser_parse_declaration(Parser* parser) {
             name = strdup(parser->current->lexeme);
             parser_advance(parser);
         }
+
+        size_t type_param_count = 0;
+        char** type_params = NULL;
+        if (parser_check(parser, TOKEN_LT) && !type_name) {
+            type_params = parser_parse_type_params(parser, &type_param_count);
+        }
         
         char** params = NULL;
         size_t param_count = 0;
@@ -239,6 +281,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                             parser->previous->line,
                             parser->previous->column);
         
+        if (type_params) {
+            fn_node->data.fn_decl.type_params = type_params;
+            fn_node->data.fn_decl.type_param_count = type_param_count;
+        }
+
         if (type_name) {
             /* Store type name in fn_decl for method binding */
             fn_node->data.fn_decl.name = name;
@@ -710,6 +757,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                                     parser->previous->line, parser->previous->column);
     }
 
+    if (parser_match(parser, TOKEN_ENUM)) {
+        return parser_parse_enum_declaration(parser);
+    }
+
+    (void)has_pub; /* Module visibility tracked for future use */
     return parser_parse_statement(parser);
 }
 
@@ -746,6 +798,10 @@ ASTNode* parser_parse_statement(Parser* parser) {
     
     if (parser_match(parser, TOKEN_TRY)) {
         return parser_parse_try_statement(parser);
+    }
+    
+    if (parser_match(parser, TOKEN_UNSAFE)) {
+        return parser_parse_unsafe_block(parser);
     }
     
     if (parser_match(parser, TOKEN_PRINT)) {
@@ -1212,6 +1268,47 @@ ASTNode* parser_parse_primary(Parser* parser) {
     if (parser_match(parser, TOKEN_IDENT)) {
         char* name = strdup(parser->previous->lexeme);
         
+        /* Check for EnumName::Variant expression */
+        if (parser_check(parser, TOKEN_COLON)) {
+            parser_advance(parser);
+            if (parser_match(parser, TOKEN_COLON)) {
+                if (!parser_check(parser, TOKEN_IDENT)) {
+                    parser_error(parser, "Expected variant name after '::'");
+                    free(name);
+                    return NULL;
+                }
+                char* variant_name = strdup(parser->current->lexeme);
+                parser_advance(parser);
+
+                ASTNode** args = NULL;
+                size_t arg_count = 0;
+                if (parser_match(parser, TOKEN_LPAREN)) {
+                    size_t arg_cap = 4;
+                    args = (ASTNode**)malloc(sizeof(ASTNode*) * arg_cap);
+                    if (!parser_check(parser, TOKEN_RPAREN)) {
+                        args[arg_count++] = parser_parse_expression(parser);
+                        while (parser_match(parser, TOKEN_COMMA)) {
+                            if (arg_count >= arg_cap) {
+                                arg_cap *= 2;
+                                args = (ASTNode**)realloc(args, sizeof(ASTNode*) * arg_cap);
+                            }
+                            args[arg_count++] = parser_parse_expression(parser);
+                        }
+                    }
+                    parser_consume(parser, TOKEN_RPAREN, "Expected ')' after variant args");
+                }
+                ASTNode* result = ast_enum_variant_create(name, variant_name, args, arg_count,
+                                                          parser->previous->line,
+                                                          parser->previous->column);
+                free(name);
+                free(variant_name);
+                return result;
+            }
+            /* Not '::', just a ':' after identifier - push back? No, it's likely a label */
+            /* Re-interpret as just an identifier, will cause parse error downstream */
+            /* For simplicity, we'll continue as if it was just an identifier */
+        }
+        
         if (strcmp(name, "len") == 0 && parser_match(parser, TOKEN_LPAREN)) {
             ASTNode* arg_expr = parser_parse_expression(parser);
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after len argument");
@@ -1389,6 +1486,96 @@ ASTNode* parser_parse_primary(Parser* parser) {
     return NULL;
 }
 
+static ASTNode* parser_parse_unsafe_block(Parser* parser) {
+    int32_t line = parser->previous->line;
+    int32_t column = parser->previous->column;
+    ASTNode* body = parser_parse_block(parser);
+    return ast_unsafe_block_create(body, line, column);
+}
+
+static ASTNode* parser_parse_enum_declaration(Parser* parser) {
+    int32_t line = parser->previous->line;
+    int32_t column = parser->previous->column;
+
+    if (!parser_check(parser, TOKEN_IDENT)) {
+        parser_error(parser, "Expected enum name after 'enum'");
+        return NULL;
+    }
+    char* enum_name = strdup(parser->current->lexeme);
+    parser_advance(parser);
+
+    parser_consume(parser, TOKEN_LBRACE, "Expected '{' after enum name");
+
+    char** variant_names = NULL;
+    size_t* variant_field_counts = NULL;
+    char*** variant_field_names = NULL;
+    size_t variant_count = 0;
+    size_t variant_capacity = 8;
+
+    variant_names = (char**)malloc(sizeof(char*) * variant_capacity);
+    variant_field_counts = (size_t*)malloc(sizeof(size_t) * variant_capacity);
+    variant_field_names = (char***)malloc(sizeof(char**) * variant_capacity);
+
+    while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+        parser_skip_newlines(parser);
+        if (parser_check(parser, TOKEN_RBRACE)) break;
+
+        if (!parser_check(parser, TOKEN_IDENT)) {
+            parser_error(parser, "Expected variant name");
+            break;
+        }
+
+        if (variant_count >= variant_capacity) {
+            variant_capacity *= 2;
+            variant_names = (char**)realloc(variant_names, sizeof(char*) * variant_capacity);
+            variant_field_counts = (size_t*)realloc(variant_field_counts, sizeof(size_t) * variant_capacity);
+            variant_field_names = (char***)realloc(variant_field_names, sizeof(char**) * variant_capacity);
+        }
+
+        variant_names[variant_count] = strdup(parser->current->lexeme);
+        parser_advance(parser);
+
+        /* Optional parenthesized fields: Variant(type1, type2) */
+        char** fields = NULL;
+        size_t field_count = 0;
+        if (parser_match(parser, TOKEN_LPAREN)) {
+            size_t field_cap = 4;
+            fields = (char**)malloc(sizeof(char*) * field_cap);
+            while (!parser_check(parser, TOKEN_RPAREN) && !parser_check(parser, TOKEN_EOF)) {
+                if (field_count > 0) {
+                    parser_consume(parser, TOKEN_COMMA, "Expected ',' between fields");
+                }
+                if (!parser_check(parser, TOKEN_IDENT)) {
+                    parser_error(parser, "Expected field name");
+                    break;
+                }
+                fields[field_count] = strdup(parser->current->lexeme);
+                field_count++;
+                parser_advance(parser);
+                if (field_count >= field_cap) {
+                    field_cap *= 2;
+                    fields = (char**)realloc(fields, sizeof(char*) * field_cap);
+                }
+            }
+            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after variant fields");
+        }
+
+        variant_field_counts[variant_count] = field_count;
+        variant_field_names[variant_count] = fields;
+        variant_count++;
+
+        /* Optional comma between variants */
+        if (parser_check(parser, TOKEN_COMMA)) {
+            parser_advance(parser);
+        }
+    }
+
+    parser_consume(parser, TOKEN_RBRACE, "Expected '}' after enum variants");
+
+    return ast_enum_decl_create(enum_name, variant_names, variant_field_counts,
+                                variant_field_names, variant_count, line, column);
+}
+
 /**
  * @brief Parses a match expression
  * @param parser Parser instance
@@ -1409,9 +1596,11 @@ static ASTNode* parser_parse_match_expression(Parser* parser) {
     size_t capacity = 8;
     
     while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+        parser_skip_newlines(parser);
+        if (parser_check(parser, TOKEN_RBRACE)) break;
         ASTNode* pattern = NULL;
         
-        /* Parse pattern - can be literal, identifier, or '_' wildcard */
+        /* Parse pattern - can be literal, identifier, '_' wildcard, or Enum::Variant */
         if (parser_match(parser, TOKEN_INT_LITERAL)) {
             pattern = ast_literal_create_int(parser->previous->value.int_value,
                                            parser->previous->line,
@@ -1431,16 +1620,58 @@ static ASTNode* parser_parse_match_expression(Parser* parser) {
             pattern = ast_literal_create_bool(0, parser->previous->line,
                                             parser->previous->column);
         } else if (parser_check(parser, TOKEN_IDENT)) {
-            /* Could be '_' wildcard or an identifier binding */
+            /* Could be '_' wildcard, an identifier binding, or Enum::Variant pattern */
             if (strcmp(parser->current->lexeme, "_") == 0) {
                 parser_advance(parser);
                 pattern = ast_identifier_create("_", parser->previous->line,
                                               parser->previous->column);
             } else {
+                /* Check for EnumName::Variant pattern */
                 char* name = strdup(parser->current->lexeme);
                 parser_advance(parser);
-                pattern = ast_identifier_create(name, parser->previous->line,
-                                              parser->previous->column);
+                TokenType next = parser->current ? parser->current->type : TOKEN_EOF;
+                if (next == TOKEN_COLON) {
+                    parser_advance(parser);
+                    if (parser_match(parser, TOKEN_COLON)) {
+                        /* EnumName :: Variant pattern */
+                        if (!parser_check(parser, TOKEN_IDENT)) {
+                            parser_error(parser, "Expected variant name after '::'");
+                            free(name);
+                            break;
+                        }
+                        char* variant_name = strdup(parser->current->lexeme);
+                        parser_advance(parser);
+
+                        ASTNode** args = NULL;
+                        size_t arg_count = 0;
+                        if (parser_match(parser, TOKEN_LPAREN)) {
+                            size_t arg_cap = 4;
+                            args = (ASTNode**)malloc(sizeof(ASTNode*) * arg_cap);
+                            if (!parser_check(parser, TOKEN_RPAREN)) {
+                                args[arg_count++] = parser_parse_expression(parser);
+                                while (parser_match(parser, TOKEN_COMMA)) {
+                                    if (arg_count >= arg_cap) {
+                                        arg_cap *= 2;
+                                        args = (ASTNode**)realloc(args, sizeof(ASTNode*) * arg_cap);
+                                    }
+                                    args[arg_count++] = parser_parse_expression(parser);
+                                }
+                            }
+                            parser_consume(parser, TOKEN_RPAREN, "Expected ')' after variant args");
+                        }
+                        pattern = ast_enum_variant_create(name, variant_name, args, arg_count,
+                                                          parser->previous->line,
+                                                          parser->previous->column);
+                        free(variant_name);
+                    } else {
+                        free(name);
+                        parser_error(parser, "Expected '::' after enum name");
+                        break;
+                    }
+                } else {
+                    pattern = ast_identifier_create(name, parser->previous->line,
+                                                  parser->previous->column);
+                }
                 free(name);
             }
         } else {
@@ -1450,8 +1681,13 @@ static ASTNode* parser_parse_match_expression(Parser* parser) {
         
         parser_consume(parser, TOKEN_FAT_ARROW, "Expected '=>' after pattern");
         
-        /* Parse the body expression */
-        ASTNode* body = parser_parse_expression(parser);
+        /* Parse the body - either a block or a simple expression */
+        ASTNode* body;
+        if (parser_check(parser, TOKEN_LBRACE)) {
+            body = parser_parse_block(parser);
+        } else {
+            body = parser_parse_expression(parser);
+        }
         
         if (case_count >= capacity) {
             capacity *= 2;
