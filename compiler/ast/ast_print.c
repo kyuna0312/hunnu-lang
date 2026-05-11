@@ -78,6 +78,7 @@ static void ast_print_node(ASTNode* node, int indent) {
         case AST_UNSAFE_BLOCK:
         case AST_ENUM_DECL:
         case AST_ENUM_VARIANT:
+        case AST_LAMBDA:
             break;
 
         default:

@@ -195,6 +195,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
     }
     
     if (parser_match(parser, TOKEN_LET)) {
+        int is_mut = 0;
+        if (parser_match(parser, TOKEN_MUT)) {
+            is_mut = 1;
+        }
+        
         if (!parser_check(parser, TOKEN_IDENT)) {
             parser_error(parser, "Expected variable name after 'let'");
             return NULL;
@@ -213,7 +218,8 @@ ASTNode* parser_parse_declaration(Parser* parser) {
         
         return ast_var_decl_create(name, value, 
                               parser->previous->line, 
-                              parser->previous->column);
+                              parser->previous->column,
+                              is_mut);
     }
     
     if (parser_match(parser, TOKEN_FN)) {
@@ -1185,6 +1191,35 @@ ASTNode* parser_parse_postfix(Parser* parser) {
 }
 
 ASTNode* parser_parse_primary(Parser* parser) {
+    /* Lambda expression: |params| body */
+    if (parser_match(parser, TOKEN_PIPE)) {
+        int32_t line = parser->previous->line;
+        int32_t column = parser->previous->column;
+        char** params = NULL;
+        size_t param_count = 0;
+        while (!parser_check(parser, TOKEN_PIPE) && !parser_check(parser, TOKEN_EOF)) {
+            if (param_count > 0) {
+                parser_consume(parser, TOKEN_COMMA, "Expected ',' between lambda params");
+            }
+            if (!parser_check(parser, TOKEN_IDENT)) {
+                parser_error(parser, "Expected parameter name in lambda");
+                break;
+            }
+            params = (char**)realloc(params, sizeof(char*) * (param_count + 1));
+            params[param_count++] = strdup(parser->current->lexeme);
+            parser_advance(parser);
+        }
+        parser_consume(parser, TOKEN_PIPE, "Expected '|' after lambda parameters");
+        parser_skip_newlines(parser);
+        ASTNode* body;
+        if (parser_check(parser, TOKEN_LBRACE)) {
+            body = parser_parse_block(parser);
+        } else {
+            body = parser_parse_expression(parser);
+        }
+        return ast_lambda_create(params, param_count, body, line, column);
+    }
+    
     if (parser_match(parser, TOKEN_INT_LITERAL)) {
         return ast_literal_create_int(parser->previous->value.int_value,
                           parser->previous->line,

@@ -48,7 +48,8 @@ static const char* ast_type_names[] = {
     "IMPL_DECL",
     "UNSAFE_BLOCK",
     "ENUM_DECL",
-    "ENUM_VARIANT"
+    "ENUM_VARIANT",
+    "LAMBDA"
 };
 
 /**
@@ -87,13 +88,14 @@ ASTNode* ast_program_create(ASTNode** statements, size_t count) {
  * @param column Column number
  * @return New AST node
  */
-ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column) {
+ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column, int is_mut) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = AST_VAR_DECL;
     node->line = line;
     node->column = column;
     node->data.var_decl.name = strdup(name);
     node->data.var_decl.initializer = initializer;
+    node->data.var_decl.is_mut = is_mut;
     return node;
 }
 
@@ -556,6 +558,17 @@ ASTNode* ast_enum_variant_create(const char* enum_name, const char* variant_name
     node->data.enum_variant.variant_name = strdup(variant_name);
     node->data.enum_variant.args = args;
     node->data.enum_variant.arg_count = arg_count;
+    return node;
+}
+
+ASTNode* ast_lambda_create(char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_LAMBDA;
+    node->line = line;
+    node->column = column;
+    node->data.lambda.params = params;
+    node->data.lambda.param_count = param_count;
+    node->data.lambda.body = body;
     return node;
 }
 

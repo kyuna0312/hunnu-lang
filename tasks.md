@@ -67,11 +67,11 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Immutable by default, `mut` keyword | [ ] | Not started (#31) |
-| 2 | First-class functions, closures | [ ] | Not started (#32) |
-| 3 | Higher-order functions (map, filter, reduce) | [ ] | Stubs exist but non-functional (#34) |
-| 4 | Lambda expressions (`\|x\| x + 1`) | [ ] | Not started (#33) |
-| 5 | Tail call optimization | [ ] | Not started (#35) |
+| 1 | Immutable by default, `mut` keyword | [X] | let mut, scope_is_mutable check |
+| 2 | First-class functions, closures | [X] | VALUE_FUNCTION, scope storage |
+| 3 | Higher-order functions (map, filter, reduce) | [X] | map/filter/reduce in stdlib |
+| 4 | Lambda expressions (`\|x\| x + 1`) | [X] | AST_LAMBDA, pipe syntax |
+| 5 | Tail call optimization | [X] | Self-tail-recursion in TCO loop |
 
 ### OOP (all done)
 

@@ -1,4 +1,5 @@
 #include "value.h"
+#include "scope.h"
 #include "i18n/i18n.h"
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,9 @@ Value value_copy(const Value* val) {
             copy.enum_fields[i] = (Value*)malloc(sizeof(Value));
             *copy.enum_fields[i] = value_copy(val->enum_fields[i]);
         }
+    } else if (val->type == VALUE_FUNCTION) {
+        copy.fn_decl = val->fn_decl;
+        copy.captured_scope = val->captured_scope;
     } else {
         copy.value = val->value;
     }
@@ -142,6 +146,9 @@ void value_free(Value* value) {
         free(value->enum_fields);
         value->enum_field_count = 0;
         value->enum_fields = NULL;
+    } else if (value->type == VALUE_FUNCTION) {
+        value->fn_decl = NULL;
+        value->captured_scope = NULL;
     }
     value->type = VALUE_NONE;
 }
@@ -225,6 +232,10 @@ void value_print(Value* value) {
                 printf(")");
             }
             break;
+
+        case VALUE_FUNCTION:
+            printf("<fn>");
+            break;
     }
 }
 
@@ -270,5 +281,15 @@ Value value_create_enum(const char* enum_name, const char* variant_name, Value**
     v.variant_name = strdup(variant_name);
     v.enum_fields = fields;
     v.enum_field_count = field_count;
+    return v;
+}
+
+Value value_create_function(struct ASTNode* fn_decl, struct Scope* captured_scope) {
+    Value v;
+    memset(&v, 0, sizeof(v));
+    v.type = VALUE_FUNCTION;
+    v.has_value = 1;
+    v.fn_decl = fn_decl;
+    v.captured_scope = captured_scope;
     return v;
 }

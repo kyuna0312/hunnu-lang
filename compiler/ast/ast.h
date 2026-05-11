@@ -51,6 +51,7 @@ typedef enum {
     AST_UNSAFE_BLOCK,
     AST_ENUM_DECL,
     AST_ENUM_VARIANT,
+    AST_LAMBDA,
 } ASTNodeType;
 
 /** AST node structure */
@@ -70,6 +71,7 @@ typedef struct ASTNode {
         struct {
             char* name;
             struct ASTNode* initializer;
+            int is_mut;
         } var_decl;
         
         /** Function declaration */
@@ -326,12 +328,19 @@ typedef struct ASTNode {
             struct ASTNode** args;           /* Variant arguments */
             size_t arg_count;                /* Number of arguments */
         } enum_variant;
+
+        /** Lambda expression: |params| body */
+        struct {
+            char** params;
+            size_t param_count;
+            struct ASTNode* body;
+        } lambda;
     } data;
 } ASTNode;
 
 /* AST creation functions */
 ASTNode* ast_program_create(ASTNode** statements, size_t count);
-ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column);
+ASTNode* ast_var_decl_create(const char* name, ASTNode* initializer, int32_t line, int32_t column, int is_mut);
 ASTNode* ast_fn_decl_create(const char* name, char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column);
 ASTNode* ast_block_create(ASTNode** statements, size_t count, int32_t line, int32_t column);
 ASTNode* ast_if_stmt_create(ASTNode* condition, ASTNode* then_branch, ASTNode* else_branch, int32_t line, int32_t column);
@@ -388,6 +397,7 @@ ASTNode* ast_impl_decl_create(const char* trait_name, const char* type_name, AST
 ASTNode* ast_unsafe_block_create(ASTNode* body, int32_t line, int32_t column);
 ASTNode* ast_enum_decl_create(const char* name, char** variant_names, size_t* variant_field_counts, char*** variant_field_names, size_t variant_count, int32_t line, int32_t column);
 ASTNode* ast_enum_variant_create(const char* enum_name, const char* variant_name, ASTNode** args, size_t arg_count, int32_t line, int32_t column);
+ASTNode* ast_lambda_create(char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column);
 
 void ast_free(ASTNode* node);
 void ast_print(ASTNode* node, int indent);

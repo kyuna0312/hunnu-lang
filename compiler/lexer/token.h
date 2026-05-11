@@ -48,6 +48,8 @@ typedef enum {
     TOKEN_IMPL,
     TOKEN_UNSAFE,
     TOKEN_ENUM,
+    TOKEN_MUT,
+    TOKEN_PIPE,
     
     TOKEN_LPAREN,
     TOKEN_RPAREN,

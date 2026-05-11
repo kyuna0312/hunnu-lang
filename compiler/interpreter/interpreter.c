@@ -48,6 +48,11 @@ struct Interpreter {
     size_t type_capacity;
     UserFn user_fns[MAX_USER_FNS];
     size_t user_fn_count;
+    /* Tail Call Optimization */
+    char* current_fn_name;
+    int tco_pending;
+    Value* tco_args;
+    size_t tco_arg_count;
 };
 
 Interpreter* interpreter_new(void) {
@@ -62,6 +67,10 @@ Interpreter* interpreter_new(void) {
     interp->type_capacity = 0;
     interp->types = NULL;
     interp->user_fn_count = 0;
+    interp->current_fn_name = NULL;
+    interp->tco_pending = 0;
+    interp->tco_args = NULL;
+    interp->tco_arg_count = 0;
     memset(interp->extern_fns, 0, sizeof(interp->extern_fns));
     memset(interp->user_fns, 0, sizeof(interp->user_fns));
     return interp;
@@ -151,6 +160,130 @@ static TypeInfo* interpreter_lookup_type(Interpreter* interp, const char* name) 
 }
 
 static void interpreter_execute_statement(Interpreter* interp, ASTNode* node);
+static Value interpreter_evaluate(Interpreter* interp, ASTNode* node);
+
+static Value interpreter_call_fn_node(Interpreter* interp, ASTNode* fn_node, Scope* captured_scope, Value* args, size_t arg_count) {
+    if (!fn_node || fn_node->type != AST_FN_DECL) {
+        return value_create_none();
+    }
+
+    ASTNode* body = fn_node->data.fn_decl.body;
+    char** params = fn_node->data.fn_decl.params;
+    size_t param_count = fn_node->data.fn_decl.param_count;
+
+    if (arg_count != param_count) {
+        fprintf(stderr, "Error at line %d: ", interp->current_line);
+        fprintf(stderr, "Expected %zu arguments but got %zu\n",
+                param_count, arg_count);
+        return value_create_none();
+    }
+
+    Scope* fn_scope = scope_create(16, captured_scope ? captured_scope : interp->current_scope);
+    Scope* old_scope = interp->current_scope;
+    interp->current_scope = fn_scope;
+
+    for (size_t i = 0; i < arg_count; i++) {
+        scope_define(fn_scope, params[i], args[i], 1);
+    }
+
+    char* saved_fn_name = interp->current_fn_name;
+    if (fn_node->data.fn_decl.name) {
+        interp->current_fn_name = fn_node->data.fn_decl.name;
+    }
+
+    Value result = value_create_none();
+
+    while (1) {
+        interp->has_return = 0;
+
+        if (body) {
+            if (body->type == AST_BLOCK) {
+                for (size_t i = 0; i < body->data.block.count; i++) {
+                    interpreter_execute_statement(interp, body->data.block.statements[i]);
+                    if (interp->has_return || interp->tco_pending) break;
+                }
+            } else {
+                interpreter_execute_statement(interp, body);
+            }
+        }
+
+        if (interp->tco_pending) {
+            interp->tco_pending = 0;
+            Scope* new_scope = scope_create(16, captured_scope ? captured_scope : old_scope);
+            interp->current_scope = new_scope;
+            scope_free(fn_scope);
+            fn_scope = new_scope;
+            for (size_t i = 0; i < interp->tco_arg_count && i < param_count; i++) {
+                scope_define(fn_scope, params[i], interp->tco_args[i], 1);
+            }
+            for (size_t i = 0; i < interp->tco_arg_count; i++) {
+                value_free(&interp->tco_args[i]);
+            }
+            free(interp->tco_args);
+            interp->tco_args = NULL;
+            interp->tco_arg_count = 0;
+            continue;
+        }
+
+        if (interp->has_return) {
+            result = interp->return_value;
+            interp->has_return = 0;
+        }
+        break;
+    }
+
+    interp->current_fn_name = saved_fn_name;
+    interp->current_scope = old_scope;
+    scope_free(fn_scope);
+
+    return result;
+}
+
+static Value interpreter_call_lambda(Interpreter* interp, ASTNode* lambda, Scope* captured_scope, Value* args, size_t arg_count) {
+    if (!lambda || lambda->type != AST_LAMBDA) {
+        return value_create_none();
+    }
+
+    if (arg_count != lambda->data.lambda.param_count) {
+        fprintf(stderr, "Error at line %d: ", interp->current_line);
+        fprintf(stderr, "Expected %zu arguments but got %zu\n",
+                lambda->data.lambda.param_count, arg_count);
+        return value_create_none();
+    }
+
+    Scope* fn_scope = scope_create(16, captured_scope ? captured_scope : interp->current_scope);
+    Scope* old_scope = interp->current_scope;
+    interp->current_scope = fn_scope;
+
+    for (size_t i = 0; i < arg_count; i++) {
+        scope_define(fn_scope, lambda->data.lambda.params[i], args[i], 1);
+    }
+
+    interp->has_return = 0;
+    Value result = value_create_none();
+    ASTNode* body = lambda->data.lambda.body;
+    if (body && body->type == AST_BLOCK) {
+        for (size_t i = 0; i < body->data.block.count; i++) {
+            interpreter_execute_statement(interp, body->data.block.statements[i]);
+            if (interp->has_return) break;
+        }
+        if (interp->has_return) {
+            result = interp->return_value;
+            interp->has_return = 0;
+        }
+    } else {
+        result = interpreter_evaluate(interp, body);
+        if (interp->has_return) {
+            result = interp->return_value;
+            interp->has_return = 0;
+        }
+    }
+
+    interp->current_scope = old_scope;
+    scope_free(fn_scope);
+
+    return result;
+}
 
 static Value interpreter_call_user_fn(Interpreter* interp, UserFn* ufn, Value* args, size_t arg_count) {
     if (!ufn || !ufn->node || ufn->node->type != AST_FN_DECL) {
@@ -159,12 +292,14 @@ static Value interpreter_call_user_fn(Interpreter* interp, UserFn* ufn, Value* a
 
     ASTNode* fn_node = ufn->node;
     ASTNode* body = fn_node->data.fn_decl.body;
+    char** params = fn_node->data.fn_decl.params;
+    size_t param_count = fn_node->data.fn_decl.param_count;
 
     /* Check arg count */
-    if (arg_count != fn_node->data.fn_decl.param_count) {
+    if (arg_count != param_count) {
         fprintf(stderr, "Error at line %d: ", interp->current_line);
         fprintf(stderr, "Expected %zu arguments but got %zu for function '%s'\n",
-                fn_node->data.fn_decl.param_count, arg_count, ufn->name);
+                param_count, arg_count, ufn->name);
         return value_create_none();
     }
 
@@ -175,29 +310,55 @@ static Value interpreter_call_user_fn(Interpreter* interp, UserFn* ufn, Value* a
 
     /* Bind parameters */
     for (size_t i = 0; i < arg_count; i++) {
-        scope_define(fn_scope, fn_node->data.fn_decl.params[i], args[i]);
+        scope_define(fn_scope, params[i], args[i], 1);
     }
 
-    /* Execute body */
-    interp->has_return = 0;
-
-    if (body) {
-        if (body->type == AST_BLOCK) {
-            for (size_t i = 0; i < body->data.block.count; i++) {
-                interpreter_execute_statement(interp, body->data.block.statements[i]);
-                if (interp->has_return) break;
-            }
-        } else {
-            interpreter_execute_statement(interp, body);
-        }
-    }
+    char* saved_fn_name = interp->current_fn_name;
+    interp->current_fn_name = ufn->name;
 
     Value result = value_create_none();
-    if (interp->has_return) {
-        result = interp->return_value;
+
+    /* TCO loop */
+    while (1) {
         interp->has_return = 0;
+
+        if (body) {
+            if (body->type == AST_BLOCK) {
+                for (size_t i = 0; i < body->data.block.count; i++) {
+                    interpreter_execute_statement(interp, body->data.block.statements[i]);
+                    if (interp->has_return || interp->tco_pending) break;
+                }
+            } else {
+                interpreter_execute_statement(interp, body);
+            }
+        }
+
+        if (interp->tco_pending) {
+            interp->tco_pending = 0;
+            Scope* new_scope = scope_create(16, old_scope);
+            interp->current_scope = new_scope;
+            scope_free(fn_scope);
+            fn_scope = new_scope;
+            for (size_t i = 0; i < interp->tco_arg_count && i < param_count; i++) {
+                scope_define(fn_scope, params[i], interp->tco_args[i], 1);
+            }
+            for (size_t i = 0; i < interp->tco_arg_count; i++) {
+                value_free(&interp->tco_args[i]);
+            }
+            free(interp->tco_args);
+            interp->tco_args = NULL;
+            interp->tco_arg_count = 0;
+            continue;
+        }
+
+        if (interp->has_return) {
+            result = interp->return_value;
+            interp->has_return = 0;
+        }
+        break;
     }
 
+    interp->current_fn_name = saved_fn_name;
     interp->current_scope = old_scope;
     scope_free(fn_scope);
 
@@ -657,6 +818,17 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 }
             }
             
+            if (op == TOKEN_PERCENT) {
+                if (left.type == VALUE_INT && right.type == VALUE_INT) {
+                    if (right.value.int_value == 0) {
+                        fprintf(stderr, "Error at line %d: ", interp->current_line);
+                        fprintf(stderr, "Division by zero\n");
+                    } else {
+                        result = value_create_int(left.value.int_value % right.value.int_value);
+                    }
+                }
+            }
+
             if (op == TOKEN_GT) {
                 if (left.type == VALUE_INT && right.type == VALUE_INT) {
                     result = value_create_bool(left.value.int_value > right.value.int_value);
@@ -717,8 +889,13 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
         }
         
         case AST_ASSIGN: {
+            if (!scope_is_mutable(interp->current_scope, node->data.assign.name)) {
+                fprintf(stderr, "Error at line %d: ", interp->current_line);
+                fprintf(stderr, "Cannot assign to immutable variable '%s'\n", node->data.assign.name);
+                return value_create_none();
+            }
             Value value = interpreter_evaluate(interp, node->data.assign.value);
-            scope_define(interp->current_scope, node->data.assign.name, value);
+            scope_define(interp->current_scope, node->data.assign.name, value, 1);
             return value;
         }
         
@@ -823,10 +1000,13 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                     value_free(array_ptr->array_elements[idx]);
                     array_ptr->array_elements[idx] = (Value*)malloc(sizeof(Value));
                     *array_ptr->array_elements[idx] = value_copy(&assign_val);
-                    value_free(&index_val);
-                    Value result = value_copy(&assign_val);
-                    value_free(&assign_val);
-                    return result;
+                } else if (idx >= 0 && (size_t)idx == array_ptr->array_length) {
+                    /* Auto-extend: append to array */
+                    size_t new_len = array_ptr->array_length + 1;
+                    array_ptr->array_elements = (Value**)realloc(array_ptr->array_elements, sizeof(Value*) * new_len);
+                    array_ptr->array_elements[array_ptr->array_length] = (Value*)malloc(sizeof(Value));
+                    *array_ptr->array_elements[array_ptr->array_length] = value_copy(&assign_val);
+                    array_ptr->array_length = new_len;
                 } else {
                     fprintf(stderr, "Error at line %d: ", interp->current_line);
                     i18n_error(ERR_INDEX_OUT_OF_BOUNDS, (long)idx, array_ptr->array_length);
@@ -835,6 +1015,10 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                     value_free(&assign_val);
                     return value_create_none();
                 }
+                value_free(&index_val);
+                Value result = value_copy(&assign_val);
+                value_free(&assign_val);
+                return result;
             }
             
             fprintf(stderr, "Error at line %d: ", interp->current_line);
@@ -1094,6 +1278,27 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 }
             }
 
+            /* Check for function value in scope */
+            Value* fn_val = scope_lookup(interp->current_scope, name);
+            if (fn_val && fn_val->type == VALUE_FUNCTION && fn_val->fn_decl) {
+                size_t arg_count = node->data.call_expr.arg_count;
+                Value* args = (Value*)malloc(sizeof(Value) * arg_count);
+                for (size_t j = 0; j < arg_count; j++) {
+                    args[j] = interpreter_evaluate(interp, node->data.call_expr.args[j]);
+                }
+                Value result;
+                if (fn_val->fn_decl->type == AST_LAMBDA) {
+                    result = interpreter_call_lambda(interp, fn_val->fn_decl, fn_val->captured_scope, args, arg_count);
+                } else {
+                    result = interpreter_call_fn_node(interp, fn_val->fn_decl, fn_val->captured_scope, args, arg_count);
+                }
+                for (size_t j = 0; j < arg_count; j++) {
+                    value_free(&args[j]);
+                }
+                free(args);
+                return result;
+            }
+
             fprintf(stderr, "Error at line %d: ", interp->current_line);
             i18n_error(ERR_UNKNOWN_FUNCTION, name);
             fprintf(stderr, "\n");
@@ -1166,7 +1371,7 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                                 if (arg && arg->type == AST_IDENTIFIER) {
                                     scope_define(interp->current_scope,
                                                  arg->data.identifier.name,
-                                                 value_copy(match_value.enum_fields[vi]));
+                                                 value_copy(match_value.enum_fields[vi]), 0);
                                 }
                             }
                         }
@@ -1235,6 +1440,9 @@ static Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             /* Register enum - for now, just treat as declarative info */
             return value_create_none();
 
+        case AST_LAMBDA:
+            return value_create_function(node, interp->current_scope);
+
         case AST_UNSAFE_BLOCK:
             /* Execute body directly (no extra checks needed in tree-walk) */
             if (node->data.unsafe_block.body) {
@@ -1289,7 +1497,7 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
             ASTNode* init = node->data.var_decl.initializer;
             
             Value value = interpreter_evaluate(interp, init);
-            scope_define(interp->current_scope, name, value);
+            scope_define(interp->current_scope, name, value, node->data.var_decl.is_mut);
             break;
         }
         
@@ -1307,6 +1515,10 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
                 fprintf(stderr, "Error at line %d: ", node->line);
                 fprintf(stderr, "Too many user-defined functions\n");
             }
+            /* Also store in scope as VALUE_FUNCTION for first-class function support */
+            Value fn_val = value_create_function(node, NULL);
+            scope_define(interp->current_scope, node->data.fn_decl.name, fn_val, 0);
+            value_free(&fn_val);
             break;
         }
         
@@ -1459,6 +1671,24 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
         }
         
         case AST_RETURN_STMT: {
+            /* Detect tail-recursive self-call for TCO */
+            if (node->data.return_stmt.value &&
+                node->data.return_stmt.value->type == AST_CALL_EXPR &&
+                interp->current_fn_name) {
+                ASTNode* call = node->data.return_stmt.value;
+                char* callee = call->data.call_expr.name;
+                if (callee && strcmp(callee, interp->current_fn_name) == 0) {
+                    size_t ac = call->data.call_expr.arg_count;
+                    Value* tco_args = (Value*)malloc(sizeof(Value) * ac);
+                    for (size_t i = 0; i < ac; i++) {
+                        tco_args[i] = interpreter_evaluate(interp, call->data.call_expr.args[i]);
+                    }
+                    interp->tco_args = tco_args;
+                    interp->tco_arg_count = ac;
+                    interp->tco_pending = 1;
+                    break;
+                }
+            }
             Value return_value;
             if (node->data.return_stmt.value) {
                 return_value = interpreter_evaluate(interp, node->data.return_stmt.value);
@@ -1470,8 +1700,13 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
         }
         
         case AST_ASSIGN: {
+            if (!scope_is_mutable(interp->current_scope, node->data.assign.name)) {
+                fprintf(stderr, "Error at line %d: ", interp->current_line);
+                fprintf(stderr, "Cannot assign to immutable variable '%s'\n", node->data.assign.name);
+                break;
+            }
             Value value = interpreter_evaluate(interp, node->data.assign.value);
-            scope_define(interp->current_scope, node->data.assign.name, value);
+            scope_define(interp->current_scope, node->data.assign.name, value, 1);
             break;
         }
         
@@ -1502,24 +1737,37 @@ static void interpreter_execute_statement(Interpreter* interp, ASTNode* node) {
         }
         
         case AST_INDEX_ASSIGN: {
-            Value arr = interpreter_evaluate(interp, node->data.index_assign.array);
+            Value* target_arr = NULL;
+            Value arr_copy;
+            if (node->data.index_assign.array->type == AST_IDENTIFIER) {
+                target_arr = scope_lookup(interp->current_scope, node->data.index_assign.array->data.identifier.name);
+            }
+            if (!target_arr) {
+                arr_copy = interpreter_evaluate(interp, node->data.index_assign.array);
+                target_arr = &arr_copy;
+            }
             Value idx_val = interpreter_evaluate(interp, node->data.index_assign.index);
             Value val = interpreter_evaluate(interp, node->data.index_assign.value);
             
-            if (arr.type == VALUE_ARRAY && idx_val.type == VALUE_INT) {
+            if (target_arr->type == VALUE_ARRAY && idx_val.type == VALUE_INT) {
                 int64_t idx = idx_val.value.int_value;
-                if (idx >= 0 && (size_t)idx < arr.array_length) {
-                    value_free(arr.array_elements[idx]);
-                    arr.array_elements[idx] = (Value*)malloc(sizeof(Value));
-                    *arr.array_elements[idx] = value_copy(&val);
+                if (idx >= 0 && (size_t)idx < target_arr->array_length) {
+                    value_free(target_arr->array_elements[idx]);
+                    target_arr->array_elements[idx] = (Value*)malloc(sizeof(Value));
+                    *target_arr->array_elements[idx] = value_copy(&val);
+                } else if (idx >= 0 && (size_t)idx == target_arr->array_length) {
+                    size_t new_len = target_arr->array_length + 1;
+                    target_arr->array_elements = (Value**)realloc(target_arr->array_elements, sizeof(Value*) * new_len);
+                    target_arr->array_elements[target_arr->array_length] = (Value*)malloc(sizeof(Value));
+                    *target_arr->array_elements[target_arr->array_length] = value_copy(&val);
+                    target_arr->array_length = new_len;
                 } else {
                     fprintf(stderr, "Error at line %d: ", interp->current_line);
-                    i18n_error(ERR_INDEX_OUT_OF_BOUNDS, (long)idx, arr.array_length);
+                    i18n_error(ERR_INDEX_OUT_OF_BOUNDS, (long)idx, target_arr->array_length);
                     fprintf(stderr, "\n");
                 }
             }
             
-            value_free(&arr);
             value_free(&idx_val);
             value_free(&val);
             break;

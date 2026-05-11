@@ -268,6 +268,14 @@ static void ast_free_node(ASTNode* node) {
             free(node->data.enum_variant.args);
             break;
 
+        case AST_LAMBDA:
+            for (size_t i = 0; i < node->data.lambda.param_count; i++) {
+                free(node->data.lambda.params[i]);
+            }
+            free(node->data.lambda.params);
+            ast_free_node(node->data.lambda.body);
+            break;
+
         case AST_WHILE_STMT:
         case AST_FOR_STMT:
         case AST_BREAK_STMT:

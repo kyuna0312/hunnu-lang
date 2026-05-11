@@ -1,55 +1,35 @@
 // std/array.hn - Array utility functions for Hunnu
 
-// Get the length of an array
 fn length(arr) {
-    return arr.length
+    return len(arr)
 }
 
-// Push an element to the end of an array
-fn push(arr, element) {
-    // TODO: Implement array push
-    print("push not fully implemented yet")
-    return arr
-}
-
-// Pop the last element from an array
-fn pop(arr) {
-    // TODO: Implement array pop
-    print("pop not fully implemented yet")
-    return null
-}
-
-// Map function: apply f to each element
 fn map(arr, f) {
-    let result = []
-    let i = 0
-    while i < arr.length {
-        result[i] = f(arr[i])
+    let mut result = []
+    let mut i = 0
+    while i < len(arr) {
+        result[len(result)] = f(arr[i])
         i = i + 1
     }
     return result
 }
 
-// Filter function: keep elements where predicate is true
 fn filter(arr, pred) {
-    let result = []
-    let j = 0
-    let i = 0
-    while i < arr.length {
+    let mut result = []
+    let mut i = 0
+    while i < len(arr) {
         if pred(arr[i]) {
-            result[j] = arr[i]
-            j = j + 1
+            result[len(result)] = arr[i]
         }
         i = i + 1
     }
     return result
 }
 
-// Reduce function: accumulate values
 fn reduce(arr, f, init) {
-    let result = init
-    let i = 0
-    while i < arr.length {
+    let mut result = init
+    let mut i = 0
+    while i < len(arr) {
         result = f(result, arr[i])
         i = i + 1
     }
