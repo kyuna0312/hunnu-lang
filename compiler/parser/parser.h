@@ -1,50 +1,59 @@
-/**
- * @file parser.h
- * @brief Parser declarations for Hunnu
- */
-
 #ifndef HUNNU_PARSER_H
 #define HUNNU_PARSER_H
 
 #include "lexer/lexer.h"
 #include "ast/ast.h"
 
-/** Parser opaque structure */
-typedef struct Parser Parser;
+/** Parser state */
+typedef struct Parser {
+    Lexer* lexer;
+    Token* current;
+    Token* previous;
+    int had_error;
+} Parser;
 
-/**
- * @brief Creates a new parser
- * @param lexer Initialized lexer
- * @return Newly allocated parser
- */
 Parser* parser_new(Lexer* lexer);
-
-/**
- * @brief Frees parser memory
- * @param parser Parser to free
- */
 void parser_free(Parser* parser);
-
-/**
- * @brief Parses source code into AST
- * @param lexer Initialized lexer
- * @return Program AST node
- */
 ASTNode* parse(Lexer* lexer);
 
-/* Parsing functions */
+/* Core parsing */
 ASTNode* parser_parse_program(Parser* parser);
+
+/* Helper functions */
+void parser_error(Parser* parser, const char* message);
+void parser_advance(Parser* parser);
+int parser_check(Parser* parser, TokenType type);
+void parser_skip_newlines(Parser* parser);
+int parser_match(Parser* parser, TokenType type);
+void parser_consume(Parser* parser, TokenType type, const char* message);
+
+/* Declaration parsing */
 ASTNode* parser_parse_declaration(Parser* parser);
+
+/* Statement parsing */
 ASTNode* parser_parse_statement(Parser* parser);
 ASTNode* parser_parse_block(Parser* parser);
 ASTNode* parser_parse_if_statement(Parser* parser);
 ASTNode* parser_parse_print_statement(Parser* parser);
+ASTNode* parser_parse_while_statement(Parser* parser);
+ASTNode* parser_parse_for_statement(Parser* parser);
+ASTNode* parser_parse_return_statement(Parser* parser);
+ASTNode* parser_parse_break_statement(Parser* parser);
+ASTNode* parser_parse_continue_statement(Parser* parser);
 ASTNode* parser_parse_expression_statement(Parser* parser);
+ASTNode* parser_parse_try_statement(Parser* parser);
+
+/* Expression parsing */
 ASTNode* parser_parse_expression(Parser* parser);
+ASTNode* parser_parse_assignment(Parser* parser);
 ASTNode* parser_parse_equality(Parser* parser);
 ASTNode* parser_parse_comparison(Parser* parser);
 ASTNode* parser_parse_addition(Parser* parser);
 ASTNode* parser_parse_multiplication(Parser* parser);
 ASTNode* parser_parse_unary(Parser* parser);
+ASTNode* parser_parse_postfix(Parser* parser);
+ASTNode* parser_parse_primary(Parser* parser);
+ASTNode* parser_parse_match_expression(Parser* parser);
+ASTNode* parser_parse_interpolated_string(Parser* parser, const char* str_val, int32_t line, int32_t column);
 
 #endif

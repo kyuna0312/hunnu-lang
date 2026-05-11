@@ -144,9 +144,15 @@ hunnu-lang/
 
 - `compiler/lexer/token.h` - Token type definitions (enum TokenType)
 - `compiler/lexer/lexer.c` - Lexical analyzer implementation
-- `compiler/parser/parser.c` - Parser implementation
+- `compiler/parser/parser.c` - Parser implementation (dispatch core)
+- `compiler/parser/parse_decl.c` - Declaration parsers
+- `compiler/parser/parse_stmt.c` - Statement parsers
+- `compiler/parser/parse_expr.c` - Expression parsers
 - `compiler/ast/ast.h` - AST node definitions
-- `compiler/interpreter/interpreter.c` - Runtime interpreter
+- `compiler/interpreter/interpreter.c` - Lifecycle + state helpers
+- `compiler/interpreter/eval.c` - Expression evaluation
+- `compiler/interpreter/exec.c` - Statement execution
+- `compiler/interpreter/call.c` - Function call dispatch
 
 ### Data Flow
 
@@ -160,8 +166,11 @@ Lexer (tokenizer)
 Parser (AST builder)
     │ AST nodes
     ▼
-Interpreter
-    │ execution
+Interpreter (lifecycle/interpreter.c)
+    ├── eval.c   → expression evaluation (interpreter_evaluate)
+    ├── exec.c   → statement execution (interpreter_execute_statement)
+    └── call.c   → function call dispatch (interpreter_call_user_fn)
+    │
     ▼
 Output
 ```
@@ -195,17 +204,35 @@ Keywords are handled in `lexer.c`:
 
 ## Testing
 
-### Manual Testing
+### Automated Testing
 
 ```bash
-# Build the project
-cd build && make
+# Run all tests via ctest
+cd build && make && ctest
 
-# Run an example
-./build/hunnu examples/main.hn
+# Run just the C unit tests
+./build/tests/hunnu_tests
 
-# Create test files in examples/ directory
+# Run integration tests on example files
+./run_tests.sh
+
+# Run specific test via ctest
+cd build && ctest -R hunnu_c_unit_tests
 ```
+
+### C Unit Tests (50 tests in tests/)
+
+The C unit test framework uses [minunit](https://github.com/siu/minunit), a minimal header-only test framework.
+
+| Suite | File | Tests | What it covers |
+|-------|------|-------|----------------|
+| Value | `tests/test_value.c` | 12 | create/free/copy values, type checks |
+| Scope | `tests/test_scope.c` | 6 | define/lookup/nested/shadowing |
+| Lexer | `tests/test_lexer.c` | 10 | tokens: int/float/string/keywords/operators |
+| Parser | `tests/test_parser.c` | 11 | AST nodes: decls/expressions/statements/errors |
+| Interpreter | `tests/test_interpreter.c` | 11 | runtime: arithmetic/fn calls/loops/scopes |
+
+**When adding features, add tests to the corresponding test suite file.**
 
 ### Test Program Example
 

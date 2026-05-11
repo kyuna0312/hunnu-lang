@@ -965,3 +965,375 @@ impl Parser {
         Err("Parse error".to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Lexer;
+
+    fn parse(source: &str) -> Result<ASTNode, String> {
+        let tokens = {
+            let mut lexer = Lexer::new(source);
+            lexer.tokenize()
+        };
+        let mut parser = Parser::new(tokens);
+        parser.parse()
+    }
+
+    #[test]
+    fn test_parse_var_decl() {
+        let ast = parse("let x = 42").unwrap();
+        assert_eq!(ast.node_type, ASTNodeType::Program);
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements.len(), 1);
+            assert_eq!(statements[0].node_type, ASTNodeType::VarDecl);
+            if let NodeData::VarDecl { name, initializer } = &statements[0].data {
+                assert_eq!(name, "x");
+                assert_eq!(initializer.node_type, ASTNodeType::Literal);
+            } else {
+                panic!("Expected VarDecl");
+            }
+        } else {
+            panic!("Expected Program");
+        }
+    }
+
+    #[test]
+    fn test_parse_fn_decl() {
+        let ast = parse("fn add(a, b) { return a + b }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::FnDecl);
+            if let NodeData::FnDecl { name, params, body } = &statements[0].data {
+                assert_eq!(name, "add");
+                assert_eq!(params.len(), 2);
+                assert_eq!(params[0], "a");
+                assert_eq!(params[1], "b");
+                assert_eq!(body.node_type, ASTNodeType::Block);
+            } else {
+                panic!("Expected FnDecl");
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_if_else() {
+        let ast = parse("if x > 0 { print(1) } else { print(2) }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::IfStmt);
+            if let NodeData::IfStmt { condition, then_branch, else_branch } = &statements[0].data {
+                assert_eq!(condition.node_type, ASTNodeType::BinaryExpr);
+                assert_eq!(then_branch.node_type, ASTNodeType::Block);
+                assert!(else_branch.is_some());
+            } else {
+                panic!("Expected IfStmt");
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_while() {
+        let ast = parse("while (x < 10) { x = x + 1 }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::WhileStmt);
+        }
+    }
+
+    #[test]
+    fn test_parse_for() {
+        let ast = parse("for (let i = 0; i < 10; i = i + 1) { print(i) }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::ForStmt);
+            if let NodeData::ForStmt { initializer, condition, update, body } = &statements[0].data {
+                assert!(initializer.is_some());
+                assert!(condition.is_some());
+                assert!(update.is_some());
+                assert_eq!(body.node_type, ASTNodeType::Block);
+            } else {
+                panic!("Expected ForStmt");
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_return() {
+        let ast = parse("fn f() { return 42 }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::FnDecl { body, .. } = &statements[0].data {
+                if let NodeData::Block { statements } = &body.data {
+                    assert_eq!(statements[0].node_type, ASTNodeType::ReturnStmt);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_break_continue() {
+        let ast = parse("fn f() { while true { break } }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::FnDecl { body, .. } = &statements[0].data {
+                if let NodeData::Block { statements } = &body.data {
+                    assert_eq!(statements[0].node_type, ASTNodeType::WhileStmt);
+                    if let NodeData::WhileStmt { body, .. } = &statements[0].data {
+                        if let NodeData::Block { statements } = &body.data {
+                            assert_eq!(statements[0].node_type, ASTNodeType::BreakStmt);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_print() {
+        let ast = parse("print(42)").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::PrintStmt);
+        }
+    }
+
+    #[test]
+    fn test_parse_binary_expr_precedence() {
+        let ast = parse("let x = 3 + 4 * 5").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::BinaryExpr);
+                if let NodeData::BinaryExpr { operator, left, right } = &initializer.data {
+                    assert_eq!(*operator, TokenType::Plus);
+                    assert_eq!(right.node_type, ASTNodeType::BinaryExpr);
+                    if let NodeData::BinaryExpr { operator, .. } = &right.data {
+                        assert_eq!(*operator, TokenType::Star);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_unary_minus() {
+        let ast = parse("let x = -5").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::UnaryExpr);
+                if let NodeData::UnaryExpr { operator, .. } = &initializer.data {
+                    assert_eq!(*operator, TokenType::Minus);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_logical_not() {
+        let ast = parse("let x = !true").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::UnaryExpr);
+                if let NodeData::UnaryExpr { operator, .. } = &initializer.data {
+                    assert_eq!(*operator, TokenType::Not);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_fn_call() {
+        let ast = parse("let r = add(3, 4)").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::CallExpr);
+                if let NodeData::CallExpr { name, args } = &initializer.data {
+                    assert_eq!(name, "add");
+                    assert_eq!(args.len(), 2);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_array() {
+        let ast = parse("let arr = [1, 2, 3]").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::ArrayExpr);
+                if let NodeData::ArrayExpr { elements } = &initializer.data {
+                    assert_eq!(elements.len(), 3);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_index_expr() {
+        let ast = parse("let v = arr[0]").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::IndexExpr);
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_comparison_chain() {
+        let ast = parse("let x = a < b && c > d").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::BinaryExpr);
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_equality() {
+        let ast = parse("let x = a == b").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::BinaryExpr);
+                if let NodeData::BinaryExpr { operator, .. } = &initializer.data {
+                    assert_eq!(*operator, TokenType::Eq);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_inequality() {
+        let ast = parse("let x = a != b").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                if let NodeData::BinaryExpr { operator, .. } = &initializer.data {
+                    assert_eq!(*operator, TokenType::Neq);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_grouping() {
+        let ast = parse("let x = (1 + 2) * 3").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::BinaryExpr);
+                if let NodeData::BinaryExpr { operator, left, .. } = &initializer.data {
+                    assert_eq!(*operator, TokenType::Star);
+                    assert_eq!(left.node_type, ASTNodeType::BinaryExpr);
+                    if let NodeData::BinaryExpr { operator, .. } = &left.data {
+                        assert_eq!(*operator, TokenType::Plus);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_type_decl() {
+        let ast = parse("type Point = { x, y }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::TypeDecl);
+            if let NodeData::TypeDecl { name, fields } = &statements[0].data {
+                assert_eq!(name, "Point");
+                assert_eq!(fields.len(), 2);
+                assert_eq!(fields[0], "x");
+                assert_eq!(fields[1], "y");
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_extern_fn() {
+        let ast = parse("extern fn puts(str) -> int from \"libc.so.6\"").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::ExternFn);
+            if let NodeData::ExternFn { name, params, returns_int, lib_name, .. } = &statements[0].data {
+                assert_eq!(name, "puts");
+                assert_eq!(params.len(), 1);
+                assert_eq!(*returns_int, 1);
+                assert!(lib_name.is_some());
+                assert_eq!(lib_name.as_ref().unwrap(), "libc.so.6");
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_field_access() {
+        let ast = parse("let v = obj.field").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::VarDecl { initializer, .. } = &statements[0].data {
+                assert_eq!(initializer.node_type, ASTNodeType::FieldAccess);
+                if let NodeData::FieldAccess { object, field } = &initializer.data {
+                    assert_eq!(field, "field");
+                    assert_eq!(object.node_type, ASTNodeType::Identifier);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_try_catch() {
+        let ast = parse("try { print(1) } catch e { print(2) }").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::TryStmt);
+            if let NodeData::TryStmt { catch_var, catch_block, .. } = &statements[0].data {
+                assert!(catch_var.is_some());
+                assert_eq!(catch_var.as_ref().unwrap(), "e");
+                assert!(catch_block.is_some());
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_error_missing_var_name() {
+        let tokens = {
+            let mut lexer = Lexer::new("let = 1");
+            lexer.tokenize()
+        };
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_empty_program() {
+        let ast = parse("").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements.len(), 0);
+        }
+    }
+
+    #[test]
+    fn test_parse_multiple_statements() {
+        let ast = parse("let x = 1\nlet y = 2\nlet z = x + y").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements.len(), 3);
+        }
+    }
+
+    #[test]
+    fn test_parse_assignment() {
+        let ast = parse("x = 42").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            assert_eq!(statements[0].node_type, ASTNodeType::ExprStmt);
+            if let NodeData::ExprStmt { expression } = &statements[0].data {
+                assert_eq!(expression.node_type, ASTNodeType::Assign);
+                if let NodeData::Assign { name, .. } = &expression.data {
+                    assert_eq!(name, "x");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_extern_void_return() {
+        let ast = parse("extern fn foo() -> void").unwrap();
+        if let NodeData::Program { statements } = &ast.data {
+            if let NodeData::ExternFn { returns_int, .. } = &statements[0].data {
+                assert_eq!(*returns_int, 0);
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_nested_blocks() {
+        let ast = parse("fn f() { { let x = 1; print(x) } }").unwrap();
+        assert!(ast.node_type == ASTNodeType::Program);
+    }
+}
+

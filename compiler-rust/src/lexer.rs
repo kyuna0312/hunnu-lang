@@ -429,3 +429,242 @@ impl Lexer {
         Token::new(TokenType::StringLiteral, value, line, column)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tokenize(source: &str) -> Vec<Token> {
+        let mut lexer = Lexer::new(source);
+        lexer.tokenize()
+    }
+
+    #[test]
+    fn test_empty_source() {
+        let tokens = tokenize("");
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].token_type, TokenType::EOF);
+    }
+
+    #[test]
+    fn test_integer_literal() {
+        let tokens = tokenize("42");
+        assert_eq!(tokens[0].token_type, TokenType::IntLiteral);
+        assert_eq!(tokens[0].lexeme, "42");
+    }
+
+    #[test]
+    fn test_float_literal() {
+        let tokens = tokenize("3.14");
+        assert_eq!(tokens[0].token_type, TokenType::FloatLiteral);
+        assert_eq!(tokens[0].lexeme, "3.14");
+    }
+
+    #[test]
+    fn test_string_literal() {
+        let tokens = tokenize("\"hello\"");
+        assert_eq!(tokens[0].token_type, TokenType::StringLiteral);
+        assert_eq!(tokens[0].lexeme, "hello");
+    }
+
+    #[test]
+    fn test_string_escape_newline() {
+        let tokens = tokenize("\"a\\nb\"");
+        assert_eq!(tokens[0].token_type, TokenType::StringLiteral);
+        assert_eq!(tokens[0].lexeme, "a\nb");
+    }
+
+    #[test]
+    fn test_string_escape_tab() {
+        let tokens = tokenize("\"a\\tb\"");
+        assert_eq!(tokens[0].token_type, TokenType::StringLiteral);
+        assert_eq!(tokens[0].lexeme, "a\tb");
+    }
+
+    #[test]
+    fn test_string_escape_quote() {
+        let tokens = tokenize("\"a\\\"b\"");
+        assert_eq!(tokens[0].token_type, TokenType::StringLiteral);
+        assert_eq!(tokens[0].lexeme, "a\"b");
+    }
+
+    #[test]
+    fn test_string_escape_backslash() {
+        let tokens = tokenize("\"a\\\\b\"");
+        assert_eq!(tokens[0].token_type, TokenType::StringLiteral);
+        assert_eq!(tokens[0].lexeme, "a\\b");
+    }
+
+    #[test]
+    fn test_identifiers() {
+        let tokens = tokenize("foo bar _x");
+        assert_eq!(tokens.len(), 4);
+        assert_eq!(tokens[0].token_type, TokenType::Ident);
+        assert_eq!(tokens[0].lexeme, "foo");
+        assert_eq!(tokens[1].token_type, TokenType::Ident);
+        assert_eq!(tokens[1].lexeme, "bar");
+        assert_eq!(tokens[2].token_type, TokenType::Ident);
+        assert_eq!(tokens[2].lexeme, "_x");
+        assert_eq!(tokens[3].token_type, TokenType::EOF);
+    }
+
+    #[test]
+    fn test_keywords() {
+        let tokens = tokenize("let fn if else true false while for return break continue match print");
+        let expected = [
+            ("let", TokenType::Let),
+            ("fn", TokenType::Fn),
+            ("if", TokenType::If),
+            ("else", TokenType::Else),
+            ("true", TokenType::True),
+            ("false", TokenType::False),
+            ("while", TokenType::While),
+            ("for", TokenType::For),
+            ("return", TokenType::Return),
+            ("break", TokenType::Break),
+            ("continue", TokenType::Continue),
+            ("match", TokenType::Match),
+            ("print", TokenType::Print),
+        ];
+        for (i, (lexeme, tt)) in expected.iter().enumerate() {
+            assert_eq!(tokens[i].token_type, *tt, "mismatch at index {}: expected {:?} got {:?}",
+                       i, tt, tokens[i].token_type);
+            assert_eq!(tokens[i].lexeme, *lexeme);
+        }
+    }
+
+    #[test]
+    fn test_operators() {
+        let tokens = tokenize("+ - * / % == != < > <= >= =");
+        let expected = [
+            ("+", TokenType::Plus),
+            ("-", TokenType::Minus),
+            ("*", TokenType::Star),
+            ("/", TokenType::Slash),
+            ("%", TokenType::Percent),
+            ("==", TokenType::Eq),
+            ("!=", TokenType::Neq),
+            ("<", TokenType::Lt),
+            (">", TokenType::Gt),
+            ("<=", TokenType::Le),
+            (">=", TokenType::Ge),
+            ("=", TokenType::Assign),
+        ];
+        for (i, (lexeme, tt)) in expected.iter().enumerate() {
+            assert_eq!(tokens[i].token_type, *tt, "mismatch at index {}: expected {:?} got {:?}",
+                       i, tt, tokens[i].token_type);
+            assert_eq!(tokens[i].lexeme, *lexeme);
+        }
+    }
+
+    #[test]
+    fn test_compound_operators() {
+        let tokens = tokenize("-> => += -= *= /=");
+        assert_eq!(tokens[0].token_type, TokenType::Arrow);
+        assert_eq!(tokens[0].lexeme, "->");
+        assert_eq!(tokens[1].token_type, TokenType::FatArrow);
+        assert_eq!(tokens[1].lexeme, "=>");
+        assert_eq!(tokens[2].token_type, TokenType::PlusAssign);
+        assert_eq!(tokens[2].lexeme, "+=");
+        assert_eq!(tokens[3].token_type, TokenType::MinusAssign);
+        assert_eq!(tokens[3].lexeme, "-=");
+        assert_eq!(tokens[4].token_type, TokenType::StarAssign);
+        assert_eq!(tokens[4].lexeme, "*=");
+        assert_eq!(tokens[5].token_type, TokenType::SlashAssign);
+        assert_eq!(tokens[5].lexeme, "/=");
+    }
+
+    #[test]
+    fn test_delimiters() {
+        let tokens = tokenize("( ) { } [ ] , . : ; &");
+        let expected = [
+            ("(", TokenType::LParen),
+            (")", TokenType::RParen),
+            ("{", TokenType::LBrace),
+            ("}", TokenType::RBrace),
+            ("[", TokenType::LBracket),
+            ("]", TokenType::RBracket),
+            (",", TokenType::Comma),
+            (".", TokenType::Dot),
+            (":", TokenType::Colon),
+            (";", TokenType::Semicolon),
+            ("&", TokenType::Ampersand),
+        ];
+        for (i, (lexeme, tt)) in expected.iter().enumerate() {
+            assert_eq!(tokens[i].token_type, *tt, "mismatch at index {}", i);
+            assert_eq!(tokens[i].lexeme, *lexeme);
+        }
+    }
+
+    #[test]
+    fn test_line_numbers() {
+        let tokens = tokenize("a\nb\nc");
+        assert_eq!(tokens[0].line, 1);
+        assert_eq!(tokens[1].line, 2);
+        assert_eq!(tokens[2].line, 3);
+    }
+
+    #[test]
+    fn test_column_numbers() {
+        let tokens = tokenize("  foo");
+        assert_eq!(tokens[0].column, 3);
+    }
+
+    #[test]
+    fn test_comments_skipped() {
+        let tokens = tokenize("// comment\n42");
+        assert_eq!(tokens.len(), 2);
+        assert_eq!(tokens[0].token_type, TokenType::IntLiteral);
+        assert_eq!(tokens[0].lexeme, "42");
+        assert_eq!(tokens[1].token_type, TokenType::EOF);
+    }
+
+    #[test]
+    fn test_unknown_character() {
+        let tokens = tokenize("@");
+        assert_eq!(tokens[0].token_type, TokenType::Unknown);
+        assert_eq!(tokens[0].lexeme, "@");
+    }
+
+    #[test]
+    fn test_mixed_program() {
+        let source = "let x = 10\nfn add(a, b) { return a + b }";
+        let tokens = tokenize(source);
+        let expected_types = [
+            TokenType::Let,
+            TokenType::Ident,
+            TokenType::Assign,
+            TokenType::IntLiteral,
+            TokenType::Fn,
+            TokenType::Ident,
+            TokenType::LParen,
+            TokenType::Ident,
+            TokenType::Comma,
+            TokenType::Ident,
+            TokenType::RParen,
+            TokenType::LBrace,
+            TokenType::Return,
+            TokenType::Ident,
+            TokenType::Plus,
+            TokenType::Ident,
+            TokenType::RBrace,
+            TokenType::EOF,
+        ];
+        assert_eq!(tokens.len(), expected_types.len(), "token count mismatch");
+        for (i, expected) in expected_types.iter().enumerate() {
+            assert_eq!(tokens[i].token_type, *expected, "mismatch at token {}", i);
+        }
+    }
+
+    #[test]
+    fn test_logical_operators() {
+        let tokens = tokenize("! and or");
+        assert_eq!(tokens[0].token_type, TokenType::Not);
+        assert_eq!(tokens[0].lexeme, "!");
+        assert_eq!(tokens[1].token_type, TokenType::Ident);
+        assert_eq!(tokens[1].lexeme, "and");
+        assert_eq!(tokens[2].token_type, TokenType::Ident);
+        assert_eq!(tokens[2].lexeme, "or");
+    }
+}
+

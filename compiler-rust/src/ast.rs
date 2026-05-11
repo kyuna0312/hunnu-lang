@@ -6,7 +6,7 @@
  * for the Month 3 AOT Compiler Foundation.
  */
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ASTNodeType {
     Program,
     VarDecl,

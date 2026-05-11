@@ -128,46 +128,14 @@
 
 ---
 
-## Technical Debt / Code Health |
-
----
-
-## Month 5 (Sep 2026): no_std + Bare Metal
-
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 1 | `no_std` mode | [ ] | |
-| 2 | Bare-metal target | [ ] | |
-| 3 | Boot loader | [ ] | |
-| 4 | Physical page allocator | [ ] | |
-| 5 | VGA text buffer driver | [ ] | |
-| 6 | Interrupt handling | [ ] | |
-| 7 | Minimal kernel | [ ] | |
-
----
-
-## Month 6 (Oct 2026): Self-Hosting + Release
-
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 1 | Package manager (`hunnu install`, `hunnu new`) | [ ] | |
-| 2 | Standard library v1 | [ ] | |
-| 3 | Self-hosting (Hunnu lexer in Hunnu) | [ ] | |
-| 4 | Documentation + language spec | [ ] | |
-| 5 | CI/CD (GitHub Actions) | [ ] | |
-| 6 | Benchmark suite | [ ] | |
-| 7 | v1.0 release | [ ] | |
-
----
-
 ## Technical Debt / Code Health
 
 | # | Task | Priority | Notes |
 |---|------|----------|-------|
-| 1 | Split `parser.c` (1135 lines) | Medium | Could split into declaration/statement/expression |
-| 2 | Split `interpreter.c` (~700 lines) | Low | |
+| 1 | Split `parser.c` (1135 lines) | Medium | [X] Done — split into parse_decl/parse_stmt/parse_expr |
+| 2 | Split `interpreter.c` (~700 lines) | Low | [X] Done — split into eval/exec/call + lifecycle |
 | 3 | Split `vm/vm.c` (520 lines) | Low | |
-| 4 | C unit test framework | Medium | No tests for C code currently |
+| 4 | C unit test framework | Medium | [X] Done — 50 tests across value/scope/lexer/parser/interpreter |
 | 5 | Rust unit tests for lexer/parser | Medium | |
 | 6 | Memory leak audit (C interpreter + VM) | Low | |
 
