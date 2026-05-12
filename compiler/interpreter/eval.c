@@ -358,9 +358,36 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
         }
 
         case AST_BINARY_EXPR: {
+            TokenType op = node->data.binary_expr.operator;
+
+            if (op == TOKEN_AND) {
+                Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
+                int left_bool = value_as_bool(&left);
+                value_free(&left);
+                if (!left_bool) {
+                    return value_create_bool(0);
+                }
+                Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
+                int right_bool = value_as_bool(&right);
+                value_free(&right);
+                return value_create_bool(right_bool);
+            }
+
+            if (op == TOKEN_OR) {
+                Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
+                int left_bool = value_as_bool(&left);
+                value_free(&left);
+                if (left_bool) {
+                    return value_create_bool(1);
+                }
+                Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
+                int right_bool = value_as_bool(&right);
+                value_free(&right);
+                return value_create_bool(right_bool);
+            }
+
             Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
             Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
-            TokenType op = node->data.binary_expr.operator;
             Value result = value_create_none();
 
             if (op == TOKEN_PLUS) {

@@ -184,9 +184,16 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                               is_mut);
     }
     
-    if (parser_match(parser, TOKEN_FN)) {
+    if (parser_check(parser, TOKEN_FN) || parser_check(parser, TOKEN_DEF)) {
+        TokenType fn_type = parser->current->type;
+        parser_advance(parser);
+        int is_def = (fn_type == TOKEN_DEF);
+        const char* kw = is_def ? "def" : "fn";
+        
         if (!parser_check(parser, TOKEN_IDENT)) {
-            parser_error(parser, "Expected function name after 'fn'");
+            parser_error(parser, "Expected function name after '");
+            parser_error(parser, kw);
+            parser_error(parser, "'");
             return NULL;
         }
         
@@ -247,7 +254,62 @@ ASTNode* parser_parse_declaration(Parser* parser) {
             parser_consume(parser, TOKEN_RPAREN, "Expected ')' after parameters");
         }
         
-        if (!parser_check(parser, TOKEN_LBRACE)) {
+        ASTNode* body = NULL;
+        if (parser_check(parser, TOKEN_LBRACE)) {
+            body = parser_parse_block(parser);
+        } else if (is_def) {
+            ASTNode** stmts = (ASTNode**)malloc(sizeof(ASTNode*) * 16);
+            size_t count = 0;
+            size_t capacity = 16;
+            while (!parser_check(parser, TOKEN_RBRACE) &&
+                   !parser_check(parser, TOKEN_END) &&
+                   !parser_check(parser, TOKEN_EOF)) {
+                ASTNode* stmt = parser_parse_declaration(parser);
+                if (stmt) {
+                    if (count >= capacity) {
+                        capacity *= 2;
+                        stmts = (ASTNode**)realloc(stmts, sizeof(ASTNode*) * capacity);
+                    }
+                    stmts[count++] = stmt;
+                }
+                if (parser->had_error) {
+                    for (size_t si = 0; si < count; si++) ast_free(stmts[si]);
+                    free(stmts);
+                    free(name);
+                    free(type_name);
+                    if (type_params) {
+                        for (size_t ti = 0; ti < type_param_count; ti++) free(type_params[ti]);
+                        free(type_params);
+                    }
+                    if (params) {
+                        for (size_t pi = 0; pi < param_count; pi++) free(params[pi]);
+                        free(params);
+                    }
+                    return NULL;
+                }
+            }
+            if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+                parser_advance(parser);
+            } else {
+                parser_error(parser, "Expected 'end' or '}' after function body");
+                for (size_t si = 0; si < count; si++) ast_free(stmts[si]);
+                free(stmts);
+                free(name);
+                free(type_name);
+                if (type_params) {
+                    for (size_t ti = 0; ti < type_param_count; ti++) free(type_params[ti]);
+                    free(type_params);
+                }
+                if (params) {
+                    for (size_t pi = 0; pi < param_count; pi++) free(params[pi]);
+                    free(params);
+                }
+                return NULL;
+            }
+            body = ast_block_create(stmts, count,
+                        parser->previous ? parser->previous->line : 0,
+                        parser->previous ? parser->previous->column : 0);
+        } else {
             parser_error(parser, "Expected function body");
             free(name);
             free(type_name);
@@ -261,8 +323,6 @@ ASTNode* parser_parse_declaration(Parser* parser) {
             }
             return NULL;
         }
-        
-        ASTNode* body = parser_parse_block(parser);
         
         ASTNode* fn_node = ast_fn_decl_create(name, params, param_count, body,
                             parser->previous->line,
@@ -397,7 +457,7 @@ ASTNode* parser_parse_declaration(Parser* parser) {
         fields = (char**)malloc(sizeof(char*) * field_capacity);
         is_pub = (int*)malloc(sizeof(int) * field_capacity);
         
-        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_END) && !parser_check(parser, TOKEN_EOF)) {
             if (field_count > 0) {
                 if (parser_check(parser, TOKEN_COMMA)) {
                     parser_advance(parser);
@@ -430,7 +490,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
             }
         }
         
-        parser_consume(parser, TOKEN_RBRACE, "Expected '}' after type fields");
+        if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+            parser_advance(parser);
+        } else {
+            parser_error(parser, "Expected '}' or 'end' after type fields");
+        }
         
         return ast_type_decl_create(name, fields, is_pub, field_count,
                                     parser->previous->line,
@@ -474,10 +538,10 @@ ASTNode* parser_parse_declaration(Parser* parser) {
         
         ASTNode* constructor = NULL;
         
-        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_END) && !parser_check(parser, TOKEN_EOF)) {
             parser_skip_newlines(parser);
             
-            if (parser_check(parser, TOKEN_RBRACE)) break;
+            if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) break;
             
             if (parser_check(parser, TOKEN_FN)) {
                 /* Parse method */
@@ -581,7 +645,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
             }
         }
         
-        parser_consume(parser, TOKEN_RBRACE, "Expected '}' after class body");
+        if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+            parser_advance(parser);
+        } else {
+            parser_error(parser, "Expected '}' or 'end' after class body");
+        }
         
         ASTNode* result = ast_class_decl_create(class_name, parent_name, fields, is_pub, field_count,
                                        constructor, methods, method_count,
@@ -609,9 +677,9 @@ ASTNode* parser_parse_declaration(Parser* parser) {
         method_names = (char**)malloc(sizeof(char*) * method_capacity);
         method_param_counts = (size_t*)malloc(sizeof(size_t) * method_capacity);
 
-        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_END) && !parser_check(parser, TOKEN_EOF)) {
             parser_skip_newlines(parser);
-            if (parser_check(parser, TOKEN_RBRACE)) break;
+            if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) break;
 
             if (!parser_check(parser, TOKEN_FN)) {
                 parser_error(parser, "Expected 'fn' in trait body");
@@ -648,7 +716,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
                 method_param_counts = (size_t*)realloc(method_param_counts, sizeof(size_t) * method_capacity);
             }
         }
-        parser_consume(parser, TOKEN_RBRACE, "Expected '}' after trait body");
+        if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+            parser_advance(parser);
+        } else {
+            parser_error(parser, "Expected '}' or 'end' after trait body");
+        }
 
         return ast_trait_decl_create(trait_name, method_names, method_param_counts, method_count,
                                      parser->previous->line, parser->previous->column);
@@ -685,9 +757,9 @@ ASTNode* parser_parse_declaration(Parser* parser) {
         size_t impl_method_capacity = 8;
         impl_methods = (ASTNode**)malloc(sizeof(ASTNode*) * impl_method_capacity);
 
-        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+        while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_END) && !parser_check(parser, TOKEN_EOF)) {
             parser_skip_newlines(parser);
-            if (parser_check(parser, TOKEN_RBRACE)) break;
+            if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) break;
 
             if (!parser_check(parser, TOKEN_FN)) {
                 parser_error(parser, "Expected 'fn' in impl body");
@@ -753,7 +825,11 @@ ASTNode* parser_parse_declaration(Parser* parser) {
             }
             impl_methods[impl_method_count++] = impl_method_node;
         }
-        parser_consume(parser, TOKEN_RBRACE, "Expected '}' after impl body");
+        if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+            parser_advance(parser);
+        } else {
+            parser_error(parser, "Expected '}' or 'end' after impl body");
+        }
 
         return ast_impl_decl_create(impl_trait_name, impl_type_name, impl_methods, impl_method_count,
                                     parser->previous->line, parser->previous->column);
@@ -824,7 +900,7 @@ ASTNode* parser_parse_block(Parser* parser) {
     size_t count = 0;
     size_t capacity = 16;
     
-    while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+    while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_END) && !parser_check(parser, TOKEN_EOF)) {
         ASTNode* stmt = parser_parse_declaration(parser);
         if (stmt) {
             if (count >= capacity) {
@@ -836,7 +912,11 @@ ASTNode* parser_parse_block(Parser* parser) {
         if (parser->had_error) return NULL;
     }
     
-    parser_consume(parser, TOKEN_RBRACE, "Expected '}' after block");
+    if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+        parser_advance(parser);
+    } else {
+        parser_error(parser, "Expected '}' or 'end' after block");
+    }
     
     return ast_block_create(statements, count,
                        parser->previous ? parser->previous->line : 0,
@@ -997,7 +1077,7 @@ static ASTNode* parser_parse_postfix(Parser* parser);
 ASTNode* parser_parse_primary(Parser* parser);
 
 ASTNode* parser_parse_assignment(Parser* parser) {
-    ASTNode* left = parser_parse_equality(parser);
+    ASTNode* left = parser_parse_or(parser);
     
     if (parser_match(parser, TOKEN_ASSIGN)) {
         if (left->type == AST_IDENTIFIER) {
@@ -1089,6 +1169,34 @@ ASTNode* parser_parse_assignment(Parser* parser) {
         }
     }
     
+    return left;
+}
+
+ASTNode* parser_parse_or(Parser* parser) {
+    ASTNode* left = parser_parse_and(parser);
+
+    while (parser_match(parser, TOKEN_OR)) {
+        TokenType op = parser->previous->type;
+        ASTNode* right = parser_parse_and(parser);
+        left = ast_binary_expr_create(op, left, right,
+                                parser->previous->line,
+                                parser->previous->column);
+    }
+
+    return left;
+}
+
+ASTNode* parser_parse_and(Parser* parser) {
+    ASTNode* left = parser_parse_equality(parser);
+
+    while (parser_match(parser, TOKEN_AND)) {
+        TokenType op = parser->previous->type;
+        ASTNode* right = parser_parse_equality(parser);
+        left = ast_binary_expr_create(op, left, right,
+                                parser->previous->line,
+                                parser->previous->column);
+    }
+
     return left;
 }
 
@@ -1603,9 +1711,9 @@ static ASTNode* parser_parse_enum_declaration(Parser* parser) {
     variant_field_counts = (size_t*)malloc(sizeof(size_t) * variant_capacity);
     variant_field_names = (char***)malloc(sizeof(char**) * variant_capacity);
 
-    while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+    while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_END) && !parser_check(parser, TOKEN_EOF)) {
         parser_skip_newlines(parser);
-        if (parser_check(parser, TOKEN_RBRACE)) break;
+        if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) break;
 
         if (!parser_check(parser, TOKEN_IDENT)) {
             parser_error(parser, "Expected variant name");
@@ -1657,7 +1765,11 @@ static ASTNode* parser_parse_enum_declaration(Parser* parser) {
         }
     }
 
-    parser_consume(parser, TOKEN_RBRACE, "Expected '}' after enum variants");
+    if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+        parser_advance(parser);
+    } else {
+        parser_error(parser, "Expected '}' or 'end' after enum variants");
+    }
 
     return ast_enum_decl_create(enum_name, variant_names, variant_field_counts,
                                 variant_field_names, variant_count, line, column);
@@ -1682,9 +1794,9 @@ static ASTNode* parser_parse_match_expression(Parser* parser) {
     size_t case_count = 0;
     size_t capacity = 8;
     
-    while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_EOF)) {
+    while (!parser_check(parser, TOKEN_RBRACE) && !parser_check(parser, TOKEN_END) && !parser_check(parser, TOKEN_EOF)) {
         parser_skip_newlines(parser);
-        if (parser_check(parser, TOKEN_RBRACE)) break;
+        if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) break;
         ASTNode* pattern = NULL;
         
         /* Parse pattern - can be literal, identifier, '_' wildcard, or Enum::Variant */
@@ -1792,7 +1904,11 @@ static ASTNode* parser_parse_match_expression(Parser* parser) {
         }
     }
     
-    parser_consume(parser, TOKEN_RBRACE, "Expected '}' after match cases");
+    if (parser_check(parser, TOKEN_RBRACE) || parser_check(parser, TOKEN_END)) {
+        parser_advance(parser);
+    } else {
+        parser_error(parser, "Expected '}' or 'end' after match cases");
+    }
     
     return ast_match_expr_create(value, patterns, bodies, case_count, line, column);
 }

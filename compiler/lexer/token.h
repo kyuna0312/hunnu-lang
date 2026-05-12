@@ -87,6 +87,8 @@ typedef enum {
     TOKEN_ARROW,
     TOKEN_FAT_ARROW,
     TOKEN_NEWLINE,
+    TOKEN_DEF,
+    TOKEN_END,
     TOKEN_UNKNOWN
 } TokenType;
 

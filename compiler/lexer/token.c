@@ -74,6 +74,8 @@ static const char* token_type_names[] = {
     "ARROW",
     "FAT_ARROW",
     "NEWLINE",
+    "DEF",
+    "END",
     "UNKNOWN"
 };
 
