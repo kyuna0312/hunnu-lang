@@ -87,6 +87,7 @@ void parser_consume(Parser* parser, TokenType type, const char* message) {
 }
 
 static ASTNode* parser_parse_assignment(Parser* parser);
+ASTNode* parser_parse_and(Parser* parser);
 
 static char** parser_parse_type_params(Parser* parser, size_t* out_count) {
     *out_count = 0;
@@ -959,8 +960,36 @@ ASTNode* parser_parse_expression_statement(Parser* parser) {
                                parser->previous->column);
 }
 
+ASTNode* parser_parse_or(Parser* parser) {
+    ASTNode* left = parser_parse_and(parser);
+
+    while (parser_match(parser, TOKEN_OR)) {
+        TokenType op = parser->previous->type;
+        ASTNode* right = parser_parse_and(parser);
+        left = ast_binary_expr_create(op, left, right,
+                                parser->previous->line,
+                                parser->previous->column);
+    }
+
+    return left;
+}
+
+ASTNode* parser_parse_and(Parser* parser) {
+    ASTNode* left = parser_parse_assignment(parser);
+
+    while (parser_match(parser, TOKEN_AND)) {
+        TokenType op = parser->previous->type;
+        ASTNode* right = parser_parse_assignment(parser);
+        left = ast_binary_expr_create(op, left, right,
+                                parser->previous->line,
+                                parser->previous->column);
+    }
+
+    return left;
+}
+
 ASTNode* parser_parse_expression(Parser* parser) {
-    return parser_parse_assignment(parser);
+    return parser_parse_or(parser);
 }
 
 /* Forward declarations */

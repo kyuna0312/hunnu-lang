@@ -700,9 +700,35 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
         
         case AST_BINARY_EXPR: {
             Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
-            Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
             TokenType op = node->data.binary_expr.operator;
             Value result = value_create_none();
+
+            /* Short-circuit for logical and/or */
+            if (op == TOKEN_OR) {
+                if (value_as_bool(&left)) {
+                    value_free(&left);
+                    return value_create_bool(1);
+                }
+                Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
+                result = value_create_bool(value_as_bool(&right));
+                value_free(&left);
+                value_free(&right);
+                return result;
+            }
+
+            if (op == TOKEN_AND) {
+                if (!value_as_bool(&left)) {
+                    value_free(&left);
+                    return value_create_bool(0);
+                }
+                Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
+                result = value_create_bool(value_as_bool(&right));
+                value_free(&left);
+                value_free(&right);
+                return result;
+            }
+
+            Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
             
             if (op == TOKEN_PLUS) {
                 if (left.type == VALUE_INT && right.type == VALUE_INT) {
@@ -845,8 +871,9 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             }
             
             if (op == TOKEN_NOT) {
+                int result = !value_as_bool(&operand);
                 value_free(&operand);
-                return value_create_bool(!value_as_bool(&operand));
+                return value_create_bool(result);
             }
             
             value_free(&operand);

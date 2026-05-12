@@ -25,7 +25,7 @@ static const char* keyword_names[] = {
     "let",        "хувьсагч",   // variable declaration
     "fn",         "функц",    // function
     "if",         "хэрвээ",   // if
-    "else",       "эсвэл",    // else  
+    "else",       "бусад",    // else
     "true",       "үнэн",     // true
     "false",      "худал",     // false
     "print",      "хэвлэх",   // print
@@ -51,6 +51,9 @@ static const char* keyword_names[] = {
     "unsafe",     "аюулгүйбус", // unsafe block
     "enum",       "тоолол",  // enum declaration
     "mut",        "өөрчлөгдөх", // mutable
+    "and",        "мөн",      // logical and
+    "or",         "эсвэл",    // logical or
+    "not",        "үгүй",     // logical not
     NULL
 };
 
@@ -84,6 +87,9 @@ static TokenType keyword_types[] = {
     TOKEN_UNSAFE, TOKEN_UNSAFE,
     TOKEN_ENUM,   TOKEN_ENUM,
     TOKEN_MUT,    TOKEN_MUT,
+    TOKEN_AND,    TOKEN_AND,
+    TOKEN_OR,     TOKEN_OR,
+    TOKEN_NOT,    TOKEN_NOT,
     TOKEN_UNKNOWN
 };
 
