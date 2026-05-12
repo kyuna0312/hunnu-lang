@@ -1,0 +1,325 @@
+import "self/token.hn"
+
+type LexerState = { lines, line_idx, col, remaining }
+
+fn str_eq(a, b) {
+    if len(a) != len(b) { return false }
+    return __hn_str_contains(a, b)
+}
+
+fn _starts_with(s, prefix) {
+    if len(s) < len(prefix) { return false }
+    let parts = __hn_str_split(s, prefix)
+    if len(parts) == 0 { return false }
+    return len(parts[0]) == 0
+}
+
+fn _remove_prefix(s, prefix) {
+    let parts = __hn_str_split(s, prefix)
+    let mut rest = []
+    let mut i = 1
+    while i < len(parts) {
+        rest[len(rest)] = parts[i]
+        i = i + 1
+    }
+    return __hn_str_join(rest, prefix)
+}
+
+fn _read_until_break(s, breaks) {
+    let mut result = s
+    let mut i = 0
+    while i < len(breaks) {
+        let parts = __hn_str_split(s, breaks[i])
+        if len(parts) > 0 && len(parts[0]) < len(result) {
+            result = parts[0]
+        }
+        i = i + 1
+    }
+    return result
+}
+
+fn _is_alpha_start(s) {
+    let chars = ["a","b","c","d","e","f","g","h","i","j","k","l","m",
+                 "n","o","p","q","r","s","t","u","v","w","x","y","z",
+                 "A","B","C","D","E","F","G","H","I","J","K","L","M",
+                 "N","O","P","Q","R","S","T","U","V","W","X","Y","Z","_"]
+    let mut i = 0
+    while i < len(chars) {
+        if _starts_with(s, chars[i]) { return true }
+        i = i + 1
+    }
+    return false
+}
+
+fn _is_digit_start(s) {
+    let chars = ["0","1","2","3","4","5","6","7","8","9"]
+    let mut i = 0
+    while i < len(chars) {
+        if _starts_with(s, chars[i]) { return true }
+        i = i + 1
+    }
+    return false
+}
+
+fn _first_char(s) {
+    let chars = [" ","\t","\n","\r","!","\"","#","$","%","&","'","(",")",
+                 "*","+",",","-",".","/","0","1","2","3","4","5","6","7",
+                 "8","9",":",";","<","=",">","?","@","[","\\","]","^","_",
+                 "`","a","b","c","d","e","f","g","h","i","j","k","l","m",
+                 "n","o","p","q","r","s","t","u","v","w","x","y","z","{",
+                 "|","}","~"]
+    let mut i = 0
+    while i < len(chars) {
+        if _starts_with(s, chars[i]) {
+            return chars[i]
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+fn LexerState.new(source) {
+    let lines = __hn_str_split(source, "\n")
+    let state = LexerState(lines: lines, line_idx: 0, col: 1, remaining: "")
+    if len(lines) > 0 {
+        state.remaining = lines[0]
+    }
+    return state
+}
+
+fn lexer_skip_whitespace(state) {
+    let ws = [" ", "\t", "\r"]
+    let mut done = false
+    while !done {
+        done = true
+        let mut i = 0
+        while i < len(ws) {
+            if _starts_with(state.remaining, ws[i]) {
+                state.remaining = _remove_prefix(state.remaining, ws[i])
+                state.col = state.col + 1
+                done = false
+            }
+            i = i + 1
+        }
+    }
+}
+
+fn lexer_read_string(state) {
+    let line = state.line_idx + 1
+    let col = state.col
+    let remaining = state.remaining
+
+    let after_open = _remove_prefix(remaining, "\"")
+    let parts = __hn_str_split(after_open, "\"")
+    let str_content = ""
+    if len(parts) > 0 {
+        str_content = parts[0]
+    }
+    let full_str = "\"" + str_content + "\""
+
+    state.remaining = _remove_prefix(remaining, full_str)
+    state.col = state.col + len(full_str)
+    return Token.new("TOKEN_STRING_LITERAL", str_content, line, col)
+}
+
+fn lexer_read_number(state) {
+    let line = state.line_idx + 1
+    let col = state.col
+    let breaks = ["+", "-", "*", "/", "%", "=", "!", "<", ">",
+                  "(", ")", "{", "}", "[", "]", ",", ";", ":", "&",
+                  " ", "\t", "\r", "\"", "'"]
+    let num_str = _read_until_break(state.remaining, breaks)
+
+    let is_float = __hn_str_contains(num_str, ".")
+    let token_type = "TOKEN_INT_LITERAL"
+    if is_float {
+        token_type = "TOKEN_FLOAT_LITERAL"
+    }
+
+    state.remaining = _remove_prefix(state.remaining, num_str)
+    state.col = state.col + len(num_str)
+    return Token.new(token_type, num_str, line, col)
+}
+
+fn lexer_read_identifier(state) {
+    let line = state.line_idx + 1
+    let col = state.col
+    let breaks = ["+", "-", "*", "/", "%", "=", "!", "<", ">",
+                  "(", ")", "{", "}", "[", "]", ",", ".", ";", ":", "&",
+                  " ", "\t", "\r", "\"", "'"]
+    let ident = _read_until_break(state.remaining, breaks)
+    let token_type = lexer_check_keyword(ident)
+
+    state.remaining = _remove_prefix(state.remaining, ident)
+    state.col = state.col + len(ident)
+    return Token.new(token_type, ident, line, col)
+}
+
+fn lexer_check_keyword(ident) {
+    if str_eq(ident, "let") { return "TOKEN_LET" }
+    if str_eq(ident, "fn") { return "TOKEN_FN" }
+    if str_eq(ident, "if") { return "TOKEN_IF" }
+    if str_eq(ident, "else") { return "TOKEN_ELSE" }
+    if str_eq(ident, "while") { return "TOKEN_WHILE" }
+    if str_eq(ident, "for") { return "TOKEN_FOR" }
+    if str_eq(ident, "return") { return "TOKEN_RETURN" }
+    if str_eq(ident, "print") { return "TOKEN_PRINT" }
+    if str_eq(ident, "true") { return "TOKEN_TRUE" }
+    if str_eq(ident, "false") { return "TOKEN_FALSE" }
+    if str_eq(ident, "null") { return "TOKEN_NULL" }
+    if str_eq(ident, "nil") { return "TOKEN_NIL" }
+    if str_eq(ident, "and") { return "TOKEN_AND" }
+    if str_eq(ident, "or") { return "TOKEN_OR" }
+    if str_eq(ident, "not") { return "TOKEN_NOT" }
+    if str_eq(ident, "class") { return "TOKEN_CLASS" }
+    if str_eq(ident, "new") { return "TOKEN_NEW" }
+    if str_eq(ident, "self") { return "TOKEN_SELF" }
+    if str_eq(ident, "pub") { return "TOKEN_PUB" }
+    if str_eq(ident, "trait") { return "TOKEN_TRAIT" }
+    if str_eq(ident, "impl") { return "TOKEN_IMPL" }
+    if str_eq(ident, "type") { return "TOKEN_TYPE" }
+    if str_eq(ident, "extern") { return "TOKEN_EXTERN" }
+    if str_eq(ident, "import") { return "TOKEN_IMPORT" }
+    if str_eq(ident, "try") { return "TOKEN_TRY" }
+    if str_eq(ident, "catch") { return "TOKEN_CATCH" }
+    if str_eq(ident, "finally") { return "TOKEN_FINALLY" }
+    if str_eq(ident, "mut") { return "TOKEN_MUT" }
+    return "TOKEN_IDENTIFIER"
+}
+
+fn lexer_op_to_type(op) {
+    if str_eq(op, "==") { return "TOKEN_EQ_EQ" }
+    if str_eq(op, "!=") { return "TOKEN_BANG_EQ" }
+    if str_eq(op, "<=") { return "TOKEN_LT_EQ" }
+    if str_eq(op, ">=") { return "TOKEN_GT_EQ" }
+    if str_eq(op, "->") { return "TOKEN_ARROW" }
+    if str_eq(op, "+=") { return "TOKEN_PLUS_EQ" }
+    if str_eq(op, "-=") { return "TOKEN_MINUS_EQ" }
+    if str_eq(op, "*=") { return "TOKEN_STAR_EQ" }
+    if str_eq(op, "/=") { return "TOKEN_SLASH_EQ" }
+    if str_eq(op, "+") { return "TOKEN_PLUS" }
+    if str_eq(op, "-") { return "TOKEN_MINUS" }
+    if str_eq(op, "*") { return "TOKEN_STAR" }
+    if str_eq(op, "/") { return "TOKEN_SLASH" }
+    if str_eq(op, "%") { return "TOKEN_PERCENT" }
+    if str_eq(op, "=") { return "TOKEN_EQ" }
+    if str_eq(op, "!") { return "TOKEN_BANG" }
+    if str_eq(op, "<") { return "TOKEN_LT" }
+    if str_eq(op, ">") { return "TOKEN_GT" }
+    if str_eq(op, "(") { return "TOKEN_LPAREN" }
+    if str_eq(op, ")") { return "TOKEN_RPAREN" }
+    if str_eq(op, "{") { return "TOKEN_LBRACE" }
+    if str_eq(op, "}") { return "TOKEN_RBRACE" }
+    if str_eq(op, "[") { return "TOKEN_LBRACKET" }
+    if str_eq(op, "]") { return "TOKEN_RBRACKET" }
+    if str_eq(op, ",") { return "TOKEN_COMMA" }
+    if str_eq(op, ".") { return "TOKEN_DOT" }
+    if str_eq(op, ";") { return "TOKEN_SEMICOLON" }
+    if str_eq(op, ":") { return "TOKEN_COLON" }
+    if str_eq(op, "&") { return "TOKEN_AMPERSAND" }
+    return ""
+}
+
+fn lexer_match_op_str(remaining, op_list) {
+    let mut i = 0
+    while i < len(op_list) {
+        if _starts_with(remaining, op_list[i]) {
+            return op_list[i]
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+fn lexer_match_operator(remaining) {
+    let multi_ops = ["==", "!=", "<=", ">=", "->", "+=", "-=", "*=", "/="]
+    let op_str = lexer_match_op_str(remaining, multi_ops)
+    if len(op_str) > 0 {
+        return [op_str, lexer_op_to_type(op_str)]
+    }
+
+    let single_ops = ["+", "-", "*", "/", "%", "=", "!", "<", ">",
+                      "(", ")", "{", "}", "[", "]", ",", ".", ";", ":", "&"]
+    let op_str_2 = lexer_match_op_str(remaining, single_ops)
+    if len(op_str_2) > 0 {
+        return [op_str_2, lexer_op_to_type(op_str_2)]
+    }
+
+    return ["", ""]
+}
+
+fn lexer_next_token(state) {
+    let mut found = false
+    while !found {
+        while len(state.remaining) == 0 {
+            state.line_idx = state.line_idx + 1
+            if state.line_idx >= len(state.lines) {
+                return Token.new("TOKEN_EOF", "", state.line_idx, 0)
+            }
+            state.remaining = state.lines[state.line_idx]
+            state.col = 1
+        }
+
+        lexer_skip_whitespace(state)
+
+        if len(state.remaining) == 0 {
+            found = false
+        } else if _starts_with(state.remaining, "//") {
+            state.remaining = ""
+            found = false
+        } else {
+            found = true
+        }
+    }
+
+    let line = state.line_idx + 1
+    let col = state.col
+
+    if _starts_with(state.remaining, "\"") {
+        return lexer_read_string(state)
+    }
+
+    let op_result = lexer_match_operator(state.remaining)
+    if len(op_result[0]) > 0 {
+        let op_str = op_result[0]
+        let op_type = op_result[1]
+        state.remaining = _remove_prefix(state.remaining, op_str)
+        state.col = state.col + len(op_str)
+        return Token.new(op_type, op_str, line, col)
+    }
+
+    if _is_digit_start(state.remaining) {
+        return lexer_read_number(state)
+    }
+
+    if _is_alpha_start(state.remaining) {
+        return lexer_read_identifier(state)
+    }
+
+    let err_char = _first_char(state.remaining)
+    if len(err_char) > 0 {
+        state.remaining = _remove_prefix(state.remaining, err_char)
+        state.col = state.col + len(err_char)
+    } else {
+        state.remaining = ""
+        state.col = state.col + 1
+    }
+    return Token.new("TOKEN_ERROR", err_char, line, col)
+}
+
+fn token_to_str(tok) {
+    return tok.tok_type + " " + tok.value
+}
+
+fn main() {
+    let source = "fn main() {\n    let x = 10\n    print(x + 5)\n}"
+    let state = LexerState.new(source)
+    let mut done = false
+    while !done {
+        let tok = lexer_next_token(state)
+        print(token_to_str(tok))
+        if str_eq(tok.tok_type, "TOKEN_EOF") || str_eq(tok.tok_type, "TOKEN_ERROR") {
+            done = true
+        }
+    }
+}

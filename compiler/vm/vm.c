@@ -1,10 +1,12 @@
 #include "compiler.h"
 #include "../value.h"
+#include "../interpreter/builtins.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include "opcodes.h"
+#include <ctype.h>
 
 #define STACK_MAX 256
 #define MAX_LOCALS 256
@@ -206,6 +208,67 @@ static void vm_call_builtin(VM* vm, const char* name, int arg_count) {
             snprintf(buf, sizeof(buf), "null");
         }
         Value result = value_create_string(buf);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_str_to_upper") == 0) {
+        Value s = vm_pop(vm);
+        Value result = builtin_str_to_upper(s.value.string_value);
+        value_free(&s);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_str_to_lower") == 0) {
+        Value s = vm_pop(vm);
+        Value result = builtin_str_to_lower(s.value.string_value);
+        value_free(&s);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_str_contains") == 0) {
+        Value sub = vm_pop(vm);
+        Value s = vm_pop(vm);
+        int found = builtin_str_contains(s.value.string_value, sub.value.string_value);
+        value_free(&s);
+        value_free(&sub);
+        Value r = value_create_bool(found);
+        vm_push(vm, r);
+    } else if (strcmp(name, "__hn_str_trim") == 0) {
+        Value s = vm_pop(vm);
+        Value result = builtin_str_trim(s.value.string_value);
+        value_free(&s);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_str_split") == 0) {
+        Value delim = vm_pop(vm);
+        Value s = vm_pop(vm);
+        Value result = builtin_str_split(s.value.string_value, delim.value.string_value);
+        value_free(&s);
+        value_free(&delim);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_str_join") == 0) {
+        Value delim = vm_pop(vm);
+        Value arr = vm_pop(vm);
+        Value result = builtin_str_join(arr, delim.value.string_value);
+        value_free(&arr);
+        value_free(&delim);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_fs_read_file") == 0) {
+        Value path = vm_pop(vm);
+        Value result = builtin_fs_read_file(path.value.string_value);
+        value_free(&path);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_fs_write_file") == 0) {
+        Value content = vm_pop(vm);
+        Value path = vm_pop(vm);
+        int ok = builtin_fs_write_file(path.value.string_value, content.value.string_value);
+        value_free(&path);
+        value_free(&content);
+        Value r = value_create_bool(ok);
+        vm_push(vm, r);
+    } else if (strcmp(name, "__hn_arr_push") == 0) {
+        Value val = vm_pop(vm);
+        Value arr = vm_pop(vm);
+        Value result = builtin_arr_push(arr, val);
+        value_free(&val);
+        vm_push(vm, result);
+    } else if (strcmp(name, "__hn_arr_pop") == 0) {
+        Value arr = vm_pop(vm);
+        Value result = builtin_arr_pop(arr);
+        value_free(&arr);
         vm_push(vm, result);
     } else {
         fprintf(stderr, "Error: Unknown builtin function '%s'\n", name);

@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake gcc
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake gcc
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          make -j$(nproc)
+
+      - name: Run tests
+        run: |
+          cd build && ctest --output-on-failure
+
+      - name: Package binary
+        run: |
+          mkdir -p dist
+          cp build/hunnu dist/
+          cp README.md dist/
+          cp LICENSE dist/
+          cd dist
+          tar czf ../hunnu-${{ runner.os }}.tar.gz *
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hunnu-${{ runner.os }}
+          path: hunnu-${{ runner.os }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            hunnu-Linux/hunnu-Linux.tar.gz
+            hunnu-macOS/hunnu-macOS.tar.gz
+          body: |
+            ## Hunnu v1.0.0 (Эрдэнэ)
+
+            See [CHANGELOG](https://github.com/hunnu-labs/hunnu-lang/blob/main/CHANGELOG.md) for full details.
+
+            ### Highlights
+            - Package manager: `hunnu new`, `hunnu install`
+            - Complete standard library v1
+            - CI/CD pipeline with automated builds
+            - Benchmark suite
+            - Self-hosting lexer (in progress)
+          draft: false
+          prerelease: false

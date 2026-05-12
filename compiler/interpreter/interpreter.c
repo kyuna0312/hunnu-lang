@@ -1,8 +1,12 @@
 #include "interpreter.h"
-#include "i18n/i18n.h"
+#include "compiler/value.h"
+#include "compiler/scope.h"
+#include "compiler/ast/ast.h"
+#include "compiler/i18n/i18n.h"
+#include "builtins.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <dlfcn.h>
 
 Interpreter* interpreter_new(void) {
@@ -1090,6 +1094,111 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 fprintf(stderr, "Error at line %d: ", interp->current_line);
                 fprintf(stderr, "is_error() and unwrap() are not available. Use error() to print errors.\n");
                 return value_create_none();
+            }
+
+            /* Builtin string operations */
+            if (strcmp(name, "__hn_str_to_upper") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                if (arg.type != VALUE_STRING) { value_free(&arg); return value_create_string(""); }
+                Value result = builtin_str_to_upper(arg.value.string_value);
+                value_free(&arg);
+                return result;
+            }
+
+            if (strcmp(name, "__hn_str_to_lower") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                if (arg.type != VALUE_STRING) { value_free(&arg); return value_create_string(""); }
+                Value result = builtin_str_to_lower(arg.value.string_value);
+                value_free(&arg);
+                return result;
+            }
+
+            if (strcmp(name, "__hn_str_contains") == 0 && node->data.call_expr.arg_count == 2) {
+                Value s = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value sub = interpreter_evaluate(interp, node->data.call_expr.args[1]);
+                int found = 0;
+                if (s.type == VALUE_STRING && sub.type == VALUE_STRING) {
+                    found = builtin_str_contains(s.value.string_value, sub.value.string_value);
+                }
+                value_free(&s);
+                value_free(&sub);
+                return value_create_bool(found);
+            }
+
+            if (strcmp(name, "__hn_str_trim") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                if (arg.type != VALUE_STRING) { value_free(&arg); return value_create_string(""); }
+                Value result = builtin_str_trim(arg.value.string_value);
+                value_free(&arg);
+                return result;
+            }
+
+            if (strcmp(name, "__hn_str_split") == 0 && node->data.call_expr.arg_count == 2) {
+                Value s = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value delim = interpreter_evaluate(interp, node->data.call_expr.args[1]);
+                Value result = value_create_none();
+                if (s.type == VALUE_STRING && delim.type == VALUE_STRING) {
+                    result = builtin_str_split(s.value.string_value, delim.value.string_value);
+                }
+                value_free(&s);
+                value_free(&delim);
+                return result;
+            }
+
+            if (strcmp(name, "__hn_str_join") == 0 && node->data.call_expr.arg_count == 2) {
+                Value arr = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value delim = interpreter_evaluate(interp, node->data.call_expr.args[1]);
+                Value result = value_create_string("");
+                if (arr.type == VALUE_ARRAY && delim.type == VALUE_STRING) {
+                    result = builtin_str_join(arr, delim.value.string_value);
+                }
+                value_free(&arr);
+                value_free(&delim);
+                return result;
+            }
+
+            /* Builtin filesystem operations */
+            if (strcmp(name, "__hn_fs_read_file") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                if (arg.type != VALUE_STRING) { value_free(&arg); return value_create_string(""); }
+                Value result = builtin_fs_read_file(arg.value.string_value);
+                value_free(&arg);
+                return result;
+            }
+
+            if (strcmp(name, "__hn_fs_write_file") == 0 && node->data.call_expr.arg_count == 2) {
+                Value path = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value content = interpreter_evaluate(interp, node->data.call_expr.args[1]);
+                int ok = 0;
+                if (path.type == VALUE_STRING && content.type == VALUE_STRING) {
+                    ok = builtin_fs_write_file(path.value.string_value, content.value.string_value);
+                }
+                value_free(&path);
+                value_free(&content);
+                return value_create_bool(ok);
+            }
+
+            /* Builtin array operations */
+            if (strcmp(name, "__hn_arr_push") == 0 && node->data.call_expr.arg_count == 2) {
+                Value arr = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value val = interpreter_evaluate(interp, node->data.call_expr.args[1]);
+                Value result = arr;
+                if (arr.type == VALUE_ARRAY) {
+                    result = builtin_arr_push(arr, val);
+                }
+                value_free(&val);
+                return result;
+            }
+
+            if (strcmp(name, "__hn_arr_pop") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arr = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                if (arr.type != VALUE_ARRAY) {
+                    value_free(&arr);
+                    return value_create_none();
+                }
+                Value result = builtin_arr_pop(arr);
+                value_free(&arr);
+                return result;
             }
 
             /* Check for extern function */

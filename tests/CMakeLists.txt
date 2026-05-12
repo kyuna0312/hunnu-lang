@@ -13,6 +13,7 @@ add_executable(hunnu_tests
     ${CMAKE_SOURCE_DIR}/compiler/ast/ast_free.c
     ${CMAKE_SOURCE_DIR}/compiler/ast/ast_print.c
     ${CMAKE_SOURCE_DIR}/compiler/interpreter/interpreter.c
+    ${CMAKE_SOURCE_DIR}/compiler/interpreter/builtins.c
     ${CMAKE_SOURCE_DIR}/compiler/value.c
     ${CMAKE_SOURCE_DIR}/compiler/scope.c
     ${CMAKE_SOURCE_DIR}/compiler/i18n/i18n.c

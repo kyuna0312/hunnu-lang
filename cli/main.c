@@ -26,6 +26,8 @@ void print_usage(const char* prog_name) {
     printf("  compile <file.hn> Compile to native binary (Month 3 - AOT)\n");
     printf("  tokens <file>   Print tokens (for debugging)\n");
     printf("  ast <file>     Print AST (for debugging)\n");
+    printf("  new <name>      Create a new Hunnu project (Month 6)\n");
+    printf("  install <pkg>   Install a Hunnu package (Month 6)\n");
     printf("\nOptions:\n");
     printf("  -v, --version   Show version information\n");
     printf("  -h, --help     Show this help message\n");
@@ -533,6 +535,26 @@ int main(int argc, char* argv[]) {
         printf("Compilation complete: %s\n", output);
         free(c_code);
         return 0;
+    }
+
+    if (strcmp(argv[1], "new") == 0) {
+        if (argc < 3 || (argc == 3 && (strcmp(argv[2], "--help") == 0 || strcmp(argv[2], "-h") == 0))) {
+            fprintf(stderr, "Usage: hunnu new <project-name>\n");
+            fprintf(stderr, "  Create a new Hunnu project with scaffolding.\n");
+            fprintf(stderr, "  <project-name> must contain only letters, numbers, hyphens, and underscores.\n");
+            return 1;
+        }
+        return cmd_new(argv[2]);
+    }
+
+    if (strcmp(argv[1], "install") == 0) {
+        if (argc < 3 || (argc == 3 && (strcmp(argv[2], "--help") == 0 || strcmp(argv[2], "-h") == 0))) {
+            fprintf(stderr, "Usage: hunnu install <package>\n");
+            fprintf(stderr, "  Install a Hunnu package.\n");
+            fprintf(stderr, "  <package> can be a name or user/repo format for GitHub packages.\n");
+            return 1;
+        }
+        return cmd_install(argv[2]);
     }
 
     i18n_error(ERR_UNKNOWN_COMMAND, argv[1]);

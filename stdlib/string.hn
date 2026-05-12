@@ -2,49 +2,35 @@
 
 // Get string length
 fn length(s) {
-    // TODO: Implement string length
-    print("length not fully implemented yet")
-    return 0
+    return len(s)
 }
 
 // Convert to uppercase
 fn to_upper(s) {
-    // TODO: Implement to_upper
-    print("to_upper not fully implemented yet")
-    return s
+    return __hn_str_to_upper(s)
 }
 
-// Convert to lowercase  
+// Convert to lowercase
 fn to_lower(s) {
-    // TODO: Implement to_lower
-    print("to_lower not fully implemented yet")
-    return s
+    return __hn_str_to_lower(s)
 }
 
 // Check if string contains substring
 fn contains(s, substring) {
-    // TODO: Implement contains
-    print("contains not fully implemented yet")
-    return false
+    return __hn_str_contains(s, substring)
 }
 
 // Trim whitespace from both ends
 fn trim(s) {
-    // TODO: Implement trim
-    print("trim not fully implemented yet")
-    return s
+    return __hn_str_trim(s)
 }
 
 // Split string by delimiter
 fn split(s, delimiter) {
-    // TODO: Implement split
-    print("split not fully implemented yet")
-    return []
+    return __hn_str_split(s, delimiter)
 }
 
 // Join array of strings with delimiter
 fn join(arr, delimiter) {
-    // TODO: Implement join
-    print("join not fully implemented yet")
-    return ""
+    return __hn_str_join(arr, delimiter)
 }

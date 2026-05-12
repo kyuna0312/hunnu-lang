@@ -35,3 +35,11 @@ fn reduce(arr, f, init) {
     }
     return result
 }
+
+fn push(arr, val) {
+    return __hn_arr_push(arr, val)
+}
+
+fn pop(arr) {
+    return __hn_arr_pop(arr)
+}

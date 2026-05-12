@@ -1,0 +1,5 @@
+type Token = { tok_type, value, line, column }
+
+fn Token.new(tok_type, value, line, column) {
+    return Token(tok_type: tok_type, value: value, line: line, column: column)
+}

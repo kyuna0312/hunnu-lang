@@ -4,7 +4,39 @@ All notable changes to the Hunnu language project.
 
 ---
 
-## [Unreleased]
+## [1.0.0] - 2026-05-12
+
+### Month 6: Self-Hosting, Package Manager, v1.0 Release ✅
+*October 2026*
+
+#### Package Manager (#41)
+- Added `hunnu new <project-name>` command for project scaffolding
+- Added `hunnu install <package>` command for dependency management
+- Project template with `main.hn` and `hunnu.json` manifest
+
+#### Standard Library v1 Completion (#42)
+- Completed `stdlib/string.hn`: `length`, `to_upper`, `to_lower`, `contains`, `trim`, `split`, `join`
+- Completed `stdlib/fs.hn`: `exists`, `read_file`, `write_file`
+- Completed `stdlib/array.hn`: `push`, `pop`
+- Added shared C builtin module (`compiler/interpreter/builtins.c`) for stdlib operations
+- Builtins dispatched in tree-walk interpreter (`interpreter.c`, `eval.c`) and bytecode VM (`vm.c`)
+
+#### Self-Hosting (#43)
+- Created `self/token.hn` — Token type definitions in Hunnu
+- Created `self/lexer.hn` — Hunnu lexer written in Hunnu (initial implementation)
+
+#### CI/CD Pipeline (#44)
+- Added `.github/workflows/release.yml` — automated release with matrix builds (Linux/macOS)
+- Enhanced CI with Rust compiler, VM, and C test matrix
+
+#### Benchmark Suite (#45)
+- Added `benchmarks/` submodule pointing to `hunnu-labs/hunnu-benchmark`
+- Benchmark runner with timing and reporting
+
+#### v1.0 Release Preparation (#46)
+- Version confirmed at 1.0.0 (Эрдэнэ — Jewel)
+- Full CHANGELOG documentation
+- Release workflow for binary distribution
 
 ### Month 4: Object-Oriented Programming ✅
 *August 2026*

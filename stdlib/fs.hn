@@ -1,38 +1,17 @@
 // std/fs.hn - Filesystem functions for Hunnu
-// Uses FFI to C standard library
-
-// Open a file for reading
-extern fn fopen(path, mode) -> int from "libc.so.6"
-
-// Close a file
-extern fn fclose(file) -> int from "libc.so.6"
-
-// Read from file
-extern fn fgets(s, n, file) -> str from "libc.so.6"
-
-// Write to file
-extern fn fputs(s, file) -> int from "libc.so.6"
 
 // Check if file exists
 fn exists(path) {
-    let file = fopen(path, "r")
-    if file != 0 {
-        fclose(file)
-        return true
-    }
-    return false
+    let content = __hn_fs_read_file(path)
+    return content != ""
 }
 
 // Read entire file content
 fn read_file(path) {
-    // TODO: Implement file reading
-    print("read_file not fully implemented yet")
-    return ""
+    return __hn_fs_read_file(path)
 }
 
 // Write content to file
 fn write_file(path, content) {
-    // TODO: Implement file writing
-    print("write_file not fully implemented yet")
-    return false
+    return __hn_fs_write_file(path, content)
 }

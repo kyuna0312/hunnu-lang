@@ -7,7 +7,7 @@ This file provides guidance for agentic coding agents working on hunnu-lang.
 hunnu-lang is a lightweight, expression-oriented programming language written in C (interpreter) and Rust (AOT compiler).
 The project uses CMake for building and has a compiler/interpreter architecture.
 
-**Current Phase:** Month 4 - Object-Oriented Programming (classes, inheritance, traits)
+**Current Phase:** v1.0.0 (Эрдэнэ) — Month 6 Complete (Self-Hosting, Package Manager, Release)
 
 ---
 
@@ -292,13 +292,18 @@ cd build && cmake .. && make
 
 ## Project Structure
 
-### Current (Month 4 - OOP Features)
+### Current (Month 6 - v1.0 Release)
 
 ```
 hunnu-lang/
 ├── compiler/
 │   ├── ast/          # Abstract syntax tree definitions
 │   ├── interpreter/  # Runtime execution (C tree-walk)
+│   │   ├── builtins.c/h  # Shared builtin implementations
+│   │   ├── interpreter.c # Lifecycle + state helpers
+│   │   ├── eval.c        # Expression evaluation
+│   │   ├── exec.c        # Statement execution
+│   │   └── call.c        # Function call dispatch
 │   ├── lexer/       # Tokenization (lexer.c, token.h)
 │   ├── parser/       # Syntax analysis
 │   └── transpile/    # C transpiler backend (AOT via gcc)
@@ -311,12 +316,17 @@ hunnu-lang/
 │   │   └── codegen.rs # LLVM IR codegen (skeleton)
 │   └── Cargo.toml
 ├── vm-rust/           # Rust VM (Month 1)
-├── cli/              # Command-line interface
-├── stdlib/            # Standard library modules
+├── cli/              # Command-line interface (incl. package manager)
+├── stdlib/            # Standard library modules (all v1 complete)
+├── self/              # Self-hosting compiler (Hunnu in Hunnu)
+│   ├── token.hn       # Token definitions
+│   └── lexer.hn       # Lexer implementation
+├── benchmarks/        # hunnu-benchmark submodule
 ├── bindings/
 │   └── python/       # Python bindings (PyO3)
 ├── examples/         # Sample .hn programs
 ├── build/            # Build output (gitignored)
+├── .github/workflows/ # CI/CD pipelines (build, test, release)
 └── CMakeLists.txt   # Build configuration
 ```
 
