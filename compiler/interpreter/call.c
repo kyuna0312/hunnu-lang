@@ -1,3 +1,8 @@
+/**
+ * @file call.c
+ * @brief Function call dispatch for the interpreter
+ */
+
 #include "interpreter.h"
 #include <stdlib.h>
 #include <string.h>

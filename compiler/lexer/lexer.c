@@ -46,7 +46,7 @@ static const char* keyword_names[] = {
     "new",        "шинэ",     // constructor/instantiation
     "pub",        "нийт",     // public field
     "self",       "өөрөө",    // self reference
-    "trait",      "ers",     // trait declaration
+    "trait",      "шинж",     // trait declaration
     "impl",       "хэрэгжүүлэх", // implementation
     "unsafe",     "аюулгүйбус", // unsafe block
     "enum",       "тоолол",  // enum declaration

@@ -1,3 +1,8 @@
+/**
+ * @file import.c
+ * @brief Module import resolution and loading
+ */
+
 #include "import.h"
 #include "i18n/i18n.h"
 #include <stdio.h>

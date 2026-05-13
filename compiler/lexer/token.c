@@ -1,3 +1,8 @@
+/**
+ * @file token.c
+ * @brief Token type utilities and display
+ */
+
 #include "token.h"
 #include <stdlib.h>
 #include <string.h>

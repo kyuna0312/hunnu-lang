@@ -1,3 +1,8 @@
+/**
+ * @file interpreter.c
+ * @brief Interpreter lifecycle and state management
+ */
+
 #include "interpreter.h"
 #include "compiler/value.h"
 #include "compiler/scope.h"
@@ -730,7 +735,6 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             }
 
             Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
-            TokenType op = node->data.binary_expr.operator;
             Value result = value_create_none();
 
             /* Short-circuit for logical and/or */

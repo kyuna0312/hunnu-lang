@@ -1,3 +1,8 @@
+//! LLVM IR code generation for the Hunnu compiler.
+//!
+//! Converts [`ASTNode`] trees into LLVM IR, object files, or assembly.
+//! Only available with the `llvm-codegen` feature.
+
 use llvm_sys::prelude::*;
 use llvm_sys::*;
 use llvm_sys::core::*;
@@ -6,6 +11,7 @@ use super::lexer::TokenType;
 use std::ffi::{CStr, CString};
 use std::ptr;
 
+/// LLVM IR code generator for Hunnu programs.
 pub struct CodeGen {
     context: LLVMContextRef,
     module: LLVMModuleRef,
@@ -16,6 +22,7 @@ pub struct CodeGen {
 }
 
 impl CodeGen {
+    /// Create a new code generator with the given module name.
     pub fn new(module_name: &str) -> Self {
         unsafe {
             let context = LLVMContextCreate();
@@ -34,6 +41,7 @@ impl CodeGen {
         }
     }
 
+    /// Generate LLVM IR for a parsed program AST.
     pub fn generate(&mut self, program: &ASTNode) -> Result<(), String> {
         match &program.data {
             NodeData::Program { statements } => {
@@ -470,12 +478,14 @@ impl CodeGen {
         }
     }
 
+    /// Print the generated LLVM IR to stderr.
     pub fn print_ir(&self) {
         unsafe {
             LLVMDumpModule(self.module);
         }
     }
 
+    /// Write LLVM bitcode to a file.
     pub fn write_bitcode(&self, filename: &str) -> Result<(), String> {
         unsafe {
             let c_filename = CString::new(filename).unwrap();
@@ -488,6 +498,7 @@ impl CodeGen {
         }
     }
 
+    /// Emit a native object file (.o).
     pub fn emit_object(&self, filename: &str) -> Result<(), String> {
         unsafe {
             let triple = LLVMGetDefaultTargetTriple();
@@ -532,6 +543,7 @@ impl CodeGen {
         }
     }
 
+    /// Emit assembly text (.s).
     pub fn emit_assembly(&self, filename: &str) -> Result<(), String> {
         unsafe {
             let triple = LLVMGetDefaultTargetTriple();
@@ -587,6 +599,7 @@ impl Drop for CodeGen {
     }
 }
 
+/// Convenience: compile an AST to LLVM IR and write to a file (or print if None).
 pub fn compile_to_ir(program: &ASTNode, output_file: Option<&str>) -> Result<(), String> {
     let mut codegen = CodeGen::new("hunnu_module");
     codegen.generate(program)?;
@@ -600,12 +613,14 @@ pub fn compile_to_ir(program: &ASTNode, output_file: Option<&str>) -> Result<(),
     Ok(())
 }
 
+/// Convenience: compile an AST to a native object file.
 pub fn compile_to_object(program: &ASTNode, output_file: &str) -> Result<(), String> {
     let mut codegen = CodeGen::new("hunnu_module");
     codegen.generate(program)?;
     codegen.emit_object(output_file)
 }
 
+/// Convenience: compile an AST to assembly text.
 pub fn compile_to_assembly(program: &ASTNode, output_file: &str) -> Result<(), String> {
     let mut codegen = CodeGen::new("hunnu_module");
     codegen.generate(program)?;

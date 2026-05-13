@@ -1,3 +1,8 @@
+//! Hunnu compiler CLI binary.
+//!
+//! Accepts a `.hn` source file, tokenizes and parses it,
+//! then prints the token stream and AST for debugging.
+
 use std::env;
 use std::fs;
 use std::process;

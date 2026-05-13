@@ -1,11 +1,9 @@
-/**
- * @file ast.rs
- * @brief AST definitions for Hunnu Language Rust Compiler
- * 
- * This module defines the Abstract Syntax Tree structures
- * for the Month 3 AOT Compiler Foundation.
- */
+//! Abstract Syntax Tree definitions for the Hunnu compiler.
+//!
+//! Defines [`ASTNode`], [`ASTNodeType`], [`NodeData`], and related
+//! types used to represent parsed Hunnu programs.
 
+/// Tag identifying the kind of an AST node.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ASTNodeType {
     Program,
@@ -39,6 +37,7 @@ pub enum ASTNodeType {
     Dereference,
 }
 
+/// The type of a literal value in the AST.
 #[derive(Debug, Clone)]
 pub enum LiteralType {
     Int,
@@ -47,6 +46,7 @@ pub enum LiteralType {
     Bool,
 }
 
+/// A token used internally by the AST module.
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: super::lexer::TokenType,
@@ -55,6 +55,7 @@ pub struct Token {
     pub column: u32,
 }
 
+/// A node in the Abstract Syntax Tree.
 #[derive(Debug, Clone)]
 pub struct ASTNode {
     pub node_type: ASTNodeType,
@@ -63,6 +64,7 @@ pub struct ASTNode {
     pub data: NodeData,
 }
 
+/// The payload data for an AST node variant.
 #[derive(Debug, Clone)]
 pub enum NodeData {
     Program {
@@ -180,6 +182,7 @@ pub enum NodeData {
     },
 }
 
+/// The concrete value of a literal in the AST.
 #[derive(Debug, Clone)]
 pub enum LiteralValue {
     Int(i64),
@@ -188,6 +191,7 @@ pub enum LiteralValue {
     Bool(bool),
 }
 
+/// Convert an [`ASTNodeType`] to a human-readable string.
 pub fn ast_node_type_to_string(node_type: &ASTNodeType) -> &'static str {
     match node_type {
         ASTNodeType::Program => "PROGRAM",

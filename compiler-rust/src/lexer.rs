@@ -1,11 +1,9 @@
-/**
- * @file lexer.rs
- * @brief Rust Lexer for Hunnu Language
- * 
- * This is part of Month 3 AOT Compiler Foundation.
- * The lexer tokenizes Hunnu source code into tokens for the parser.
- */
+//! Lexer for the Hunnu programming language.
+//!
+//! Tokenizes Hunnu source code into a stream of [`Token`] values
+//! for consumption by the parser.
 
+/// Represents the type of a single token.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     // Literals
@@ -90,15 +88,21 @@ pub enum TokenType {
     Unknown,
 }
 
+/// A single token produced by the lexer.
 #[derive(Debug, Clone)]
 pub struct Token {
+    /// The type of this token.
     pub token_type: TokenType,
+    /// The raw lexeme string from source.
     pub lexeme: String,
+    /// Line number (1-indexed).
     pub line: u32,
+    /// Column number (1-indexed).
     pub column: u32,
 }
 
 impl Token {
+    /// Create a new token.
     pub fn new(token_type: TokenType, lexeme: String, line: u32, column: u32) -> Self {
         Token {
             token_type,
@@ -109,6 +113,9 @@ impl Token {
     }
 }
 
+/// Hunnu source code lexer.
+///
+/// Converts a source string into a [`Vec<Token>`] via [`tokenize`](Lexer::tokenize).
 pub struct Lexer {
     source: Vec<char>,
     length: usize,
@@ -118,6 +125,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    /// Create a new lexer for the given source string.
     pub fn new(source: &str) -> Self {
         Lexer {
             source: source.chars().collect(),
@@ -128,6 +136,7 @@ impl Lexer {
         }
     }
     
+    /// Tokenize the full source and return all tokens.
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
         
@@ -334,28 +343,28 @@ impl Lexer {
         }
         
         let token_type = match lexeme.as_str() {
-            "let" => TokenType::Let,
-            "fn" => TokenType::Fn,
-            "if" => TokenType::If,
-            "else" => TokenType::Else,
-            "true" => TokenType::True,
-            "false" => TokenType::False,
-            "print" => TokenType::Print,
-            "while" => TokenType::While,
-            "for" => TokenType::For,
-            "return" => TokenType::Return,
-            "break" => TokenType::Break,
-            "continue" => TokenType::Continue,
-            "match" => TokenType::Match,
-            "null" | "nil" => TokenType::Null,
-            "import" => TokenType::Import,
-            "extern" => TokenType::Extern,
-            "try" => TokenType::Try,
-            "catch" => TokenType::Catch,
-            "finally" => TokenType::Finally,
-            "type" => TokenType::Type,
-            "pub" => TokenType::Pub,
-            "self" => TokenType::SelfToken,
+            "let" | "хувьсагч" => TokenType::Let,
+            "fn" | "функц" => TokenType::Fn,
+            "if" | "хэрвээ" => TokenType::If,
+            "else" | "бусад" => TokenType::Else,
+            "true" | "үнэн" => TokenType::True,
+            "false" | "худал" => TokenType::False,
+            "print" | "хэвлэх" => TokenType::Print,
+            "while" | "давталт" => TokenType::While,
+            "for" | "тооллого" => TokenType::For,
+            "return" | "буцаах" => TokenType::Return,
+            "break" | "зогсоох" => TokenType::Break,
+            "continue" | "үргэлжлүүлэх" => TokenType::Continue,
+            "match" | "тохирох" => TokenType::Match,
+            "null" | "nil" | "хоосон" => TokenType::Null,
+            "import" | "импорт" => TokenType::Import,
+            "extern" | "гаднах" => TokenType::Extern,
+            "try" | "турших" => TokenType::Try,
+            "catch" | "барих" => TokenType::Catch,
+            "finally" | "эцэст" => TokenType::Finally,
+            "type" | "төрөл" => TokenType::Type,
+            "pub" | "нийт" => TokenType::Pub,
+            "self" | "өөрөө" => TokenType::SelfToken,
             _ => TokenType::Ident,
         };
         

@@ -1160,44 +1160,19 @@ ASTNode* parser_parse_expression_statement(Parser* parser) {
                                parser->previous->column);
 }
 
-ASTNode* parser_parse_or(Parser* parser) {
-    ASTNode* left = parser_parse_and(parser);
-
-    while (parser_match(parser, TOKEN_OR)) {
-        TokenType op = parser->previous->type;
-        ASTNode* right = parser_parse_and(parser);
-        left = ast_binary_expr_create(op, left, right,
-                                parser->previous->line,
-                                parser->previous->column);
-    }
-
-    return left;
-}
-
-ASTNode* parser_parse_and(Parser* parser) {
-    ASTNode* left = parser_parse_assignment(parser);
-
-    while (parser_match(parser, TOKEN_AND)) {
-        TokenType op = parser->previous->type;
-        ASTNode* right = parser_parse_assignment(parser);
-        left = ast_binary_expr_create(op, left, right,
-                                parser->previous->line,
-                                parser->previous->column);
-    }
-
-    return left;
-}
+/* Forward declarations for parsing functions */
+ASTNode* parser_parse_or(Parser* parser);
+ASTNode* parser_parse_and(Parser* parser);
+ASTNode* parser_parse_equality(Parser* parser);
+static ASTNode* parser_parse_postfix(Parser* parser);
+ASTNode* parser_parse_primary(Parser* parser);
 
 ASTNode* parser_parse_expression(Parser* parser) {
     return parser_parse_or(parser);
 }
 
-/* Forward declarations */
-static ASTNode* parser_parse_postfix(Parser* parser);
-ASTNode* parser_parse_primary(Parser* parser);
-
 ASTNode* parser_parse_assignment(Parser* parser) {
-    ASTNode* left = parser_parse_or(parser);
+    ASTNode* left = parser_parse_equality(parser);
     
     if (parser_match(parser, TOKEN_ASSIGN)) {
         if (left->type == AST_IDENTIFIER) {
@@ -1307,11 +1282,11 @@ ASTNode* parser_parse_or(Parser* parser) {
 }
 
 ASTNode* parser_parse_and(Parser* parser) {
-    ASTNode* left = parser_parse_equality(parser);
+    ASTNode* left = parser_parse_assignment(parser);
 
     while (parser_match(parser, TOKEN_AND)) {
         TokenType op = parser->previous->type;
-        ASTNode* right = parser_parse_equality(parser);
+        ASTNode* right = parser_parse_assignment(parser);
         left = ast_binary_expr_create(op, left, right,
                                 parser->previous->line,
                                 parser->previous->column);

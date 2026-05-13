@@ -1,3 +1,8 @@
+/**
+ * @file exec.c
+ * @brief Statement execution for the interpreter
+ */
+
 #include "interpreter.h"
 #include "../i18n/i18n.h"
 #include <stdlib.h>

@@ -1,3 +1,8 @@
+/**
+ * @file scope.c
+ * @brief Scope management for variable lookups
+ */
+
 #include "scope.h"
 #include <stdlib.h>
 #include <string.h>

@@ -1,3 +1,8 @@
+/**
+ * @file eval.c
+ * @brief Expression evaluation for the interpreter
+ */
+
 #include "interpreter.h"
 #include "../i18n/i18n.h"
 #include "builtins.h"

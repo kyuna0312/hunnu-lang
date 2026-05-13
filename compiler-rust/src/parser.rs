@@ -1,15 +1,13 @@
-/**
- * @file parser.rs
- * @brief Parser for Hunnu Language Rust Compiler
- * 
- * This is a recursive descent parser that converts
- * tokens into an Abstract Syntax Tree (AST).
- */
+//! Recursive descent parser for the Hunnu programming language.
+//!
+//! Converts a token stream (from [`crate::lexer`]) into an
+//! Abstract Syntax Tree ([`ASTNode`]).
 
 use super::lexer::TokenType;
 use super::ast::*;
 use crate::lexer::Token;
 
+/// Hunnu recursive descent parser.
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -17,6 +15,7 @@ pub struct Parser {
 }
 
 impl Parser {
+    /// Create a new parser from a token vector.
     pub fn new(tokens: Vec<Token>) -> Self {
         Parser {
             tokens,
@@ -97,6 +96,7 @@ impl Parser {
         }
     }
     
+    /// Parse the full token stream into an AST.
     pub fn parse(&mut self) -> Result<ASTNode, String> {
         self.parse_program()
     }

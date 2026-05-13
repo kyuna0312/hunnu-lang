@@ -1,3 +1,8 @@
+/**
+ * @file value.c
+ * @brief Value type system and memory management
+ */
+
 #include "value.h"
 #include "scope.h"
 #include "i18n/i18n.h"
