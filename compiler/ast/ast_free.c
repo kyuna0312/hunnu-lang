@@ -62,7 +62,8 @@ static void ast_free_node(ASTNode* node) {
             break;
 
         case AST_LITERAL:
-            if (node->data.literal.literal_type == TOKEN_STRING_LITERAL) {
+            if (node->data.literal.literal_type == TOKEN_STRING_LITERAL ||
+                node->data.literal.literal_type == TOKEN_SYMBOL) {
                 free(node->data.literal.value.string_value);
             }
             break;
@@ -274,6 +275,19 @@ static void ast_free_node(ASTNode* node) {
             }
             free(node->data.lambda.params);
             ast_free_node(node->data.lambda.body);
+            break;
+
+        case AST_RANGE_PATTERN:
+            ast_free_node(node->data.range_pattern.start);
+            ast_free_node(node->data.range_pattern.end);
+            break;
+
+        case AST_ARRAY_PATTERN:
+            for (size_t i = 0; i < node->data.array_pattern.count; i++) {
+                free(node->data.array_pattern.names[i]);
+            }
+            free(node->data.array_pattern.names);
+            free(node->data.array_pattern.rest_name);
             break;
 
         case AST_WHILE_STMT:

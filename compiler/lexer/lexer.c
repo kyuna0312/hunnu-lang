@@ -255,7 +255,7 @@ Token* lexer_read_number(Lexer* lexer) {
     }
     
     int is_float = 0;
-    if (lexer_peek(lexer) == '.') {
+    if (lexer_peek(lexer) == '.' && lexer_peek_next(lexer) != '.') {
         is_float = 1;
         lexer_advance(lexer);
         while (isdigit(lexer_peek(lexer))) {
@@ -459,6 +459,9 @@ Token* lexer_next_token(Lexer* lexer) {
 
         case '.':
             lexer_advance(lexer);
+            if (lexer_match(lexer, '.')) {
+                return token_new(TOKEN_DOT_DOT, "..", lexer->line, lexer->column);
+            }
             return token_new(TOKEN_DOT, ".", lexer->line, lexer->column);
 
         case '&':
@@ -492,6 +495,21 @@ Token* lexer_next_token(Lexer* lexer) {
     i18n_error(ERR_UNKNOWN_CHARACTER, unknown);
     fprintf(stderr, "\n");
     return token_new(TOKEN_UNKNOWN, unknown, lexer->line, lexer->column);
+}
+
+size_t lexer_get_position(Lexer* lexer) {
+    return lexer->current;
+}
+
+int lexer_peek_symbol(Lexer* lexer) {
+    /* Check if current position has :ident pattern (symbol literal) */
+    size_t pos = lexer->current;
+    if (pos >= lexer->length) return 0;
+    if (lexer->source[pos] != ':') return 0;
+    pos++;
+    if (pos >= lexer->length) return 0;
+    char c = lexer->source[pos];
+    return (isalpha(c) || c == '_' || ((unsigned char)c > 127));
 }
 
 int lexer_peek_struct_field(Lexer* lexer) {

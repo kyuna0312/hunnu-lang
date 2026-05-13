@@ -25,6 +25,16 @@ fn trim(s) {
     return __hn_str_trim(s)
 }
 
+// Convert to uppercase (alias)
+fn upcase(s) {
+    return __hn_str_to_upper(s)
+}
+
+// Check if string contains substring (alias)
+fn include(s, substring) {
+    return __hn_str_contains(s, substring)
+}
+
 // Split string by delimiter
 fn split(s, delimiter) {
     return __hn_str_split(s, delimiter)

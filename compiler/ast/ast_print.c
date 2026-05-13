@@ -79,6 +79,8 @@ static void ast_print_node(ASTNode* node, int indent) {
         case AST_ENUM_DECL:
         case AST_ENUM_VARIANT:
         case AST_LAMBDA:
+        case AST_RANGE_PATTERN:
+        case AST_ARRAY_PATTERN:
             break;
 
         default:
@@ -345,6 +347,18 @@ static void ast_print_node(ASTNode* node, int indent) {
                 }
                 printf("\n");
             }
+            break;
+
+        case AST_ARRAY_PATTERN:
+            indent_print(indent);
+            printf("ARRAY_PATTERN (%zu elements, rest: %s)\n",
+                   node->data.array_pattern.count,
+                   node->data.array_pattern.rest_name ? node->data.array_pattern.rest_name : "none");
+            break;
+
+        case AST_RANGE_PATTERN:
+            indent_print(indent);
+            printf("RANGE_PATTERN\n");
             break;
 
         case AST_ENUM_VARIANT:

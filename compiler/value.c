@@ -37,6 +37,17 @@ Value value_copy(const Value* val) {
             copy.enum_fields[i] = (Value*)malloc(sizeof(Value));
             *copy.enum_fields[i] = value_copy(val->enum_fields[i]);
         }
+    } else if (val->type == VALUE_SYMBOL) {
+        copy.value.string_value = strdup(val->value.string_value);
+    } else if (val->type == VALUE_OPTION) {
+        copy.option_value = val->option_value ? (Value*)malloc(sizeof(Value)) : NULL;
+        if (copy.option_value) *copy.option_value = value_copy(val->option_value);
+        copy.is_none = val->is_none;
+    } else if (val->type == VALUE_RESULT) {
+        copy.result_ok = val->result_ok ? (Value*)malloc(sizeof(Value)) : NULL;
+        if (copy.result_ok) *copy.result_ok = value_copy(val->result_ok);
+        copy.result_err = val->result_err ? (Value*)malloc(sizeof(Value)) : NULL;
+        if (copy.result_err) *copy.result_err = value_copy(val->result_err);
     } else if (val->type == VALUE_FUNCTION) {
         copy.fn_decl = val->fn_decl;
         copy.captured_scope = val->captured_scope;
@@ -146,6 +157,25 @@ void value_free(Value* value) {
         free(value->enum_fields);
         value->enum_field_count = 0;
         value->enum_fields = NULL;
+    } else if (value->type == VALUE_SYMBOL) {
+        free(value->value.string_value);
+    } else if (value->type == VALUE_OPTION) {
+        if (value->option_value) {
+            value_free(value->option_value);
+            free(value->option_value);
+            value->option_value = NULL;
+        }
+    } else if (value->type == VALUE_RESULT) {
+        if (value->result_ok) {
+            value_free(value->result_ok);
+            free(value->result_ok);
+            value->result_ok = NULL;
+        }
+        if (value->result_err) {
+            value_free(value->result_err);
+            free(value->result_err);
+            value->result_err = NULL;
+        }
     } else if (value->type == VALUE_FUNCTION) {
         value->fn_decl = NULL;
         value->captured_scope = NULL;
@@ -175,6 +205,11 @@ char* value_to_string(Value* value) {
             break;
         case VALUE_NONE:
             snprintf(buf, 64, "%s", i18n_get_value_string("nil"));
+            break;
+        case VALUE_SYMBOL:
+            free(buf);
+            buf = (char*)malloc(strlen(value->value.string_value) + 2);
+            snprintf(buf, strlen(value->value.string_value) + 2, ":%s", value->value.string_value);
             break;
         default:
             snprintf(buf, 64, "?");
@@ -239,6 +274,32 @@ void value_print(Value* value) {
             }
             break;
 
+        case VALUE_SYMBOL:
+            printf(":%s", value->value.string_value);
+            break;
+
+        case VALUE_OPTION:
+            if (value->is_none) {
+                printf("None");
+            } else if (value->option_value) {
+                printf("Some(");
+                value_print(value->option_value);
+                printf(")");
+            }
+            break;
+
+        case VALUE_RESULT:
+            if (value->result_ok) {
+                printf("Ok(");
+                value_print(value->result_ok);
+                printf(")");
+            } else if (value->result_err) {
+                printf("Err(");
+                value_print(value->result_err);
+                printf(")");
+            }
+            break;
+
         case VALUE_FUNCTION:
             printf("<fn>");
             break;
@@ -254,6 +315,8 @@ int value_as_bool(Value* value) {
             return value->value.int_value != 0;
         case VALUE_STRING:
             return value->value.string_value[0] != '\0';
+        case VALUE_SYMBOL:
+            return 1;
         default:
             return 0;
     }
@@ -287,6 +350,38 @@ Value value_create_enum(const char* enum_name, const char* variant_name, Value**
     v.variant_name = strdup(variant_name);
     v.enum_fields = fields;
     v.enum_field_count = field_count;
+    return v;
+}
+
+Value value_create_option(int is_none, Value* inner) {
+    Value v;
+    memset(&v, 0, sizeof(v));
+    v.type = VALUE_OPTION;
+    v.has_value = 1;
+    v.is_none = is_none;
+    v.option_value = inner ? (Value*)malloc(sizeof(Value)) : NULL;
+    if (v.option_value && inner) *v.option_value = value_copy(inner);
+    return v;
+}
+
+Value value_create_result(int is_ok, Value* ok_val, Value* err_val) {
+    Value v;
+    memset(&v, 0, sizeof(v));
+    v.type = VALUE_RESULT;
+    v.has_value = 1;
+    v.result_ok = ok_val ? (Value*)malloc(sizeof(Value)) : NULL;
+    if (v.result_ok && ok_val) *v.result_ok = value_copy(ok_val);
+    v.result_err = err_val ? (Value*)malloc(sizeof(Value)) : NULL;
+    if (v.result_err && err_val) *v.result_err = value_copy(err_val);
+    return v;
+}
+
+Value value_create_symbol(const char* name) {
+    Value v;
+    memset(&v, 0, sizeof(v));
+    v.type = VALUE_SYMBOL;
+    v.has_value = 1;
+    v.value.string_value = strdup(name);
     return v;
 }
 

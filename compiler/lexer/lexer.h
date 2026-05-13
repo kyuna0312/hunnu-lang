@@ -10,6 +10,7 @@
 #define HUNNU_LEXER_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include "token.h"
 
 /**
@@ -65,6 +66,13 @@ char lexer_peek_next(Lexer* lexer);
 int lexer_is_at_end(Lexer* lexer);
 
 /**
+ * @brief Get current position in the source
+ * @param lexer Pointer to lexer
+ * @return Current offset from start of source
+ */
+size_t lexer_get_position(Lexer* lexer);
+
+/**
  * @brief Match and consume expected character
  * @param lexer Pointer to lexer
  * @param expected Character to match
@@ -106,5 +114,12 @@ TokenType lexer_check_keyword(const char* lexeme);
  * @return 1 if upcoming non-whitespace chars match IDENT : pattern, 0 otherwise
  */
 int lexer_peek_struct_field(Lexer* lexer);
+
+/**
+ * @brief Check if current position starts a symbol literal (:ident)
+ * @param lexer Pointer to lexer
+ * @return 1 if current char is ':' followed by identifier start, 0 otherwise
+ */
+int lexer_peek_symbol(Lexer* lexer);
 
 #endif

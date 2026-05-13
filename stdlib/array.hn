@@ -43,3 +43,28 @@ fn push(arr, val) {
 fn pop(arr) {
     return __hn_arr_pop(arr)
 }
+
+fn first(arr) {
+    if len(arr) > 0 {
+        return arr[0]
+    }
+    return None()
+}
+
+fn last(arr) {
+    let l = len(arr)
+    if l > 0 {
+        return arr[l - 1]
+    }
+    return None()
+}
+
+fn enumerate(arr) {
+    let mut result = []
+    let mut i = 0
+    while i < len(arr) {
+        result[len(result)] = [i, arr[i]]
+        i = i + 1
+    }
+    return result
+}

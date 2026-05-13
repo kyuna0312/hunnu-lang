@@ -49,7 +49,9 @@ static const char* ast_type_names[] = {
     "UNSAFE_BLOCK",
     "ENUM_DECL",
     "ENUM_VARIANT",
-    "LAMBDA"
+    "LAMBDA",
+    "RANGE_PATTERN",
+    "ARRAY_PATTERN"
 };
 
 /**
@@ -569,6 +571,27 @@ ASTNode* ast_lambda_create(char** params, size_t param_count, ASTNode* body, int
     node->data.lambda.params = params;
     node->data.lambda.param_count = param_count;
     node->data.lambda.body = body;
+    return node;
+}
+
+ASTNode* ast_range_pattern_create(ASTNode* start, ASTNode* end, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_RANGE_PATTERN;
+    node->line = line;
+    node->column = column;
+    node->data.range_pattern.start = start;
+    node->data.range_pattern.end = end;
+    return node;
+}
+
+ASTNode* ast_array_pattern_create(char** names, size_t count, char* rest_name, int32_t line, int32_t column) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = AST_ARRAY_PATTERN;
+    node->line = line;
+    node->column = column;
+    node->data.array_pattern.names = names;
+    node->data.array_pattern.count = count;
+    node->data.array_pattern.rest_name = rest_name ? strdup(rest_name) : NULL;
     return node;
 }
 

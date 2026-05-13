@@ -52,6 +52,8 @@ typedef enum {
     AST_ENUM_DECL,
     AST_ENUM_VARIANT,
     AST_LAMBDA,
+    AST_RANGE_PATTERN,
+    AST_ARRAY_PATTERN,
 } ASTNodeType;
 
 /** AST node structure */
@@ -335,6 +337,19 @@ typedef struct ASTNode {
             size_t param_count;
             struct ASTNode* body;
         } lambda;
+
+        /** Range pattern: start..end in match */
+        struct {
+            struct ASTNode* start;
+            struct ASTNode* end;
+        } range_pattern;
+
+        /** Array pattern: [a, b, ...rest] in match */
+        struct {
+            char** names;
+            size_t count;
+            char* rest_name;
+        } array_pattern;
     } data;
 } ASTNode;
 
@@ -398,6 +413,8 @@ ASTNode* ast_unsafe_block_create(ASTNode* body, int32_t line, int32_t column);
 ASTNode* ast_enum_decl_create(const char* name, char** variant_names, size_t* variant_field_counts, char*** variant_field_names, size_t variant_count, int32_t line, int32_t column);
 ASTNode* ast_enum_variant_create(const char* enum_name, const char* variant_name, ASTNode** args, size_t arg_count, int32_t line, int32_t column);
 ASTNode* ast_lambda_create(char** params, size_t param_count, ASTNode* body, int32_t line, int32_t column);
+ASTNode* ast_range_pattern_create(ASTNode* start, ASTNode* end, int32_t line, int32_t column);
+ASTNode* ast_array_pattern_create(char** names, size_t count, char* rest_name, int32_t line, int32_t column);
 
 void ast_free(ASTNode* node);
 void ast_print(ASTNode* node, int indent);

@@ -74,6 +74,10 @@ static const char* token_type_names[] = {
     "ARROW",
     "FAT_ARROW",
     "NEWLINE",
+    "DEF",
+    "END",
+    "SYMBOL",
+    "DOT_DOT",
     "UNKNOWN"
 };
 
@@ -89,6 +93,9 @@ Token* token_new(TokenType type, const char* lexeme, int32_t line, int32_t colum
 void token_free(Token* token) {
     if (token) {
         free(token->lexeme);
+        if (token->type == TOKEN_STRING_LITERAL || token->type == TOKEN_SYMBOL) {
+            free(token->value.string_value);
+        }
         free(token);
     }
 }

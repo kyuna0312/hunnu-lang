@@ -340,6 +340,8 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 return value_create_string(node->data.literal.value.string_value);
             } else if (node->data.literal.literal_type == TOKEN_BOOL_LITERAL) {
                 return value_create_bool(node->data.literal.value.bool_value);
+            } else if (node->data.literal.literal_type == TOKEN_SYMBOL) {
+                return value_create_symbol(node->data.literal.value.string_value);
             }
             return value_create_none();
         }
@@ -699,6 +701,34 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
         }
         
         case AST_BINARY_EXPR: {
+            TokenType op = node->data.binary_expr.operator;
+
+            if (op == TOKEN_AND) {
+                Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
+                int left_bool = value_as_bool(&left);
+                value_free(&left);
+                if (!left_bool) {
+                    return value_create_bool(0);
+                }
+                Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
+                int right_bool = value_as_bool(&right);
+                value_free(&right);
+                return value_create_bool(right_bool);
+            }
+
+            if (op == TOKEN_OR) {
+                Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
+                int left_bool = value_as_bool(&left);
+                value_free(&left);
+                if (left_bool) {
+                    return value_create_bool(1);
+                }
+                Value right = interpreter_evaluate(interp, node->data.binary_expr.right);
+                int right_bool = value_as_bool(&right);
+                value_free(&right);
+                return value_create_bool(right_bool);
+            }
+
             Value left = interpreter_evaluate(interp, node->data.binary_expr.left);
             TokenType op = node->data.binary_expr.operator;
             Value result = value_create_none();
@@ -861,6 +891,24 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
             return result;
         }
         
+        case AST_STRING_CONCAT: {
+            Value left = interpreter_evaluate(interp, node->data.string_concat.left);
+            Value right = interpreter_evaluate(interp, node->data.string_concat.right);
+            char* lstr = value_to_string(&left);
+            char* rstr = value_to_string(&right);
+            size_t len = strlen(lstr) + strlen(rstr) + 1;
+            char* combined = (char*)malloc(len);
+            strcpy(combined, lstr);
+            strcat(combined, rstr);
+            Value result = value_create_string(combined);
+            free(combined);
+            free(lstr);
+            free(rstr);
+            value_free(&left);
+            value_free(&right);
+            return result;
+        }
+
         case AST_UNARY_EXPR: {
             Value operand = interpreter_evaluate(interp, node->data.unary_expr.operand);
             TokenType op = node->data.unary_expr.operator;
@@ -1117,10 +1165,59 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 return value_create_none();
             }
 
-            if (strcmp(name, "is_error") == 0 || strcmp(name, "unwrap") == 0) {
-                fprintf(stderr, "Error at line %d: ", interp->current_line);
-                fprintf(stderr, "is_error() and unwrap() are not available. Use error() to print errors.\n");
-                return value_create_none();
+            /* Option/Result constructors */
+            if (strcmp(name, "Some") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value result = value_create_option(0, &arg);
+                value_free(&arg);
+                return result;
+            }
+
+            if (strcmp(name, "None") == 0 && node->data.call_expr.arg_count == 0) {
+                return value_create_option(1, NULL);
+            }
+
+            if (strcmp(name, "Ok") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value result = value_create_result(1, &arg, NULL);
+                value_free(&arg);
+                return result;
+            }
+
+            if (strcmp(name, "Err") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                Value result = value_create_result(0, NULL, &arg);
+                value_free(&arg);
+                return result;
+            }
+
+            /* Option/Result utilities */
+            if (strcmp(name, "is_some") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                int is_some = (arg.type == VALUE_OPTION && !arg.is_none);
+                value_free(&arg);
+                return value_create_bool(is_some);
+            }
+
+            if (strcmp(name, "is_none") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                int is_none = (arg.type == VALUE_OPTION && arg.is_none);
+                value_free(&arg);
+                return value_create_bool(is_none);
+            }
+
+            if (strcmp(name, "is_ok") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                int is_ok = (arg.type == VALUE_RESULT && arg.result_ok);
+                value_free(&arg);
+                return value_create_bool(is_ok);
+            }
+
+            if (strcmp(name, "is_err") == 0 && node->data.call_expr.arg_count == 1) {
+                Value arg = interpreter_evaluate(interp, node->data.call_expr.args[0]);
+                int is_err = (arg.type == VALUE_RESULT && arg.result_err);
+                value_free(&arg);
+                return value_create_bool(is_err);
             }
 
             /* Builtin string operations */
@@ -1427,6 +1524,8 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                         pattern_val = value_create_string(pattern->data.literal.value.string_value);
                     } else if (pattern->data.literal.literal_type == TOKEN_BOOL_LITERAL) {
                         pattern_val = value_create_bool(pattern->data.literal.value.bool_value);
+                    } else if (pattern->data.literal.literal_type == TOKEN_SYMBOL) {
+                        pattern_val = value_create_symbol(pattern->data.literal.value.string_value);
                     } else {
                         pattern_val = value_create_none();
                     }
@@ -1446,6 +1545,10 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                         } else if (match_value.type == VALUE_BOOL && 
                                    match_value.value.bool_value == pattern_val.value.bool_value) {
                             matched = 1;
+                        } else if (match_value.type == VALUE_SYMBOL && 
+                                   strcmp(match_value.value.string_value,
+                                          pattern_val.value.string_value) == 0) {
+                            matched = 1;
                         }
                     }
                     value_free(&pattern_val);
@@ -1456,10 +1559,55 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                 }
                 /* Enum variant pattern: EnumName::Variant(args) */
                 else if (pattern->type == AST_ENUM_VARIANT) {
-                    if (match_value.type == VALUE_ENUM &&
+                    int optres_handled = 0;
+                    /* Handle VALUE_OPTION pattern matching */
+                    if (match_value.type == VALUE_OPTION) {
+                        if (strcmp(pattern->data.enum_variant.variant_name, "Some") == 0 && !match_value.is_none) {
+                            if (pattern->data.enum_variant.arg_count > 0) {
+                                ASTNode* arg = pattern->data.enum_variant.args[0];
+                                if (arg && arg->type == AST_IDENTIFIER) {
+                                    scope_define(interp->current_scope,
+                                                 arg->data.identifier.name,
+                                                 value_copy(match_value.option_value), 0);
+                                }
+                            }
+                            matched = 1;
+                            optres_handled = 1;
+                        } else if (strcmp(pattern->data.enum_variant.variant_name, "None") == 0 && match_value.is_none) {
+                            matched = 1;
+                            optres_handled = 1;
+                        }
+                    }
+                    /* Handle VALUE_RESULT pattern matching */
+                    if (match_value.type == VALUE_RESULT && !optres_handled) {
+                        if (strcmp(pattern->data.enum_variant.variant_name, "Ok") == 0 && match_value.result_ok) {
+                            if (pattern->data.enum_variant.arg_count > 0) {
+                                ASTNode* arg = pattern->data.enum_variant.args[0];
+                                if (arg && arg->type == AST_IDENTIFIER) {
+                                    scope_define(interp->current_scope,
+                                                 arg->data.identifier.name,
+                                                 value_copy(match_value.result_ok), 0);
+                                }
+                            }
+                            matched = 1;
+                            optres_handled = 1;
+                        } else if (strcmp(pattern->data.enum_variant.variant_name, "Err") == 0 && match_value.result_err) {
+                            if (pattern->data.enum_variant.arg_count > 0) {
+                                ASTNode* arg = pattern->data.enum_variant.args[0];
+                                if (arg && arg->type == AST_IDENTIFIER) {
+                                    scope_define(interp->current_scope,
+                                                 arg->data.identifier.name,
+                                                 value_copy(match_value.result_err), 0);
+                                }
+                            }
+                            matched = 1;
+                            optres_handled = 1;
+                        }
+                    }
+                    /* Standard VALUE_ENUM pattern matching */
+                    if (!optres_handled && match_value.type == VALUE_ENUM &&
                         strcmp(match_value.enum_name, pattern->data.enum_variant.enum_name) == 0 &&
                         strcmp(match_value.variant_name, pattern->data.enum_variant.variant_name) == 0) {
-                        /* Bind fields to identifiers if the pattern has capture variables */
                         if (pattern->data.enum_variant.arg_count > 0 &&
                             match_value.enum_field_count >= pattern->data.enum_variant.arg_count) {
                             for (size_t vi = 0; vi < pattern->data.enum_variant.arg_count; vi++) {
@@ -1470,6 +1618,68 @@ Value interpreter_evaluate(Interpreter* interp, ASTNode* node) {
                                                  value_copy(match_value.enum_fields[vi]), 0);
                                 }
                             }
+                        }
+                        matched = 1;
+                    }
+                }
+                /* Range pattern: start..end */
+                else if (pattern->type == AST_RANGE_PATTERN) {
+                    Value start_val = interpreter_evaluate(interp, pattern->data.range_pattern.start);
+                    Value end_val = interpreter_evaluate(interp, pattern->data.range_pattern.end);
+                    if (match_value.type == VALUE_INT &&
+                        start_val.type == VALUE_INT && end_val.type == VALUE_INT) {
+                        if (match_value.value.int_value >= start_val.value.int_value &&
+                            match_value.value.int_value <= end_val.value.int_value) {
+                            matched = 1;
+                        }
+                    } else if (match_value.type == VALUE_FLOAT &&
+                               start_val.type == VALUE_FLOAT && end_val.type == VALUE_FLOAT) {
+                        if (match_value.value.float_value >= start_val.value.float_value &&
+                            match_value.value.float_value <= end_val.value.float_value) {
+                            matched = 1;
+                        }
+                    } else if (match_value.type == VALUE_INT &&
+                               start_val.type == VALUE_FLOAT && end_val.type == VALUE_FLOAT) {
+                        double mv = (double)match_value.value.int_value;
+                        if (mv >= start_val.value.float_value && mv <= end_val.value.float_value) {
+                            matched = 1;
+                        }
+                    } else if (match_value.type == VALUE_FLOAT &&
+                               start_val.type == VALUE_INT && end_val.type == VALUE_INT) {
+                        if (match_value.value.float_value >= (double)start_val.value.int_value &&
+                            match_value.value.float_value <= (double)end_val.value.int_value) {
+                            matched = 1;
+                        }
+                    }
+                    value_free(&start_val);
+                    value_free(&end_val);
+                }
+                /* Array destructuring pattern: [a, b, ...rest] */
+                else if (pattern->type == AST_ARRAY_PATTERN) {
+                    int arr_matches = 0;
+                    if (match_value.type == VALUE_ARRAY) {
+                        if (pattern->data.array_pattern.rest_name) {
+                            arr_matches = match_value.array_length >= pattern->data.array_pattern.count;
+                        } else {
+                            arr_matches = match_value.array_length == pattern->data.array_pattern.count;
+                        }
+                    }
+                    if (arr_matches) {
+                        for (size_t vi = 0; vi < pattern->data.array_pattern.count; vi++) {
+                            scope_define(interp->current_scope,
+                                         pattern->data.array_pattern.names[vi],
+                                         value_copy(match_value.array_elements[vi]), 0);
+                        }
+                        if (pattern->data.array_pattern.rest_name) {
+                            size_t rest_len = match_value.array_length - pattern->data.array_pattern.count;
+                            Value** rest_elems = (Value**)malloc(sizeof(Value*) * rest_len);
+                            for (size_t vi = 0; vi < rest_len; vi++) {
+                                rest_elems[vi] = (Value*)malloc(sizeof(Value));
+                                *rest_elems[vi] = value_copy(match_value.array_elements[pattern->data.array_pattern.count + vi]);
+                            }
+                            Value rest_val = value_create_array_val(rest_elems, rest_len);
+                            scope_define(interp->current_scope, pattern->data.array_pattern.rest_name, rest_val, 0);
+                            value_free(&rest_val);
                         }
                         matched = 1;
                     }
