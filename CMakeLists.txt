@@ -9,30 +9,31 @@ option(BUILD_RUST_VM "Build Rust VM component" ON)
 option(BUILD_RUST_COMPILER "Build Rust compiler frontend" ON)
 
 include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/compiler)
+include_directories(${CMAKE_SOURCE_DIR}/compiler-core)
+include_directories(${CMAKE_SOURCE_DIR}/compiler-core/compiler)
 include_directories(${CMAKE_SOURCE_DIR}/vm-rust/include)
-include_directories(${CMAKE_SOURCE_DIR}/compiler-rust/include)
+include_directories(${CMAKE_SOURCE_DIR}/compiler-core/compiler-rust/include)
 
 # C sources for the main hunnu binary
 set(HUNNU_SOURCES
     cli/main.c
     cli/cli.c
-    compiler/lexer/lexer.c
-    compiler/lexer/token.c
-    compiler/parser/parser.c
-    compiler/ast/ast.c
-    compiler/ast/ast_free.c
-    compiler/ast/ast_print.c
-    compiler/interpreter/interpreter.c
-    compiler/interpreter/builtins.c
-    compiler/value.c
-    compiler/scope.c
-    compiler/import.c
-    compiler/i18n/i18n.c
-    compiler/version.c
-    compiler/vm/compiler.c
-    compiler/vm/vm.c
-    compiler/transpile/transpile.c
+    compiler-core/compiler/lexer/lexer.c
+    compiler-core/compiler/lexer/token.c
+    compiler-core/compiler/parser/parser.c
+    compiler-core/compiler/ast/ast.c
+    compiler-core/compiler/ast/ast_free.c
+    compiler-core/compiler/ast/ast_print.c
+    compiler-core/compiler/interpreter/interpreter.c
+    compiler-core/compiler/interpreter/builtins.c
+    compiler-core/compiler/value.c
+    compiler-core/compiler/scope.c
+    compiler-core/compiler/import.c
+    compiler-core/compiler/i18n/i18n.c
+    compiler-core/compiler/version.c
+    compiler-core/compiler/vm/compiler.c
+    compiler-core/compiler/vm/vm.c
+    compiler-core/compiler/transpile/transpile.c
 )
 
 # Rust VM integration
@@ -113,7 +114,7 @@ if(BUILD_RUST_COMPILER AND CARGO_EXECUTABLE)
     add_test(
         NAME rust_compiler_tests
         COMMAND ${CARGO_EXECUTABLE} test
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-rust
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-core/compiler-rust
     )
 endif()
 
@@ -130,13 +131,13 @@ endif()
 # Rust compiler frontend integration
 if(BUILD_RUST_COMPILER)
     if(CARGO_EXECUTABLE)
-        set(RUST_COMPILER_LIB ${CMAKE_SOURCE_DIR}/compiler-rust/target/release/libhunnu_compiler.a)
-        set(RUST_COMPILER_HEADER ${CMAKE_SOURCE_DIR}/compiler-rust/include/hunnu_compiler.h)
+        set(RUST_COMPILER_LIB ${CMAKE_SOURCE_DIR}/compiler-core/compiler-rust/target/release/libhunnu_compiler.a)
+        set(RUST_COMPILER_HEADER ${CMAKE_SOURCE_DIR}/compiler-core/compiler-rust/include/hunnu_compiler.h)
 
         add_custom_command(
             OUTPUT ${RUST_COMPILER_LIB}
             COMMAND ${CARGO_EXECUTABLE} build --release
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-rust
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-core/compiler-rust
             COMMENT "Building Rust compiler library"
         )
 
@@ -147,7 +148,7 @@ if(BUILD_RUST_COMPILER)
             add_dependencies(hunnu hunnu_compiler_rust)
         endif()
 
-        install(PROGRAMS ${CMAKE_SOURCE_DIR}/compiler-rust/target/release/hunnu-compiler
+        install(PROGRAMS ${CMAKE_SOURCE_DIR}/compiler-core/compiler-rust/target/release/hunnu-compiler
                 DESTINATION bin
                 OPTIONAL)
 
