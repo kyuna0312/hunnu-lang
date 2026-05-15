@@ -11,13 +11,13 @@ option(BUILD_RUST_COMPILER "Build Rust compiler frontend" ON)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/compiler-core)
 include_directories(${CMAKE_SOURCE_DIR}/compiler-core/compiler)
-include_directories(${CMAKE_SOURCE_DIR}/vm-rust/include)
+include_directories(${CMAKE_SOURCE_DIR}/compiler-core/vm-rust/include)
 include_directories(${CMAKE_SOURCE_DIR}/compiler-core/compiler-rust/include)
 
 # C sources for the main hunnu binary
 set(HUNNU_SOURCES
-    cli/main.c
-    cli/cli.c
+    compiler-core/cli/main.c
+    compiler-core/cli/cli.c
     compiler-core/compiler/lexer/lexer.c
     compiler-core/compiler/lexer/token.c
     compiler-core/compiler/parser/parser.c
@@ -43,14 +43,14 @@ if(BUILD_RUST_VM)
         message(STATUS "Found cargo: ${CARGO_EXECUTABLE}")
 
         # Build Rust VM as a static library
-        set(RUST_VM_LIB ${CMAKE_SOURCE_DIR}/vm-rust/target/release/libhunnu_vm.a)
-        set(RUST_VM_HEADER ${CMAKE_SOURCE_DIR}/vm-rust/include/hunnu_vm.h)
+        set(RUST_VM_LIB ${CMAKE_SOURCE_DIR}/compiler-core/vm-rust/target/release/libhunnu_vm.a)
+        set(RUST_VM_HEADER ${CMAKE_SOURCE_DIR}/compiler-core/vm-rust/include/hunnu_vm.h)
 
         # Custom command to build the Rust VM
         add_custom_command(
             OUTPUT ${RUST_VM_LIB}
             COMMAND ${CARGO_EXECUTABLE} build --release
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vm-rust
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-core/vm-rust
             COMMENT "Building Rust VM library"
         )
 
@@ -68,7 +68,7 @@ if(BUILD_RUST_VM)
         add_dependencies(hunnu hunnu_vm_rust)
 
         # Install the Rust VM binary (optional, for standalone use)
-        install(PROGRAMS ${CMAKE_SOURCE_DIR}/vm-rust/target/release/hunnu-vm
+        install(PROGRAMS ${CMAKE_SOURCE_DIR}/compiler-core/vm-rust/target/release/hunnu-vm
                 DESTINATION bin
                 RENAME hunnu-vm
                 OPTIONAL)
@@ -91,7 +91,7 @@ install(TARGETS hunnu DESTINATION bin)
 enable_testing()
 
 # C unit tests
-add_subdirectory(tests)
+add_subdirectory(compiler-core/tests)
 
 # C interpreter integration tests
 add_test(NAME hunnu_version COMMAND hunnu -v)
@@ -106,7 +106,7 @@ if(BUILD_RUST_VM AND CARGO_EXECUTABLE)
     add_test(
         NAME rust_vm_tests
         COMMAND ${CARGO_EXECUTABLE} test
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vm-rust
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/compiler-core/vm-rust
     )
 endif()
 
